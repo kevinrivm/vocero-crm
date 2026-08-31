@@ -34,10 +34,11 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# su-exec: bajar de root a `vocero` DESPUÉS de arreglar permisos del volumen
+# (Railway/Coolify montan volúmenes nombrados como root y el chown del build
+# no persiste sobre el mount; hay que hacerlo en el arranque).
+RUN apk add --no-cache su-exec
 RUN addgroup -S vocero && adduser -S vocero -G vocero
-# 008: punto de montaje del volumen de adjuntos, propiedad del usuario de la
-# app — el volumen nombrado hereda este dueño al montarse vacío (sin esto,
-# monta como root y el guardado de adjuntos falla con EACCES).
 RUN mkdir -p /data/media && chown -R vocero:vocero /data
 
 COPY --from=builder --chown=vocero:vocero /app/.next/standalone ./
@@ -47,14 +48,13 @@ COPY --from=builder --chown=vocero:vocero /app/migrate.bundle.mjs ./migrate.mjs
 COPY --from=builder --chown=vocero:vocero /app/seed-demo.bundle.mjs ./seed-demo.mjs
 COPY --from=builder --chown=vocero:vocero /app/drizzle ./drizzle
 
-USER vocero
+# Arranca como root SOLO para arreglar el owner del volumen montado
+# (idempotente: si ya está bien no hace nada). Luego baja a `vocero`.
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
-# start-period amplio: cubre las migraciones del arranque
 HEALTHCHECK --interval=15s --timeout=5s --start-period=40s --retries=5 \
   CMD wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1
 
-# Migrar al BOOT del contenedor nuevo y arrancar el server standalone
-CMD ["sh", "-c", "node migrate.mjs && node server.js"]
+CMD ["sh", "-c", "mkdir -p /data/media && chown -R vocero:vocero /data && su-exec vocero node migrate.mjs && exec su-exec vocero node server.js"]
