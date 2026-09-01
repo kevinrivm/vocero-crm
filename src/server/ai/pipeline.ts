@@ -17,6 +17,9 @@ import {
 import { matchesHandoffIntent } from "@/server/ai/handoff";
 import { buildAgentSystemPrompt } from "@/server/ai/prompts";
 import { agendaEnabled } from "@/server/agenda/flag";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("agente");
 import { bookSlot, offerSlots } from "@/server/agenda/agent";
 
 /**
@@ -75,7 +78,7 @@ async function executeTurn(conversationId: string): Promise<void> {
   try {
     await runAgentTurn(conversationId);
   } catch (err) {
-    console.error("[agente] turno falló:", err);
+    log.error("turno falló", { err, conversationId });
   } finally {
     entry.running = false;
     if (entry.pending) {
@@ -169,7 +172,7 @@ export async function runAgentTurn(conversationId: string): Promise<void> {
   if (!result.ok) {
     if (result.error === "not_configured") return;
     // Fallo persistente del proveedor o salida imposible → escalar (FR-022).
-    console.error(`[agente] fallo del proveedor (raw): ${result.detail}`);
+    log.error("fallo del proveedor (raw)", { detail: result.detail });
     await applyHandoff(conversationId, organizationId, "error");
     return;
   }
@@ -205,7 +208,7 @@ export async function runAgentTurn(conversationId: string): Promise<void> {
         }
         return;
       } catch (err) {
-        console.error(`[agente] el motor de agenda falló: ${err}`);
+        log.error("el motor de agenda falló", { err, conversationId });
         action = degradeAction(action);
       }
     }

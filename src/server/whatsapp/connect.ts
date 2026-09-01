@@ -1,4 +1,7 @@
 import { graphRequest, MetaApiError } from "@/lib/meta/client";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("connect");
 
 export type ConnectionCheck =
   | {
@@ -75,9 +78,6 @@ export async function subscribeAppToWaba(
       token,
     });
   } catch (err) {
-    console.warn(
-      "[connect] subscribed_apps falló (esperado en modo agencia):",
-      err instanceof Error ? err.message : err
-    );
+    log.warn("subscribed_apps falló (esperado en modo agencia)", { err });
   }
 }

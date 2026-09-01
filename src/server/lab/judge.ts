@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { chatJson } from "@/lib/ai";
 import { buildJudgePrompt } from "@/server/ai/prompts";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("lab");
 
 /** Veredicto estructurado del juez (FR-032, contrato ai.md). */
 export const Verdict = z.object({
@@ -50,9 +53,11 @@ export async function judgeCase(input: {
   if (!result.ok) {
     // Diagnóstico operativo: el caso queda visible como judge_failed y aquí
     // queda el porqué (incluye el raw= truncado del proveedor).
-    console.error(
-      `[lab] juez falló para ${input.personaKey}: ${result.error} — ${result.detail}`
-    );
+    log.error("juez falló", {
+      persona: input.personaKey,
+      error: result.error,
+      detail: result.detail,
+    });
     return { status: "judge_failed", detail: result.detail };
   }
   return { status: "done", verdict: result.data };

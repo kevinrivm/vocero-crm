@@ -11,6 +11,9 @@ import {
   channelDisabledResponse,
   isChannelEnabled,
 } from "@/server/channels/enabled";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("ig");
 
 /**
  * 014 — Webhook público del canal de Instagram.
@@ -98,7 +101,7 @@ export async function POST(req: Request, { params }: Params) {
         await processZernioEvent(payload);
       }
     } catch (err) {
-      console.error("[ig] error procesando payload:", err);
+      log.error("error procesando payload", { err });
     }
   });
 

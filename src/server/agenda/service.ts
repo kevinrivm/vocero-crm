@@ -24,6 +24,9 @@ import {
 import { ConnectorError } from "@/server/agenda/connectors/types";
 import { moveLeadToStage } from "@/server/leads/stage-history";
 import { publish } from "@/server/events/bus";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("agenda");
 
 /**
  * 015 — Ciclo de vida de la cita y las dos reglas INNEGOCIABLES:
@@ -221,7 +224,7 @@ export async function createSessionBooking(input: {
   if (input.conversationId) {
     await clearOffers(input.organizationId, input.conversationId).catch(
       (err) => {
-        console.warn(`[agenda] no pude limpiar la oferta: ${err}`);
+        log.warn("no pude limpiar la oferta", { err });
       }
     );
   }
@@ -233,7 +236,7 @@ export async function createSessionBooking(input: {
     contactId,
     input.source === "ai" ? "bot" : "dueno"
   ).catch((err) => {
-    console.warn(`[agenda] avance de etapa falló: ${err}`);
+    log.warn("avance de etapa falló", { err });
   });
 
   publish(input.organizationId, {
@@ -546,9 +549,7 @@ async function deliverMeeting(
       linkPending: CONNECTOR_META[connectorId].perBookingLink && !meeting.joinUrl,
     });
   } catch (err) {
-    console.warn(
-      `[agenda] el conector ${connectorId} no pudo entregar la reunión: ${err}`
-    );
+    log.warn("el conector no pudo entregar la reunión", { connectorId, err });
     if (err instanceof ConnectorError && err.isAuthError) {
       await markConnectorAuthError(booking.organizationId, connectorId).catch(
         () => {}
@@ -605,7 +606,7 @@ async function withConnector(
     );
     await run(conn, booking.externalRef);
   } catch (err) {
-    console.warn(`[agenda] efecto en ${connectorId} falló: ${err}`);
+    log.warn("efecto en conector falló", { connectorId, err });
     if (err instanceof ConnectorError && err.isAuthError) {
       await markConnectorAuthError(booking.organizationId, connectorId).catch(
         () => {}
@@ -631,7 +632,7 @@ async function refreshOffer(
       FRESH_ALTERNATIVES
     );
   } catch (err) {
-    console.warn(`[agenda] no pude calcular alternativas: ${err}`);
+    log.warn("no pude calcular alternativas", { err });
     return [];
   }
   const offers: OfferedSlot[] = fresh.map((s) => ({
@@ -640,7 +641,7 @@ async function refreshOffer(
   }));
   if (conversationId && offers.length > 0) {
     await replaceOffers(organizationId, conversationId, offers).catch((err) => {
-      console.warn(`[agenda] no pude registrar la nueva oferta: ${err}`);
+      log.warn("no pude registrar la nueva oferta", { err });
     });
   }
   return offers;

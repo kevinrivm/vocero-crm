@@ -1,9 +1,15 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("boot");
 
 /**
  * Limpieza al arranque (FR-034): corridas del Laboratorio que quedaron
- * "running" tras un reinicio → fallidas. Solo corre en el runtime Node.
+ * "running" tras un reinicio → fallidas, con SUS casos individuales
+ * sacados de pending/running (si no, la UI del Lab muestra personas
+ * "corriendo" para siempre en una corrida que ya no existe en memoria).
+ * Solo corre en el runtime Node.
  */
 export async function cleanupOrphanRuns(): Promise<void> {
   try {
@@ -18,12 +24,25 @@ export async function cleanupOrphanRuns(): Promise<void> {
       .where(eq(schema.agentTestRun.status, "running"))
       .returning({ id: schema.agentTestRun.id });
     if (updated.length > 0) {
-      console.log(
-        `[boot] ${updated.length} corrida(s) del Laboratorio huérfana(s) marcada(s) como fallida(s)`
-      );
+      // Los casos quedan judge_failed: con el enum cerrado
+      // [pending, running, done, judge_failed] es el único estado terminal
+      // que ya usa la UI para "sin veredicto", y computeScore lo excluye
+      // del denominador — una corrida interrumpida no infla ni hunde el score.
+      await db
+        .update(schema.agentTestCase)
+        .set({ status: "judge_failed" })
+        .where(
+          inArray(
+            schema.agentTestCase.runId,
+            updated.map((r) => r.id)
+          )
+        );
+      log.info("corridas del Laboratorio huérfanas marcadas como fallidas", {
+        count: updated.length,
+      });
     }
   } catch (err) {
     // La BD puede no estar lista aún (migraciones corren antes del server).
-    console.error("[boot] limpieza de corridas huérfanas falló:", err);
+    log.error("limpieza de corridas huérfanas falló", { err });
   }
 }

@@ -7,6 +7,9 @@ import {
 } from "@/server/inbox/webhook";
 import { processEchoesValue, processMessagesValue } from "@/server/inbox/ingest";
 import { processTemplateStatusValue } from "@/server/whatsapp/template-events";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("webhook");
 
 /**
  * Webhook público de WhatsApp (contrato webhook.md).
@@ -61,7 +64,7 @@ export async function POST(req: Request, { params }: Params) {
     try {
       await processPayload(payload);
     } catch (err) {
-      console.error("[webhook] error procesando payload:", err);
+      log.error("error procesando payload", { err });
     }
   });
 

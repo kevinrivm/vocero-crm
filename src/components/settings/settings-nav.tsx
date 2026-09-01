@@ -11,6 +11,7 @@ const TABS: Tab[] = [
   { href: "/settings/branding", label: "Marca" },
   { href: "/settings/templates", label: "Plantillas" },
   { href: "/settings/team", label: "Equipo" },
+  { href: "/settings/data", label: "Datos" },
 ];
 
 /** 015 — "Agenda" solo existe si esta instancia encendió la bandera. */

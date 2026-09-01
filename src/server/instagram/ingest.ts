@@ -5,6 +5,9 @@ import {
   getInstagramCredentialsByAccountRef,
   getInstagramCredentialsByIgUserId,
 } from "@/server/instagram/credentials";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("ig");
 
 /**
  * 014 — Adaptadores de entrada del canal de Instagram.
@@ -78,9 +81,9 @@ export async function processZernioEvent(payload: unknown): Promise<void> {
 
   const creds = await getInstagramCredentialsByAccountRef(accountRef);
   if (!creds) {
-    console.warn(
-      `[ig] evento para accountId desconocido (${accountRef}): ` +
-        "guarda la conexion en Configuracion -> Instagram para recibir mensajes"
+    log.warn(
+      "evento para accountId desconocido — guarda la conexion en Configuracion -> Instagram para recibir mensajes",
+      { accountRef }
     );
     return;
   }
@@ -88,22 +91,22 @@ export async function processZernioEvent(payload: unknown): Promise<void> {
     // Defensa en profundidad: esta instancia no habla con Zernio, asi que un
     // payload con su forma no puede ser legitimo aunque llegue por la URL
     // correcta. Sin esto, la unica barrera de la forma ajena es la URL.
-    console.warn(
-      `[ig] payload de Zernio en una instancia configurada como '${creds.source}': descartado`
-    );
+    log.warn("payload de Zernio en instancia con otra fuente: descartado", {
+      source: creds.source,
+    });
     return;
   }
 
   const igsid = evt.message?.sender?.id;
   if (!igsid) {
-    console.warn(`[ig] evento ${evt.id ?? "?"} sin sender.id: descartado`);
+    log.warn("evento sin sender.id: descartado", { eventId: evt.id ?? null });
     return;
   }
 
   const text = evt.message?.text ?? null;
   const platformMessageId = evt.message?.id;
   if (!platformMessageId) {
-    console.warn(`[ig] evento ${evt.id ?? "?"} sin id de mensaje: descartado`);
+    log.warn("evento sin id de mensaje: descartado", { eventId: evt.id ?? null });
     return;
   }
 
@@ -160,9 +163,9 @@ export async function processMetaInstagramPayload(
 
     const creds = await getInstagramCredentialsByIgUserId(igUserId);
     if (!creds) {
-      console.warn(
-        `[ig] evento para IG_ID desconocido (${igUserId}): ` +
-          "guarda la conexion en Configuracion -> Instagram para recibir mensajes"
+      log.warn(
+        "evento para IG_ID desconocido — guarda la conexion en Configuracion -> Instagram para recibir mensajes",
+        { igUserId }
       );
       continue;
     }
@@ -170,9 +173,9 @@ export async function processMetaInstagramPayload(
       // Idem: sin app propia de Meta, un payload con su forma no puede venir
       // de Meta. Cierra la inyeccion en instancias que solo usan Zernio, donde
       // META_APP_SECRET no existe y la firma no se puede verificar.
-      console.warn(
-        `[ig] payload de Meta en una instancia configurada como '${creds.source}': descartado`
-      );
+      log.warn("payload de Meta en instancia con otra fuente: descartado", {
+        source: creds.source,
+      });
       continue;
     }
 

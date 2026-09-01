@@ -21,6 +21,9 @@ import { atribucionEnabled } from "@/server/attribution/flag";
 import { recordAttribution } from "@/server/attribution/store";
 import { onLeadActivity } from "@/server/inbox/lead-activity";
 import { maybeRunAgentTurn } from "@/server/ai/trigger";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("webhook");
 
 /** Tipos de contenido soportados; el resto se ignora sin error. */
 const SUPPORTED_TYPES = new Set([
@@ -139,7 +142,7 @@ async function attachMediaAsset(
     }
     return asset;
   } catch (err) {
-    console.warn(`[media] no se pudo registrar el adjunto de ${messageId}:`, err);
+    log.warn("no se pudo registrar el adjunto", { messageId, err });
     return null;
   }
 }
@@ -219,9 +222,9 @@ export async function processMessagesValue(value: WebhookValue): Promise<void> {
   if (!credentials) {
     // Caso típico: webhook/override configurado ANTES de guardar la conexión
     // en el wizard — el evento llega pero no hay a qué organización enrutarlo.
-    console.warn(
-      `[webhook] evento para phone_number_id desconocido (${phoneNumberId}): ` +
-        "guarda la conexión en Configuración → WhatsApp para recibir mensajes"
+    log.warn(
+      "evento para phone_number_id desconocido — guarda la conexión en Configuración → WhatsApp para recibir mensajes",
+      { phoneNumberId }
     );
     return;
   }
@@ -238,9 +241,9 @@ export async function processMessagesValue(value: WebhookValue): Promise<void> {
     if (!resolved) {
       // Mensaje sin NINGUNA identidad utilizable (ni teléfono ni BSUID):
       // registrar y descartar — jamás reventar el webhook (003).
-      console.warn(
-        `[webhook] mensaje ${msg.id} sin identidad utilizable (sin from ni from_user_id): descartado`
-      );
+      log.warn("mensaje sin identidad utilizable (sin from ni from_user_id): descartado", {
+        messageId: msg.id,
+      });
       continue;
     }
     await ingestInboundMessage({
@@ -268,9 +271,7 @@ export async function processEchoesValue(value: WebhookValue): Promise<void> {
 
   const credentials = await getCredentialsByPhoneNumberId(phoneNumberId);
   if (!credentials) {
-    console.warn(
-      `[webhook] echo para phone_number_id desconocido (${phoneNumberId}): descartado`
-    );
+    log.warn("echo para phone_number_id desconocido: descartado", { phoneNumberId });
     return;
   }
 
@@ -279,14 +280,14 @@ export async function processEchoesValue(value: WebhookValue): Promise<void> {
   for (const echo of echoes) {
     if (!SUPPORTED_TYPES.has(echo.type)) continue;
     if (!echo.to) {
-      console.warn(`[webhook] echo ${echo.id} sin destinatario: descartado`);
+      log.warn("echo sin destinatario: descartado", { echoId: echo.id });
       continue;
     }
     try {
       await ingestManualEcho(credentials.organizationId, echo);
     } catch (err) {
       // Un echo malformado jamás tumba el webhook (edge case del spec).
-      console.error(`[webhook] error procesando echo ${echo.id}:`, err);
+      log.error("error procesando echo", { echoId: echo.id, err });
     }
   }
 }
@@ -357,9 +358,9 @@ async function ingestManualEcho(
     )
     .returning();
   if (paused[0]) {
-    console.log(
-      `[webhook] respuesta manual del dueño en ${conversation.id} — IA pausada (manual_reply)`
-    );
+    log.info("respuesta manual del dueño — IA pausada (manual_reply)", {
+      conversationId: conversation.id,
+    });
   }
 
   publish(organizationId, {

@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
 import { publish } from "@/server/events/bus";
@@ -6,6 +6,9 @@ import { runAgentTurn } from "@/server/ai/pipeline";
 import { renderKb } from "@/server/ai/prompts";
 import { computeScore, judgeCase } from "@/server/lab/judge";
 import { PERSONAS, type Persona } from "@/server/lab/personas";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("lab");
 
 /**
  * Runner del Laboratorio (FR-030/FR-034): corrida en segundo plano DENTRO del
@@ -51,7 +54,7 @@ export async function startRun(organizationId: string): Promise<string> {
 
   // Fire-and-forget in-process: el POST regresa ya; el progreso va por SSE.
   void executeRun(runId, organizationId).catch(async (err) => {
-    console.error("[lab] corrida falló:", err);
+    log.error("corrida falló", { err });
     await failRun(runId, organizationId, String(err));
   });
 
@@ -282,6 +285,18 @@ async function failRun(
     .update(schema.agentTestRun)
     .set({ status: "failed", error, finishedAt: new Date() })
     .where(eq(schema.agentTestRun.id, runId));
+  // Los casos sin terminar no quedan "running" para siempre: mismo estado
+  // terminal que usa el arranque para corridas huérfanas (ver
+  // instrumentation-node.ts). computeScore ya excluye judge_failed.
+  await db
+    .update(schema.agentTestCase)
+    .set({ status: "judge_failed" })
+    .where(
+      and(
+        eq(schema.agentTestCase.runId, runId),
+        inArray(schema.agentTestCase.status, ["pending", "running"])
+      )
+    );
   publishProgress(organizationId, runId, "failed", 0, PERSONAS.length);
 }
 

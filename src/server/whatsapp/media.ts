@@ -8,6 +8,9 @@ import {
   getCredentialsByOrg,
   type Credentials,
 } from "@/server/whatsapp/credentials";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("media");
 
 /**
  * 008 — Única frontera de media con la Graph API (constitución II: todo el
@@ -227,7 +230,7 @@ export async function ensureAssetAvailable(
       .update(schema.mediaAsset)
       .set({ fetchStatus: "failed", fetchError: message, updatedAt: new Date() })
       .where(eq(schema.mediaAsset.id, assetId));
-    console.warn(`[media] descarga del asset ${assetId} falló: ${message}`);
+    log.warn("descarga del asset falló", { assetId, message });
     return null;
   }
 }

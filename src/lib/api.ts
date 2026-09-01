@@ -1,5 +1,8 @@
 import { z } from "zod";
 import { requireSession, UnauthorizedError, type SessionContext } from "@/lib/auth/session";
+import { createLogger } from "@/lib/logger";
+
+const log = createLogger("api");
 
 /** Respuesta de error estándar de la API interna (contrato api.md). */
 export function apiError(
@@ -30,7 +33,7 @@ export function withAuth<Args extends unknown[]>(
     try {
       return await handler(session, ...args);
     } catch (err) {
-      console.error("[api] error no controlado:", err);
+      log.error("error no controlado", { err });
       return apiError(500, "internal", "Error interno");
     }
   };
