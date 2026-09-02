@@ -107,7 +107,15 @@ async function callProvider(
         Authorization: `Bearer ${env.OPENROUTER_API_TOKEN}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ model, messages }),
+      body: JSON.stringify({
+        model,
+        messages,
+        // Forzar JSON válido a nivel API — cuando el KB crece, Claude/GPT
+        // ocasionalmente ignoran la instrucción del prompt y devuelven
+        // texto libre. Con esto el proveedor rechaza cualquier salida no-JSON
+        // y la extracción robusta deja de fallar en producción.
+        response_format: { type: "json_object" },
+      }),
       signal: controller.signal,
     });
     if (!res.ok) {
