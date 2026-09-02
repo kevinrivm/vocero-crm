@@ -186,7 +186,16 @@ export async function syncTemplates(organizationId: string): Promise<number> {
   }
 
   let data: {
-    data?: { id?: string; name?: string; language?: string; status?: string; category?: string; quality_score?: unknown; rejected_reason?: string }[];
+    data?: {
+      id?: string;
+      name?: string;
+      language?: string;
+      status?: string;
+      category?: string;
+      quality_score?: unknown;
+      rejected_reason?: string;
+      components?: { type?: string; text?: string }[];
+    }[];
   };
   try {
     data = await graphRequest(`${creds.wabaId}/message_templates`, {
@@ -218,10 +227,35 @@ export async function syncTemplates(organizationId: string): Promise<number> {
         (remote.id && t.waTemplateId === remote.id) ||
         (t.name === remote.name && t.language === remote.language)
     );
-    if (!match) continue;
     // Meta reclasifica la categoría al aprobar (una UTILITY puede volverse
     // MARKETING, lo que cambia el costo por conversación): es autoridad.
-    const category = remote.category ?? match.category;
+    const category = remote.category ?? match?.category ?? "UTILITY";
+
+    if (!match) {
+      // Plantilla creada directamente en Meta (vía Graph API o WhatsApp
+      // Manager) sin pasar por Vocero: la importamos para que aparezca en
+      // la UI y se pueda enviar desde el composer. El body se reconstruye
+      // desde el componente BODY (si trae header/footer/buttons, esos no
+      // se muestran en la UI pero se envían igual — Meta usa la plantilla
+      // aprobada de su lado).
+      if (!remote.name || !remote.language) continue;
+      const body =
+        remote.components?.find((c) => c.type === "BODY")?.text ?? "";
+      await db.insert(schema.template).values({
+        id: newId("template"),
+        organizationId,
+        name: remote.name,
+        language: remote.language,
+        category,
+        body,
+        status,
+        rejectionReason: remote.rejected_reason ?? null,
+        waTemplateId: remote.id ?? null,
+      });
+      updated += 1;
+      continue;
+    }
+
     if (match.status === status && match.category === category) continue;
     await db
       .update(schema.template)
