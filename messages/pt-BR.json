@@ -1,0 +1,189 @@
+{
+  "auth": {
+    "login": {
+      "title": "Entrar",
+      "email": "E-mail",
+      "password": "Senha",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "firstTime": "Primeira vez aqui?",
+      "createAccount": "Criar a conta inicial",
+      "errorTooMany": "Muitas tentativas. Aguarde alguns minutos.",
+      "errorInvalid": "E-mail ou senha incorretos."
+    },
+    "register": {
+      "title": "Criar conta",
+      "description": "O primeiro cadastro cria a organização desta instância e define o proprietário.",
+      "name": "Seu nome",
+      "email": "E-mail",
+      "password": "Senha",
+      "submit": "Criar conta",
+      "submitting": "Criando…",
+      "alreadyHaveAccount": "Já tem uma conta?",
+      "signIn": "Entrar",
+      "errorClosed": "Cadastro encerrado: esta instância já possui uma organização. Solicite acesso ao proprietário.",
+      "errorTooMany": "Muitas tentativas. Aguarde alguns minutos.",
+      "errorGeneric": "Não foi possível criar a conta.",
+      "success": "Conta criada ✓"
+    }
+  },
+  "nav": {
+    "inbox": "Caixa de entrada",
+    "contacts": "Contatos",
+    "pipeline": "Pipeline",
+    "agent": "Agente de IA",
+    "lab": "Laboratório",
+    "settings": "Configurações",
+    "bookings": "Agendamentos"
+  },
+  "inbox": {
+    "title": "Caixa de entrada",
+    "subtitle": "Caixa de entrada · tempo real",
+    "loading": "Carregando…",
+    "noResults": "Sem resultados",
+    "windowClosed": "A janela de 24 horas está fechada.",
+    "aiInConversation": "IA nesta conversa",
+    "notDelivered": "Não foi entregue.",
+    "sharedContact": "Contato compartilhado"
+  },
+  "contacts": {
+    "title": "Contatos",
+    "newContact": "Novo contato",
+    "editContact": "Editar contato",
+    "noContacts": "Sem contatos",
+    "name": "Nome",
+    "phone": "Telefone",
+    "email": "E-mail",
+    "notes": "Notas",
+    "stage": "Etapa do pipeline",
+    "priority": "Prioridade",
+    "status": "Status",
+    "archived": "Arquivado",
+    "category": "Categoria",
+    "detail": "Detalhe",
+    "details": "Detalhes",
+    "activity": "Atividade recente",
+    "noAmounts": "Sem valores registrados",
+    "amountAndPriority": "Valor e prioridade"
+  },
+  "pipeline": {
+    "title": "Pipeline",
+    "stages": "Etapas do pipeline",
+    "stageTarget": "Etapa de destino…",
+    "allStages": "Todas as etapas",
+    "noLeads": "Não reportar leads qualificados"
+  },
+  "agent": {
+    "title": "Agente de IA",
+    "name": "Nome do agente",
+    "tone": "Tom de voz",
+    "instructions": "Instruções",
+    "behavior": "Comportamento",
+    "saveBehavior": "Salvar comportamento",
+    "escalation": "Regras de escalonamento",
+    "greeting": "Saudação",
+    "knowledgeBase": "Base de conhecimento",
+    "newQA": "Nova pergunta / resposta",
+    "newBlock": "Novo bloco de texto livre",
+    "question": "Pergunta",
+    "answer": "Resposta",
+    "addedToKnowledge": "Adicionado ao conhecimento ✓",
+    "configureProvider": "Configure seu provedor de IA para ativar o agente",
+    "language": "Idioma",
+    "currency": "Moeda do negócio"
+  },
+  "lab": {
+    "title": "Laboratório",
+    "report": "Relatório",
+    "score": "Pontuação {score}",
+    "evidence": "Evidência:",
+    "evaluating": "Avaliando personas…",
+    "noRuns": "Nenhuma execução ainda.",
+    "personas": "Personas simuladas"
+  },
+  "settings": {
+    "title": "Configurações",
+    "branding": {
+      "title": "Marca do CRM",
+      "accentColor": "Cor de destaque",
+      "tabIcon": "Ícone da aba",
+      "saved": "Marca salva ✓"
+    },
+    "whatsapp": {
+      "title": "Webhook do WhatsApp",
+      "wabaId": "WABA ID",
+      "phoneNumberId": "Phone Number ID",
+      "accessToken": "Token de acesso",
+      "verifyToken": "Token de verificação",
+      "webhookUrl": "URL do webhook (callback URL)",
+      "webhookSecret": "Segredo do webhook (opcional)",
+      "directMode": "Modo direto",
+      "agencyMode": "Modo agência (Tech Provider)",
+      "connected": "Conectado",
+      "closed": "Fechado"
+    },
+    "messenger": {
+      "title": "Webhook do Messenger",
+      "active": "Messenger ativo",
+      "pageId": "ID da página",
+      "datasetId": "ID do dataset",
+      "callbackUrl": "URL de callback",
+      "token": "Token (opcional)",
+      "connect": "Conectar {meta.label}"
+    },
+    "team": {
+      "title": "Equipe",
+      "newAccount": "Criar conta de equipe",
+      "tempPassword": "Senha temporária"
+    },
+    "templates": {
+      "title": "Modelos",
+      "new": "Novo modelo",
+      "loading": "Carregando modelos…",
+      "approved": "Modelo aprovado",
+      "failed": "Falhou",
+      "body": "Corpo",
+      "chooseTemplate": "Escolha um modelo…",
+      "marketing": "MARKETING",
+      "utility": "UTILITY (acompanhamento)",
+      "copied": "Copiado ✓",
+      "copiedAlt": "Copiado ✓"
+    },
+    "ai": {
+      "token": "OPENROUTER_API_TOKEN",
+      "model": "OPENROUTER_MODEL"
+    },
+    "calendar": {
+      "title": "Agenda",
+      "openDays": "Agenda aberta (dias)",
+      "minNotice": "Aviso mínimo (horas)",
+      "duration": "Duração do agendamento (min)",
+      "buffer": "Intervalo entre agendamentos (min)",
+      "timezone": "Fuso horário",
+      "howSlots": "Como os horários são gerados",
+      "howDelivery": "Como a reunião é entregue",
+      "nextSlots": "Próximos horários",
+      "blockRange": "Bloquear um período",
+      "block": "Bloqueio",
+      "event": "Evento",
+      "when": "Quando",
+      "yourRoom": "Sua sala fixa",
+      "minutes": "Minutos"
+    }
+  },
+  "common": {
+    "saved": "Salvo",
+    "savedAlt": "Salvo ✓",
+    "savedDot": "Salvo.",
+    "loading": "Carregando…",
+    "calculating": "Calculando…",
+    "inProgress": "Em andamento…",
+    "noLink": "Sem link",
+    "home": "Início",
+    "contact": "Contato",
+    "status": "Status",
+    "name": "Nome",
+    "crm": "CRM de WhatsApp com agente de IA",
+    "crmShort": "CRM · WhatsApp"
+  }
+}

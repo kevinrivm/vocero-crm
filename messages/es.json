@@ -1,0 +1,189 @@
+{
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "email": "Correo",
+      "password": "Contraseña",
+      "submit": "Entrar",
+      "submitting": "Entrando…",
+      "firstTime": "¿Primera vez aquí?",
+      "createAccount": "Crear la cuenta inicial",
+      "errorTooMany": "Demasiados intentos. Espera unos minutos.",
+      "errorInvalid": "Correo o contraseña incorrectos."
+    },
+    "register": {
+      "title": "Crear cuenta",
+      "description": "El primer registro crea la organización de esta instancia y queda como propietario.",
+      "name": "Tu nombre",
+      "email": "Correo",
+      "password": "Contraseña",
+      "submit": "Crear cuenta",
+      "submitting": "Creando…",
+      "alreadyHaveAccount": "¿Ya tienes cuenta?",
+      "signIn": "Inicia sesión",
+      "errorClosed": "El registro está cerrado: esta instancia ya tiene su organización. Pide acceso al propietario.",
+      "errorTooMany": "Demasiados intentos. Espera unos minutos.",
+      "errorGeneric": "No se pudo crear la cuenta.",
+      "success": "Cuenta creada ✓"
+    }
+  },
+  "nav": {
+    "inbox": "Bandeja",
+    "contacts": "Contactos",
+    "pipeline": "Pipeline",
+    "agent": "Agente de IA",
+    "lab": "Prueba",
+    "settings": "Configuración",
+    "bookings": "Citas"
+  },
+  "inbox": {
+    "title": "Bandeja",
+    "subtitle": "Bandeja · tiempo real",
+    "loading": "Cargando…",
+    "noResults": "Sin resultados",
+    "windowClosed": "La ventana de 24 horas está cerrada.",
+    "aiInConversation": "IA en esta conversación",
+    "notDelivered": "No se entregó.",
+    "sharedContact": "Contacto compartido"
+  },
+  "contacts": {
+    "title": "Contactos",
+    "newContact": "Nuevo contacto",
+    "editContact": "Editar contacto",
+    "noContacts": "Sin contactos",
+    "name": "Nombre",
+    "phone": "Teléfono",
+    "email": "Correo",
+    "notes": "Notas",
+    "stage": "Etapa del pipeline",
+    "priority": "Prioridad",
+    "status": "Estado",
+    "archived": "Archivado",
+    "category": "Categoría",
+    "detail": "Detalle",
+    "details": "Detalles",
+    "activity": "Actividad reciente",
+    "noAmounts": "Sin montos capturados",
+    "amountAndPriority": "Monto y prioridad"
+  },
+  "pipeline": {
+    "title": "Pipeline",
+    "stages": "Etapas del pipeline",
+    "stageTarget": "Etapa destino…",
+    "allStages": "Toda etapa",
+    "noLeads": "No reportar leads calificados"
+  },
+  "agent": {
+    "title": "Agente de IA",
+    "name": "Nombre del agente",
+    "tone": "Tono",
+    "instructions": "Instrucciones",
+    "behavior": "Comportamiento",
+    "saveBehavior": "Guardar comportamiento",
+    "escalation": "Reglas de escalado",
+    "greeting": "Saludo",
+    "knowledgeBase": "Knowledge base",
+    "newQA": "Nueva pregunta / respuesta",
+    "newBlock": "Nuevo bloque de texto libre",
+    "question": "Pregunta",
+    "answer": "Respuesta",
+    "addedToKnowledge": "Agregado al conocimiento ✓",
+    "configureProvider": "Configura tu proveedor de IA para activar el agente",
+    "language": "Idioma",
+    "currency": "Moneda del negocio"
+  },
+  "lab": {
+    "title": "Prueba",
+    "report": "Reporte",
+    "score": "Score {score}",
+    "evidence": "Evidencia:",
+    "evaluating": "Evaluando personas…",
+    "noRuns": "Sin corridas todavía.",
+    "personas": "Personas simuladas"
+  },
+  "settings": {
+    "title": "Configuración",
+    "branding": {
+      "title": "Marca del CRM",
+      "accentColor": "Color de acento",
+      "tabIcon": "Icono de la pestaña",
+      "saved": "Marca guardada ✓"
+    },
+    "whatsapp": {
+      "title": "Webhook de WhatsApp",
+      "wabaId": "WABA ID",
+      "phoneNumberId": "Phone Number ID",
+      "accessToken": "Token de acceso",
+      "verifyToken": "Token de verificación",
+      "webhookUrl": "URL del webhook (callback URL)",
+      "webhookSecret": "Secreto del webhook (opcional)",
+      "directMode": "Modo directo",
+      "agencyMode": "Modo agencia (Tech Provider)",
+      "connected": "Conectado",
+      "closed": "Cerrado"
+    },
+    "messenger": {
+      "title": "Webhook de Messenger",
+      "active": "Messenger activo",
+      "pageId": "ID de la página",
+      "datasetId": "ID del dataset",
+      "callbackUrl": "URL de callback",
+      "token": "Token (opcional)",
+      "connect": "Conectar {meta.label}"
+    },
+    "team": {
+      "title": "Equipo",
+      "newAccount": "Crear cuenta de equipo",
+      "tempPassword": "Contraseña temporal"
+    },
+    "templates": {
+      "title": "Plantillas",
+      "new": "Nueva plantilla",
+      "loading": "Cargando plantillas…",
+      "approved": "Plantilla aprobada",
+      "failed": "Fallida",
+      "body": "Cuerpo",
+      "chooseTemplate": "Elige una plantilla…",
+      "marketing": "MARKETING",
+      "utility": "UTILITY (seguimiento)",
+      "copied": "Copiada ✓",
+      "copiedAlt": "Copiado ✓"
+    },
+    "ai": {
+      "token": "OPENROUTER_API_TOKEN",
+      "model": "OPENROUTER_MODEL"
+    },
+    "calendar": {
+      "title": "Agenda",
+      "openDays": "Agenda abierta (días)",
+      "minNotice": "Aviso mínimo (horas)",
+      "duration": "Duración de la cita (min)",
+      "buffer": "Respiro entre citas (min)",
+      "timezone": "Zona horaria",
+      "howSlots": "Cómo se generan los huecos",
+      "howDelivery": "Cómo se entrega la reunión",
+      "nextSlots": "Próximos huecos",
+      "blockRange": "Bloquear un rango",
+      "block": "Bloqueo",
+      "event": "Evento",
+      "when": "Cuándo",
+      "yourRoom": "Tu sala de siempre",
+      "minutes": "Minutos"
+    }
+  },
+  "common": {
+    "saved": "Guardado",
+    "savedAlt": "Guardado ✓",
+    "savedDot": "Guardado.",
+    "loading": "Cargando…",
+    "calculating": "Calculando…",
+    "inProgress": "En curso…",
+    "noLink": "Sin enlace",
+    "home": "Inicio",
+    "contact": "Contacto",
+    "status": "Estado",
+    "name": "Nombre",
+    "crm": "CRM de WhatsApp con agente de IA",
+    "crmShort": "CRM · WhatsApp"
+  }
+}

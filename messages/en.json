@@ -1,0 +1,189 @@
+{
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "firstTime": "First time here?",
+      "createAccount": "Create the initial account",
+      "errorTooMany": "Too many attempts. Please wait a few minutes.",
+      "errorInvalid": "Incorrect email or password."
+    },
+    "register": {
+      "title": "Create account",
+      "description": "The first registration creates this instance's organization and sets you as the owner.",
+      "name": "Your name",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Create account",
+      "submitting": "Creating…",
+      "alreadyHaveAccount": "Already have an account?",
+      "signIn": "Sign in",
+      "errorClosed": "Registration is closed: this instance already has an organization. Ask the owner for access.",
+      "errorTooMany": "Too many attempts. Please wait a few minutes.",
+      "errorGeneric": "Could not create the account.",
+      "success": "Account created ✓"
+    }
+  },
+  "nav": {
+    "inbox": "Inbox",
+    "contacts": "Contacts",
+    "pipeline": "Pipeline",
+    "agent": "AI Agent",
+    "lab": "Lab",
+    "settings": "Settings",
+    "bookings": "Bookings"
+  },
+  "inbox": {
+    "title": "Inbox",
+    "subtitle": "Inbox · real time",
+    "loading": "Loading…",
+    "noResults": "No results",
+    "windowClosed": "The 24-hour window is closed.",
+    "aiInConversation": "AI in this conversation",
+    "notDelivered": "Not delivered.",
+    "sharedContact": "Shared contact"
+  },
+  "contacts": {
+    "title": "Contacts",
+    "newContact": "New contact",
+    "editContact": "Edit contact",
+    "noContacts": "No contacts",
+    "name": "Name",
+    "phone": "Phone",
+    "email": "Email",
+    "notes": "Notes",
+    "stage": "Pipeline stage",
+    "priority": "Priority",
+    "status": "Status",
+    "archived": "Archived",
+    "category": "Category",
+    "detail": "Detail",
+    "details": "Details",
+    "activity": "Recent activity",
+    "noAmounts": "No amounts captured",
+    "amountAndPriority": "Amount and priority"
+  },
+  "pipeline": {
+    "title": "Pipeline",
+    "stages": "Pipeline stages",
+    "stageTarget": "Target stage…",
+    "allStages": "All stages",
+    "noLeads": "Do not report qualified leads"
+  },
+  "agent": {
+    "title": "AI Agent",
+    "name": "Agent name",
+    "tone": "Tone",
+    "instructions": "Instructions",
+    "behavior": "Behavior",
+    "saveBehavior": "Save behavior",
+    "escalation": "Escalation rules",
+    "greeting": "Greeting",
+    "knowledgeBase": "Knowledge base",
+    "newQA": "New question / answer",
+    "newBlock": "New free text block",
+    "question": "Question",
+    "answer": "Answer",
+    "addedToKnowledge": "Added to knowledge ✓",
+    "configureProvider": "Configure your AI provider to activate the agent",
+    "language": "Language",
+    "currency": "Business currency"
+  },
+  "lab": {
+    "title": "Lab",
+    "report": "Report",
+    "score": "Score {score}",
+    "evidence": "Evidence:",
+    "evaluating": "Evaluating personas…",
+    "noRuns": "No runs yet.",
+    "personas": "Simulated personas"
+  },
+  "settings": {
+    "title": "Settings",
+    "branding": {
+      "title": "CRM branding",
+      "accentColor": "Accent color",
+      "tabIcon": "Tab icon",
+      "saved": "Branding saved ✓"
+    },
+    "whatsapp": {
+      "title": "WhatsApp webhook",
+      "wabaId": "WABA ID",
+      "phoneNumberId": "Phone Number ID",
+      "accessToken": "Access token",
+      "verifyToken": "Verify token",
+      "webhookUrl": "Webhook URL (callback URL)",
+      "webhookSecret": "Webhook secret (optional)",
+      "directMode": "Direct mode",
+      "agencyMode": "Agency mode (Tech Provider)",
+      "connected": "Connected",
+      "closed": "Closed"
+    },
+    "messenger": {
+      "title": "Messenger webhook",
+      "active": "Messenger active",
+      "pageId": "Page ID",
+      "datasetId": "Dataset ID",
+      "callbackUrl": "Callback URL",
+      "token": "Token (optional)",
+      "connect": "Connect {meta.label}"
+    },
+    "team": {
+      "title": "Team",
+      "newAccount": "Create team account",
+      "tempPassword": "Temporary password"
+    },
+    "templates": {
+      "title": "Templates",
+      "new": "New template",
+      "loading": "Loading templates…",
+      "approved": "Approved template",
+      "failed": "Failed",
+      "body": "Body",
+      "chooseTemplate": "Choose a template…",
+      "marketing": "MARKETING",
+      "utility": "UTILITY (follow-up)",
+      "copied": "Copied ✓",
+      "copiedAlt": "Copied ✓"
+    },
+    "ai": {
+      "token": "OPENROUTER_API_TOKEN",
+      "model": "OPENROUTER_MODEL"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "openDays": "Open schedule (days)",
+      "minNotice": "Minimum notice (hours)",
+      "duration": "Appointment duration (min)",
+      "buffer": "Buffer between appointments (min)",
+      "timezone": "Timezone",
+      "howSlots": "How slots are generated",
+      "howDelivery": "How the meeting is delivered",
+      "nextSlots": "Upcoming slots",
+      "blockRange": "Block a range",
+      "block": "Block",
+      "event": "Event",
+      "when": "When",
+      "yourRoom": "Your permanent room",
+      "minutes": "Minutes"
+    }
+  },
+  "common": {
+    "saved": "Saved",
+    "savedAlt": "Saved ✓",
+    "savedDot": "Saved.",
+    "loading": "Loading…",
+    "calculating": "Calculating…",
+    "inProgress": "In progress…",
+    "noLink": "No link",
+    "home": "Home",
+    "contact": "Contact",
+    "status": "Status",
+    "name": "Name",
+    "crm": "WhatsApp CRM with AI agent",
+    "crmShort": "CRM · WhatsApp"
+  }
+}
