@@ -137,6 +137,11 @@ export async function runAgentTurn(conversationId: string): Promise<void> {
 
   // Patrón de respaldo ANTES del LLM (FR-022).
   if (lastInbound.text && matchesHandoffIntent(lastInbound.text)) {
+    // El camino del modelo ya se despide con action.farewell; este no enviaba
+    // nada y el cliente quedaba en silencio. Si el envío falla, se traspasa igual.
+    await deliverReply(conversation, HANDOFF_ACK).catch((err) =>
+      console.error("[agente] acuse de traspaso no enviado:", err)
+    );
     await applyHandoff(conversationId, organizationId, "cliente");
     return;
   }
@@ -282,6 +287,10 @@ export async function runAgentTurn(conversationId: string): Promise<void> {
 }
 
 type Conversation = typeof schema.conversation.$inferSelect;
+
+/** Acuse que cierra el turno cuando el patrón de respaldo detecta la petición (FR-022). */
+const HANDOFF_ACK =
+  "Con gusto. Ya pasé su conversación a una persona del equipo; le escribirá por aquí en breve.";
 
 /** Entrega la respuesta: envío real o persistencia sandbox (is_test). */
 async function deliverReply(
