@@ -4,7 +4,7 @@ import { newId } from "@/lib/db/ids";
 import { normalizeMx } from "@/lib/meta/client";
 import { publish } from "@/server/events/bus";
 import { getCredentialsByPhoneNumberId } from "@/server/whatsapp/credentials";
-import { ensureAssetAvailable } from "@/server/whatsapp/media";
+import { ensureAssetAvailable, saveMediaFile } from "@/server/whatsapp/media";
 import type { Channel } from "@/lib/channels";
 import type {
   WebhookMediaPayload,
@@ -53,12 +53,12 @@ export type MediaInput = {
   payload: unknown;
   fetchStatus: "available" | "pending";
   /**
-   * 014: canales sin media-id (Instagram con URL efímera de Meta) descargan
-   * el binario ANTES de la ingesta y pasan el path aquí. Con esto ya
-   * disponible, `ensureAssetAvailable` no se dispara.
+   * 014: canales sin media-id (Instagram con URL efímera de Meta) bajan el
+   * binario ANTES de la ingesta y lo pasan aquí. `attachMediaAsset` lo
+   * guarda con el assetId REAL (el que genera el insert) — así el endpoint
+   * `/api/media/[assetId]` lo encuentra bajo esa misma llave.
    */
-  storagePath?: string | null;
-  fileSize?: number | null;
+  data?: Buffer | null;
 };
 
 /**
@@ -114,17 +114,26 @@ export function mediaInputFrom(msg: WebhookMessage): MediaInput | null {
  * Crea el media_asset de un mensaje recién insertado y dispara la descarga en
  * segundo plano si hay binario. Jamás lanza hacia el webhook (FR-013).
  */
-async function attachMediaAsset(
+export async function attachMediaAsset(
   organizationId: string,
   messageId: string,
   media: MediaInput
 ): Promise<typeof schema.mediaAsset.$inferSelect | null> {
   try {
     const db = getDb();
+    const assetId = newId("mediaAsset");
+    // Si el buffer ya viene (canales sin media-id: Instagram con URL efímera),
+    // se guarda con el assetId REAL para que `/api/media/[assetId]` lo halle.
+    let storagePath: string | null = null;
+    let fileSize: number | null = null;
+    if (media.data) {
+      storagePath = await saveMediaFile(organizationId, assetId, media.data);
+      fileSize = media.data.length;
+    }
     const inserted = await db
       .insert(schema.mediaAsset)
       .values({
-        id: newId("mediaAsset"),
+        id: assetId,
         organizationId,
         kind: media.kind,
         waMediaId: media.waMediaId,
@@ -133,8 +142,8 @@ async function attachMediaAsset(
         caption: media.caption,
         payload: media.payload ?? null,
         fetchStatus: media.fetchStatus,
-        storagePath: media.storagePath ?? null,
-        fileSize: media.fileSize ?? null,
+        storagePath,
+        fileSize,
       })
       .returning();
     const asset = inserted[0];

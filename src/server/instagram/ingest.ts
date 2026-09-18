@@ -7,6 +7,7 @@ import {
   IG_PREFIX,
 } from "@/server/inbox/identity";
 import {
+  attachMediaAsset,
   getOrCreateConversation,
   ingestInboundMessage,
   serializeMessage,
@@ -16,7 +17,6 @@ import {
   getInstagramCredentialsByAccountRef,
   getInstagramCredentialsByIgUserId,
 } from "@/server/instagram/credentials";
-import { saveMediaFile } from "@/server/whatsapp/media";
 import {
   parseZernioEvent,
   zernioSentAtSeconds,
@@ -207,11 +207,15 @@ export async function processMetaInstagramPayload(
         const recipient = m.recipient?.id;
         if (!recipient) continue;
         try {
+          const echoMedia = attachment
+            ? await downloadIgAttachment(mid, attachment)
+            : null;
           await ingestIgManualEcho({
             organizationId: creds.organizationId,
             recipientIgsid: recipient,
             mid,
-            text: text ?? (attachment ? `[${attachment.kind}]` : ""),
+            text,
+            media: echoMedia,
             timestamp: m.timestamp,
           });
         } catch (err) {
@@ -235,11 +239,7 @@ export async function processMetaInstagramPayload(
       // que dejar un `mediaAsset` roto en la BD.
       let media: MediaInput | null = null;
       if (attachment) {
-        media = await downloadIgAttachment(
-          creds.organizationId,
-          mid,
-          attachment
-        );
+        media = await downloadIgAttachment(mid, attachment);
         if (!media && text === null) {
           console.warn(
             `[ig] mensaje ${mid} con adjunto no descargable y sin texto: descartado`
@@ -313,7 +313,8 @@ async function ingestIgManualEcho(input: {
   organizationId: string;
   recipientIgsid: string;
   mid: string;
-  text: string;
+  text: string | null;
+  media?: MediaInput | null;
   timestamp?: number;
 }): Promise<void> {
   const db = getDb();
@@ -336,6 +337,7 @@ async function ingestIgManualEcho(input: {
     input.timestamp ? input.timestamp : Date.now()
   );
   const waMessageId = `ig_${input.mid}`;
+  const messageType = input.media?.kind ?? "text";
 
   const inserted = await db
     .insert(schema.message)
@@ -345,7 +347,7 @@ async function ingestIgManualEcho(input: {
       conversationId: conversation.id,
       waMessageId,
       direction: "out",
-      type: "text",
+      type: messageType,
       text: input.text,
       status: "sent",
       origin: "manual",
@@ -354,6 +356,10 @@ async function ingestIgManualEcho(input: {
     .onConflictDoNothing({ target: [schema.message.waMessageId] })
     .returning();
   if (!inserted[0]) return; // duplicado
+
+  const asset = input.media
+    ? await attachMediaAsset(input.organizationId, inserted[0].id, input.media)
+    : null;
 
   await db
     .update(schema.conversation)
@@ -385,7 +391,7 @@ async function ingestIgManualEcho(input: {
     type: "message.new",
     data: {
       conversationId: conversation.id,
-      message: serializeMessage(inserted[0], null),
+      message: serializeMessage(inserted[0], asset),
     },
   });
 }
@@ -421,7 +427,6 @@ function firstSupportedAttachment(
  * o descarta el mensaje entero.
  */
 async function downloadIgAttachment(
-  organizationId: string,
   mid: string,
   attachment: { url: string; kind: MediaInput["kind"] }
 ): Promise<MediaInput | null> {
@@ -437,10 +442,6 @@ async function downloadIgAttachment(
     }
     const mimeType = res.headers.get("content-type")?.split(";")[0]?.trim() ?? null;
     const buf = Buffer.from(await res.arrayBuffer());
-    // `assetId` lo genera `attachMediaAsset`, pero `saveMediaFile` necesita
-    // uno estable para el path — usamos el `mid` prefijado (único por Meta).
-    const tempAssetId = `ig_${mid.replace(/[^a-zA-Z0-9_-]/g, "_")}`;
-    const storagePath = await saveMediaFile(organizationId, tempAssetId, buf);
     return {
       kind: attachment.kind,
       waMediaId: null,
@@ -449,8 +450,7 @@ async function downloadIgAttachment(
       caption: null,
       payload: { source: "instagram" },
       fetchStatus: "available",
-      storagePath,
-      fileSize: buf.length,
+      data: buf,
     };
   } catch (err) {
     console.warn(`[ig] descarga adjunto de ${mid} falló:`, err);
