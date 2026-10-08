@@ -1106,3 +1106,40 @@ export const aiCredentials = pgTable(
   },
   (t) => [uniqueIndex("ai_credentials_org_uq").on(t.organizationId)]
 );
+
+/**
+ * Registro de llamadas al proveedor de IA (issue #85).
+ *
+ * Una fila por llamada HTTP al proveedor: quién la pagó (`organization_id`),
+ * con qué proveedor y modelo, cuánto tardó (`ms`), cuántos tokens reportó
+ * el proveedor y si salió bien. El `error` lleva el detalle cuando `ok` es
+ * falso. Solo diagnóstico: jamás guarda el contenido de los mensajes.
+ *
+ * Se escribe desde el adaptador (`src/lib/ai/index.ts`) sin romper nunca el
+ * turno del agente: si la inserción falla, se traga el error.
+ */
+export const aiCallLog = pgTable(
+  "ai_call_log",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    /** Preset de la UI; `base_url` es lo que de verdad identifica al proveedor. */
+    provider: text("provider", { enum: ["openrouter", "openai_compatible"] })
+      .notNull()
+      .default("openrouter"),
+    baseUrl: text("base_url").notNull(),
+    model: text("model").notNull(),
+    /** Intento dentro de `chatJson` (1..3): los reintentos quedan visibles. */
+    attempt: integer("attempt").notNull().default(1),
+    ms: integer("ms").notNull(),
+    promptTokens: integer("prompt_tokens"),
+    completionTokens: integer("completion_tokens"),
+    totalTokens: integer("total_tokens"),
+    ok: boolean("ok").notNull(),
+    error: text("error"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [index("ai_call_log_org_created_idx").on(t.organizationId, t.createdAt)]
+);
