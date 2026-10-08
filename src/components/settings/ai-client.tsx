@@ -423,6 +423,7 @@ export function AiClient() {
           </form>
         </CardContent>
       </Card>
+      <RegistroLlamadas />
     </div>
   );
 }
@@ -501,5 +502,167 @@ function AyudaLlave({ provider }: { provider: AiProviderId }) {
         como respaldo mientras aquí no haya nada guardado.
       </p>
     </details>
+  );
+}
+
+type Llamada = {
+  id: string;
+  provider: AiProviderId;
+  baseUrl: string;
+  model: string;
+  attempt: number;
+  ms: number;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+  ok: boolean;
+  error: string | null;
+  createdAt: string;
+};
+
+/**
+ * Registro de llamadas (issue #85): qué le pidió el agente al proveedor,
+ * cuánto tardó y cuántos tokens gastó. Diagnóstico puro: el contenido de los
+ * mensajes nunca se guarda.
+ */
+function RegistroLlamadas() {
+  const [llamadas, setLlamadas] = useState<Llamada[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(true);
+  const [mas, setMas] = useState(false);
+  const [fallo, setFallo] = useState(false);
+
+  const cargar = useCallback(
+    async (cursorParam: string | null) => {
+      const params = new URLSearchParams({ limit: "50" });
+      if (cursorParam) params.set("cursor", cursorParam);
+      const res = await fetch(`/api/settings/ai/calls?${params}`).catch(
+        () => null
+      );
+      if (!res?.ok) {
+        if (!cursorParam) setFallo(true);
+        return;
+      }
+      const data = (await res.json()) as {
+        items: Llamada[];
+        nextCursor: string | null;
+      };
+      setLlamadas((prev) => (cursorParam ? [...prev, ...data.items] : data.items));
+      setCursor(data.nextCursor);
+    },
+    []
+  );
+
+  useEffect(() => {
+    cargar(null).finally(() => setCargando(false));
+  }, [cargar]);
+
+  async function cargarMas() {
+    if (!cursor || mas) return;
+    setMas(true);
+    await cargar(cursor);
+    setMas(false);
+  }
+
+  function tokensDe(l: Llamada): string {
+    if (l.totalTokens !== null) return String(l.totalTokens);
+    const p = l.promptTokens ?? 0;
+    const c = l.completionTokens ?? 0;
+    return p + c > 0 ? String(p + c) : "—";
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Registro de llamadas</CardTitle>
+        <CardDescription>
+          Cada llamada del agente al proveedor: modelo, duración y tokens. Si
+          algo va lento o falla, aquí se ve.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {cargando ? (
+          <p className="text-sm text-muted-foreground">Cargando…</p>
+        ) : fallo ? (
+          <p className="text-sm text-muted-foreground">
+            No se pudo cargar el registro.
+          </p>
+        ) : llamadas.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Todavía no hay llamadas registradas. Aparecen aquí en cuanto el
+            agente hable con el proveedor.
+          </p>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="pb-2 pr-3 font-medium">Fecha</th>
+                    <th className="pb-2 pr-3 font-medium">Proveedor</th>
+                    <th className="pb-2 pr-3 font-medium">Modelo</th>
+                    <th className="pb-2 pr-3 font-medium">Duración</th>
+                    <th className="pb-2 pr-3 font-medium">Tokens</th>
+                    <th className="pb-2 font-medium">Estado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {llamadas.map((l) => (
+                    <tr key={l.id} className="border-b last:border-0">
+                      <td className="py-2 pr-3 whitespace-nowrap text-muted-foreground">
+                        {new Date(l.createdAt).toLocaleString()}
+                      </td>
+                      <td className="py-2 pr-3">
+                        {AI_PROVIDER_PRESETS[l.provider].label}
+                        {l.attempt > 1 && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            · intento {l.attempt}
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 pr-3">
+                        <code className="font-mono text-xs">{l.model}</code>
+                      </td>
+                      <td className="py-2 pr-3 whitespace-nowrap">
+                        {l.ms < 1000 ? `${l.ms} ms` : `${(l.ms / 1000).toFixed(1)} s`}
+                      </td>
+                      <td
+                        className="py-2 pr-3"
+                        title={
+                          l.promptTokens !== null || l.completionTokens !== null
+                            ? `entrada ${l.promptTokens ?? "—"} · salida ${l.completionTokens ?? "—"}`
+                            : "el proveedor no reportó el uso"
+                        }
+                      >
+                        {tokensDe(l)}
+                      </td>
+                      <td className="py-2">
+                        <Badge variant={l.ok ? "success" : "destructive"}>
+                          {l.ok ? "ok" : "fallo"}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {cursor && (
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={cargarMas}
+                  disabled={mas}
+                >
+                  {mas ? "Cargando…" : "Cargar más"}
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }

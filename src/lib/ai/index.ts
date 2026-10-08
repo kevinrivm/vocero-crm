@@ -1,11 +1,12 @@
 import type { z } from "zod";
-import { chatCompletionsUrl } from "@/lib/ai/presets";
+import { chatCompletionsUrl, presetDeBaseUrl } from "@/lib/ai/presets";
 import {
   resolveAiProvider,
   type AiProvider,
   type EstadoIa,
 } from "@/lib/ai/provider";
 import { marcarEstadoPorRespuesta } from "@/server/ai/credentials";
+import { registrarLlamadaIa, type UsoTokens } from "@/server/ai/call-log";
 
 /**
  * Adaptador LLM OpenRouter-compatible — ÚNICA frontera con el proveedor de IA
@@ -86,8 +87,34 @@ export async function chatJson<T>(
                 "STRICT: tu respuesta anterior no fue JSON válido según el esquema. Responde ÚNICAMENTE el objeto JSON, sin explicaciones ni markdown.",
             },
           ];
+    const inicio = Date.now();
+    /**
+     * Registro de llamadas (issue #85): cada intento contra el proveedor
+     * queda anotado con proveedor, modelo, duración, tokens y resultado.
+     * Fire-and-forget —`registrarLlamadaIa` nunca lanza— y solo con
+     * `organizationId`: sin organización no hay pestaña donde mostrarlo.
+     */
+    const anotar = (resto: {
+      uso: UsoTokens | null;
+      ok: boolean;
+      error?: string;
+    }) => {
+      const organizationId = opts?.organizationId;
+      if (!organizationId) return;
+      void registrarLlamadaIa({
+        organizationId,
+        provider: presetDeBaseUrl(provider.baseUrl),
+        baseUrl: provider.baseUrl,
+        model,
+        attempt,
+        ms: Date.now() - inicio,
+        uso: resto.uso,
+        ok: resto.ok,
+        error: resto.error,
+      });
+    };
     try {
-      const raw = await callProvider(
+      const { content: raw, uso } = await callProvider(
         provider,
         model,
         attemptMessages,
@@ -96,6 +123,7 @@ export async function chatJson<T>(
       const extracted = extractJson(raw);
       if (extracted === null) {
         lastDetail = `sin JSON extraíble (raw=${truncate(raw)})`;
+        anotar({ uso, ok: false, error: lastDetail });
         continue;
       }
       const parsed = schema.safeParse(extracted);
@@ -103,11 +131,14 @@ export async function chatJson<T>(
         lastDetail = `no cumple el esquema: ${parsed.error.issues
           .map((i) => i.path.join(".") + " " + i.message)
           .join("; ")} (raw=${truncate(raw)})`;
+        anotar({ uso, ok: false, error: lastDetail });
         continue;
       }
+      anotar({ uso, ok: true });
       return { ok: true, data: parsed.data, raw };
     } catch (err) {
       lastDetail = err instanceof Error ? err.message : String(err);
+      anotar({ uso: null, ok: false, error: lastDetail });
       /**
        * El estado de la credencial lo dicta QUIEN COBRA, no la UI.
        *
@@ -161,7 +192,7 @@ async function callProvider(
   model: string,
   messages: ChatMessage[],
   timeoutMs = 60_000
-): Promise<string> {
+): Promise<{ content: string; uso: UsoTokens | null }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -181,12 +212,31 @@ async function callProvider(
     }
     const json = (await res.json()) as {
       choices?: { message?: { content?: string } }[];
+      usage?: {
+        prompt_tokens?: number;
+        completion_tokens?: number;
+        total_tokens?: number;
+      };
     };
     const content = json.choices?.[0]?.message?.content;
     if (typeof content !== "string" || content.length === 0) {
       throw new Error("respuesta del proveedor sin contenido");
     }
-    return content;
+    // Los tokens alimentan el registro de llamadas (issue #85). No todos
+    // los proveedores compatibles los devuelven: entonces van en null.
+    const u = json.usage;
+    const num = (v: unknown): number | null =>
+      typeof v === "number" && Number.isFinite(v) ? v : null;
+    return {
+      content,
+      uso: u
+        ? {
+            promptTokens: num(u.prompt_tokens),
+            completionTokens: num(u.completion_tokens),
+            totalTokens: num(u.total_tokens),
+          }
+        : null,
+    };
   } finally {
     clearTimeout(timer);
   }
