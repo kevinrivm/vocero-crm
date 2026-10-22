@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import {
@@ -21,6 +25,8 @@ export function ThemeToggle({
   initial: ThemePreference;
   className?: string;
 }) {
+  const { t: tr } = useI18n();
+
   const [pref, setPref] = useState<ThemePreference>(initial);
 
   function cycle() {
@@ -31,14 +37,14 @@ export function ThemeToggle({
   }
 
   const Icon = ICONS[pref];
-  const label = `Tema: ${THEME_LABELS[pref]}`;
+  const label = tr("Tema: {v0}", {v0: systemText(tr.locale, THEME_LABELS[pref])});
 
   return (
     <button
       type="button"
       onClick={cycle}
       aria-label={label}
-      title={`${label} (clic para cambiar)`}
+      title={tr("{v0} (clic para cambiar)", {v0: label})}
       className={cn(
         "rounded p-1 text-text-3 transition-colors hover:text-foreground",
         className

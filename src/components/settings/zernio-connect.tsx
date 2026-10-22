@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -43,6 +47,8 @@ export function ZernioConnect({
   idPrefix: string;
   onSaved: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [token, setToken] = useState("");
   const [manual, setManual] = useState(false);
   const [accountRef, setAccountRef] = useState("");
@@ -71,7 +77,7 @@ export function ZernioConnect({
         error?: { message?: string; details?: { accounts?: Candidate[] } };
       } | null;
       setCandidates(data?.error?.details?.accounts ?? []);
-      setError(data?.error?.message ?? "No se pudo conectar. Intenta de nuevo.");
+      setError(data?.error?.message ?? tr("No se pudo conectar. Intenta de nuevo."));
       return;
     }
     const data = (await res.json().catch(() => ({}))) as Saved;
@@ -88,7 +94,7 @@ export function ZernioConnect({
   return (
     <div className="space-y-4">
       <div className="space-y-1.5 sm:max-w-md">
-        <Label htmlFor={`${idPrefix}-token`}>API key de Zernio</Label>
+        <Label htmlFor={`${idPrefix}-token`}>{tr("API key de Zernio")}</Label>
         <Input
           id={`${idPrefix}-token`}
           type="password"
@@ -98,14 +104,12 @@ export function ZernioConnect({
           autoComplete="off"
         />
         <p className="text-xs text-text-2">
-          Con esa llave Vocero encuentra {what} en Zernio: no hace falta copiar
-          ningún id.
-        </p>
+          {tr("Con esa llave Vocero encuentra ")}{what} {tr(" en Zernio: no hace falta copiar ningún id.")}</p>
       </div>
 
       {manual && (
         <div className="space-y-1.5 sm:max-w-md">
-          <Label htmlFor={`${idPrefix}-account`}>accountId de la cuenta en Zernio</Label>
+          <Label htmlFor={`${idPrefix}-account`}>{tr("accountId de la cuenta en Zernio")}</Label>
           <Input
             id={`${idPrefix}-account`}
             value={accountRef}
@@ -122,13 +126,13 @@ export function ZernioConnect({
           role="alert"
           className={candidates.length > 0 ? "text-sm font-medium" : "text-sm text-destructive"}
         >
-          {error}
+          {systemText(tr.locale, error)}
         </p>
       )}
 
       {candidates.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-text-2">Cuentas de este canal en esa llave:</p>
+          <p className="text-xs font-semibold text-text-2">{tr("Cuentas de este canal en esa llave:")}</p>
           <div className="flex flex-wrap gap-2">
             {candidates.map((c) => (
               <button
@@ -138,7 +142,7 @@ export function ZernioConnect({
                 onClick={() => void save(c.id)}
                 className="rounded-full border border-border-strong px-3.5 py-1.5 text-[12.5px] font-semibold transition-colors hover:bg-accent disabled:opacity-50"
               >
-                Conectar {c.name}
+                {tr("Conectar ")}{c.name}
               </button>
             ))}
           </div>
@@ -147,7 +151,7 @@ export function ZernioConnect({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button disabled={saving || !canSave} onClick={() => void save()}>
-          {saving ? "Probando…" : "Probar y conectar"}
+          {saving ? tr("Probando…") : tr("Probar y conectar")}
         </Button>
         {!manual && (
           <button
@@ -155,8 +159,7 @@ export function ZernioConnect({
             onClick={() => setManual(true)}
             className="text-xs font-semibold text-text-2 underline-offset-2 hover:underline"
           >
-            Pegar el accountId a mano
-          </button>
+            {tr("Pegar el accountId a mano")}</button>
         )}
       </div>
 
@@ -164,22 +167,21 @@ export function ZernioConnect({
         <div className="space-y-2 rounded-lg border border-success-soft bg-success-tint p-4 text-sm">
           <p className="flex items-center gap-2 font-medium text-success-text">
             <CheckCircle2 className="h-4 w-4 shrink-0" />
-            Conectado{saved.accountName ? `: ${saved.accountName}` : ""}
+            {tr("Conectado")}{saved.accountName ? `: ${saved.accountName}` : ""}
           </p>
           {saved.webhook?.ok && (
             <p className="text-success-text opacity-80">
               {saved.webhook.created
-                ? "Vocero dio de alta su webhook en tu Zernio, limitado a tus cuentas conectadas."
-                : "El webhook de tu Zernio quedó actualizado y limitado a tus cuentas conectadas."}
+                ? tr("Vocero dio de alta su webhook en tu Zernio, limitado a tus cuentas conectadas.")
+                : tr("El webhook de tu Zernio quedó actualizado y limitado a tus cuentas conectadas.")}
             </p>
           )}
           {saved.health && saved.health.level !== "ok" && <Aviso>{saved.health.message}</Aviso>}
           {saved.webhook && !saved.webhook.ok && (
             <Aviso>
-              {saved.webhook.message ?? "No se pudo dar de alta el webhook en Zernio."}{" "}
+              {saved.webhook.message ?? tr("No se pudo dar de alta el webhook en Zernio.")}{" "}
               <Link href="/settings/channels" className="font-semibold underline">
-                Ver el estado de los canales
-              </Link>
+                {tr("Ver el estado de los canales")}</Link>
             </Aviso>
           )}
         </div>

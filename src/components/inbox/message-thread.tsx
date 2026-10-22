@@ -1,6 +1,14 @@
 "use client";
 
+<<<<<<< HEAD
+import { translator, type Translator } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
+import { useEffect, useRef } from "react";
+=======
 import { useCallback, useEffect, useRef, useState } from "react";
+>>>>>>> origin/main
 import {
   AlertTriangle,
   Check,
@@ -48,6 +56,8 @@ type ContactPayload = {
 
 /** 008 — Previsualización del adjunto de un mensaje, por tipo. */
 function MediaBlock({ media }: { media: MessageMediaDto }) {
+  const { t: tr } = useI18n();
+
   const src = `/api/media/${media.assetId}`;
 
   if (media.kind === "location") {
@@ -60,7 +70,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
       <span className="flex items-start gap-1.5">
         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" strokeWidth={1.7} />
         <span className="min-w-0">
-          <span className="block font-medium">{loc.name ?? "Ubicación"}</span>
+          <span className="block font-medium">{loc.name ?? tr("Ubicación")}</span>
           {loc.address && (
             <span className="block text-[12.5px] text-text-3">{loc.address}</span>
           )}
@@ -71,8 +81,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
               target="_blank"
               rel="noreferrer noopener"
             >
-              {coords} — abrir mapa
-            </a>
+              {coords} {tr(" — abrir mapa")}</a>
           )}
         </span>
       </span>
@@ -90,7 +99,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
             const name =
               typeof c.name === "string"
                 ? c.name
-                : c.name?.formatted_name ?? c.name?.first_name ?? "Contacto";
+                : c.name?.formatted_name ?? c.name?.first_name ?? tr("Contacto");
             const phone = c.phones?.[0]?.phone ?? c.phone ?? null;
             return (
               <span key={i} className="flex items-center gap-1.5">
@@ -105,7 +114,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
             );
           })
         ) : (
-          <span className="text-text-3">Contacto compartido</span>
+          <span className="text-text-3">{tr("Contacto compartido")}</span>
         )}
       </span>
     );
@@ -115,21 +124,21 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
     return (
       <span className="inline-flex items-center gap-1.5 text-text-3">
         <Paperclip className="h-3.5 w-3.5" strokeWidth={1.7} />
-        {mediaLabel(media.kind)}
+        {mediaLabel(media.kind, tr.locale)}
         {media.fetchStatus === "failed"
-          ? " — contenido no disponible"
-          : " — descargando…"}
+          ? tr(" — contenido no disponible")
+          : tr(" — descargando…")}
       </span>
     );
   }
 
   if (media.kind === "image" || media.kind === "sticker") {
     return (
-      <a href={src} target="_blank" rel="noreferrer noopener" title="Ver completa">
+      <a href={src} target="_blank" rel="noreferrer noopener" title={tr("Ver completa")}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
-          alt={media.caption ?? mediaLabel(media.kind)}
+          alt={media.caption ?? mediaLabel(media.kind, tr.locale)}
           className="max-h-72 max-w-full rounded-md object-contain"
           loading="lazy"
         />
@@ -158,7 +167,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
       <FileText className="h-6 w-6 shrink-0 text-brand" strokeWidth={1.5} />
       <span className="min-w-0">
         <span className="block truncate font-medium">
-          {media.fileName ?? "Documento"}
+          {media.fileName ?? tr("Documento")}
         </span>
         {media.fileSize != null && (
           <span className="block text-[12px] text-text-3">
@@ -170,23 +179,28 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
   );
 }
 
-function dayLabel(iso: string): string {
+function dayLabel(iso: string, tr: Translator = translator("es")): string {
   const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date(today.getTime() - 86400000);
-  if (d.toDateString() === today.toDateString()) return "Hoy";
-  if (d.toDateString() === yesterday.toDateString()) return "Ayer";
-  return d.toLocaleDateString("es-MX", { day: "numeric", month: "long" });
+  if (d.toDateString() === today.toDateString()) return tr("Hoy");
+  if (d.toDateString() === yesterday.toDateString()) return tr("Ayer");
+  return d.toLocaleDateString(tr.intl, { day: "numeric", month: "long" });
 }
 
-function bubbleTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("es-MX", {
+function bubbleTime(iso: string, tr: Translator = translator("es")): string {
+  return new Date(iso).toLocaleTimeString(tr.intl, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   });
 }
 
+<<<<<<< HEAD
+export function MessageThread({ messages }: { messages: MessageDto[] }) {
+  const { t: tr } = useI18n();
+
+=======
 export function MessageThread({
   messages,
   contactName,
@@ -203,6 +217,7 @@ export function MessageThread({
   conversations?: ConversationDto[];
   onForwarded?: () => void;
 }) {
+>>>>>>> origin/main
   const scrollRef = useRef<HTMLDivElement>(null);
   const [forwarding, setForwarding] = useState<MessageDto | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -265,7 +280,7 @@ export function MessageThread({
             {newDay && (
               <div className="my-3 flex justify-center">
                 <span className="kicker rounded-full border border-border-strong bg-background px-3 py-1 text-text-2 shadow-sm">
-                  {dayLabel(m.createdAt)}
+                  {dayLabel(m.createdAt, tr)}
                 </span>
               </div>
             )}
@@ -328,7 +343,7 @@ export function MessageThread({
                 ) : (
                   <span className="inline-flex items-center gap-1.5 text-text-3">
                     <Paperclip className="h-3.5 w-3.5" strokeWidth={1.7} />
-                    {mediaLabel(m.type)}
+                    {mediaLabel(m.type, tr.locale)}
                     {m.text ? ` — ${m.text}` : ""}
                   </span>
                 )}
@@ -336,21 +351,19 @@ export function MessageThread({
                   {m.aiGenerated && (
                     <span
                       className="inline-flex items-center gap-0.5 text-[10px] font-medium text-brand-ink"
-                      title="Respuesta generada por IA"
+                      title={tr("Respuesta generada por IA")}
                     >
-                      <Sparkles className="h-3 w-3" strokeWidth={1.7} /> IA
-                    </span>
+                      <Sparkles className="h-3 w-3" strokeWidth={1.7} /> {tr(" IA")}</span>
                   )}
                   {m.origin === "manual" && (
                     <span
                       className="inline-flex items-center gap-0.5 text-[10px] font-medium text-text-3"
-                      title="Enviado a mano desde la app de WhatsApp Business"
+                      title={tr("Enviado a mano desde la app de WhatsApp Business")}
                     >
-                      <Smartphone className="h-3 w-3" strokeWidth={1.7} /> Celular
-                    </span>
+                      <Smartphone className="h-3 w-3" strokeWidth={1.7} /> {tr(" Celular")}</span>
                   )}
                   <span className="font-mono text-[10px] tracking-[0.04em] text-text-3">
-                    {bubbleTime(m.createdAt)}
+                    {bubbleTime(m.createdAt, tr)}
                   </span>
                   {out && <StatusTicks status={m.status} />}
                 </span>
@@ -363,8 +376,8 @@ export function MessageThread({
                       strokeWidth={1.8}
                     />
                     <span>
-                      <span className="font-semibold">No se entregó.</span>{" "}
-                      {m.error ?? "Meta no informó el motivo."}
+                      <span className="font-semibold">{tr("No se entregó.")}</span>{" "}
+                      {m.error ?? tr("Meta no informó el motivo.")}
                     </span>
                   </p>
                 )}

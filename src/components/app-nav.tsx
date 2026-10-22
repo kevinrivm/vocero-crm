@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -10,6 +14,7 @@ import { cn, initials } from "@/lib/utils";
 import { appNavGroups, isNavActive, SETTINGS_ITEM, type NavItem } from "@/lib/nav";
 import { signOut } from "@/lib/auth/client";
 import { useEvents } from "@/components/use-events";
+import { LanguageSelect } from "@/components/language-select";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { BrandLogo } from "@/components/brand-mark";
 import {
@@ -70,6 +75,8 @@ export function AppNav({
   open?: boolean;
   onClose?: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const pathname = usePathname();
   const router = useRouter();
   const [unread, setUnread] = useState(0);
@@ -111,7 +118,7 @@ export function AppNav({
           strokeWidth={1.8}
           aria-hidden
         />
-        <span className="flex-1">{item.label}</span>
+        <span className="flex-1">{systemText(tr.locale, item.label)}</span>
         {item.badge && unread > 0 && (
           <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-brand px-1.5 text-[10.5px] font-bold text-brand-fg">
             {unread}
@@ -144,26 +151,26 @@ export function AppNav({
             alcanzable con el pulgar. */}
         <button
           onClick={onClose}
-          aria-label="Cerrar el menú"
+          aria-label={tr("Cerrar el menú")}
           className="-ml-1 mt-0.5 rounded-md p-1.5 text-text-3 hover:bg-accent hover:text-foreground lg:hidden"
         >
           <X className="h-[18px] w-[18px]" strokeWidth={1.8} />
         </button>
         <div className="min-w-0">
           <BrandLogo branding={branding} />
-          <span className="kicker mt-2 block">{kicker}</span>
+          <span className="kicker mt-2 block">{systemText(tr.locale, kicker)}</span>
         </div>
       </div>
 
       {/* Grupos con encabezado pequeño, sin letras ni colapsables: se leen
           de arriba abajo como una lista de lo que hay. Un grupo sin título
           (Resultados) es una entrada suelta separada por el espacio. */}
-      <nav className="flex flex-col gap-4" aria-label="Secciones">
+      <nav className="flex flex-col gap-4" aria-label={tr("Secciones")}>
         {groups.map((group, i) => (
           <div key={group.title ?? i} className="flex flex-col gap-0.5">
             {group.title && (
               <span className="kicker mb-1 block px-2.5" aria-hidden>
-                {group.title}
+                {systemText(tr.locale, group.title)}
               </span>
             )}
             {group.items.map(renderItem)}
@@ -183,13 +190,12 @@ export function AppNav({
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[13px] font-semibold">{userName}</span>
           <span className="block truncate text-[11px] text-text-3">
-            {role === "owner" ? "Propietario" : "Equipo"} · En línea
-          </span>
+            {role === "owner" ? tr("Propietario") : tr("Equipo")} {tr(" · En línea")}</span>
         </span>
         <ThemeToggle initial={theme} />
         <button
-          aria-label="Cerrar sesión"
-          title="Cerrar sesión"
+          aria-label={tr("Cerrar sesión")}
+          title={tr("Cerrar sesión")}
           className="rounded p-1 text-text-3 hover:text-foreground"
           onClick={async () => {
             await signOut();
@@ -226,10 +232,11 @@ export function AppNav({
               strokeWidth={2}
               aria-hidden
             />
-            {UNVERIFIED_COMMIT_NOTE}
+            {systemText(tr.locale, UNVERIFIED_COMMIT_NOTE)}
           </span>
         )}
       </p>
+      <LanguageSelect className="px-2 pb-3" />
     </aside>
   );
 }

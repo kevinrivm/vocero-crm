@@ -2,7 +2,7 @@
 # Vocero CRM — railway.toml (docs.railway.com/reference/config-as-code)
 #
 # 2.0 — El agente (Nea) es un segundo servicio del mismo proyecto, desde la
-# imagen ghcr.io/kevinrivm/nea-agent:2.0.0, sin dominio público: CRM_BASE_URL
+# imagen ghcr.io/kevinrivm/nea-agent:2.1.0, sin dominio público: CRM_BASE_URL
 # hacia este servicio por la red privada (http://<servicio>.railway.internal:3000),
 # la misma DATABASE_URL con DATABASE_SCHEMA=nea, CRM_BOT_API_KEY = BOT_API_KEY
 # de aquí y su LLM_API_KEY. Aquí, BRAIN_DISPATCH_URL hacia
@@ -36,7 +36,7 @@
 # 037: sin volumen, los adjuntos pueden ir a un bucket S3-compatible con
 # MEDIA_STORE=bucket y las MEDIA_BUCKET_* (ver .env.example).
 #
-# - Sin build: `railway add --image ghcr.io/kevinrivm/vocero-crm:2.0.0` crea
+# - Sin build: `railway add --image ghcr.io/kevinrivm/vocero-crm:2.1.0` crea
 #   el servicio desde la imagen publicada. Entonces este archivo NO se lee: el
 #   healthcheck (/api/health) y el reinicio se fijan en el panel del servicio.
 # - El volumen se monta como root; el entrypoint de la imagen se lo da al

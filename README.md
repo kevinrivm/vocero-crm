@@ -907,3 +907,9 @@ aprender a convertirte en Meta Tech Provider y monetizar con tu agencia de IA?
 de producción (webhook firmado, ingesta idempotente, cifrado de tokens) vienen
 de un proyecto de referencia privado en producción, portados y simplificados
 para este repo.
+
+## Idiomas de la interfaz
+
+Español y portugués de Brasil están disponibles desde la 2.1.0. El propietario
+elige el predeterminado en Ajustes → Marca; el selector del menú y del acceso
+guarda la elección en este navegador. [Configuración y extensión](docs/idiomas.md).

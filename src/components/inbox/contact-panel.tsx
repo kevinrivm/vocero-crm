@@ -1,4 +1,7 @@
 "use client";
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
@@ -59,6 +62,8 @@ export function ContactPanel({
   onDeleteConversation?: (alsoContact: boolean) => Promise<string | null>;
   onClose: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [notes, setNotes] = useState("");
   const [ficha, setFicha] = useState<FichaDto>({});
@@ -189,10 +194,10 @@ export function ContactPanel({
       {/* Por debajo de xl el panel flota (bg-popover, ver InboxClient): su
           cabecera va del mismo tono para no dejar una franja más oscura. */}
       <header className="sticky top-0 flex items-center justify-between border-b bg-background px-4 py-3 max-xl:bg-popover">
-        <h3 className="kicker text-text-2">Detalles</h3>
+        <h3 className="kicker text-text-2">{tr("Detalles")}</h3>
         <button
           onClick={onClose}
-          aria-label="Ocultar panel"
+          aria-label={tr("Ocultar panel")}
           className="rounded p-1 text-text-3 hover:bg-accent hover:text-foreground"
         >
           <ChevronRight className="h-4 w-4" strokeWidth={1.7} />
@@ -221,11 +226,10 @@ export function ContactPanel({
           {conversation.handoffAt && (
             <div className="mt-3 rounded-md border border-warning-soft bg-warning-tint p-3">
               <p className="flex items-center gap-1.5 text-[13px] font-medium text-warning-text">
-                <UserRound className="h-4 w-4" strokeWidth={1.7} /> Atención humana
-              </p>
+                <UserRound className="h-4 w-4" strokeWidth={1.7} /> {tr(" Atención humana")}</p>
               <p className="mt-1 text-xs text-warning-text opacity-80">
-                {HANDOFF_LABELS[conversation.handoffReason ?? ""] ??
-                  "La IA está en pausa en esta conversación."}
+                {systemText(tr.locale, HANDOFF_LABELS[conversation.handoffReason ?? ""]) ||
+                  tr("La IA está en pausa en esta conversación.")}
               </p>
               <Button
                 size="sm"
@@ -233,29 +237,28 @@ export function ContactPanel({
                 className="mt-2 w-full"
                 onClick={() => void onPatchConversation({ reactivate: true })}
               >
-                Reactivar IA
-              </Button>
+                {tr("Reactivar IA")}</Button>
             </div>
           )}
 
           <div className="mt-3 rounded-md border bg-subtle px-3 py-2.5">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[13px] font-medium">IA en esta conversación</p>
+                <p className="text-[13px] font-medium">{tr("IA en esta conversación")}</p>
                 <p className="text-[11px] text-text-3">
                   {conversation.handoffAt
-                    ? "En pausa · atención humana"
+                    ? tr("En pausa · atención humana")
                     : !conversation.aiEnabled
-                      ? "En pausa"
+                      ? tr("En pausa")
                       : externalActive
-                        ? "Respondiendo"
-                        : "Activada"}
+                        ? tr("Respondiendo")
+                        : tr("Activada")}
                 </p>
               </div>
               <Switch
                 size="sm"
                 checked={aiActive}
-                label="IA en esta conversación"
+                label={tr("IA en esta conversación")}
                 onCheckedChange={() => {
                   void onPatchConversation({
                     aiEnabled: !conversation.aiEnabled,
@@ -267,7 +270,7 @@ export function ContactPanel({
             {brain && externalActive ? (
               <p className="mt-2 flex items-center gap-1.5 text-[11px] text-text-3">
                 <Cable className="h-3.5 w-3.5 shrink-0" strokeWidth={1.7} />
-                {externalAnswerLabel(brain)}
+                {systemText(tr.locale, externalAnswerLabel(brain))}
               </p>
             ) : brain && brain.dispatch.active && externalDown(brain) ? (
               <div className="mt-2.5 flex items-start gap-2 rounded-md border border-warning-soft bg-warning-tint p-2.5">
@@ -276,14 +279,11 @@ export function ContactPanel({
                   strokeWidth={1.7}
                 />
                 <p className="text-[11px] leading-relaxed text-warning-text">
-                  Tu agente no está en línea: nadie contesta en automático hasta
-                  que vuelva.
-                  <Link
+                  {tr("Tu agente no está en línea: nadie contesta en automático hasta que vuelva.")}<Link
                     href="/agent"
                     className="ml-1 whitespace-nowrap font-medium text-brand-text underline underline-offset-2 hover:text-brand"
                   >
-                    Ver en Agente →
-                  </Link>
+                    {tr("Ver en Agente →")}</Link>
                 </p>
               </div>
             ) : brain && brain.dispatch.active ? (
@@ -293,26 +293,23 @@ export function ContactPanel({
                   strokeWidth={1.7}
                 />
                 <p className="text-[11px] leading-relaxed text-warning-text">
-                  Tu agente está conectado pero apagado: contestas tú.
-                  <Link
+                  {tr("Tu agente está conectado pero apagado: contestas tú.")}<Link
                     href="/agent"
                     className="ml-1 whitespace-nowrap font-medium text-brand-text underline underline-offset-2 hover:text-brand"
                   >
-                    Encenderlo →
-                  </Link>
+                    {tr("Encenderlo →")}</Link>
                 </p>
               </div>
             ) : brain ? (
               <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed text-text-3">
                 <Inbox className="mt-px h-3.5 w-3.5 shrink-0" strokeWidth={1.7} />
                 <span>
-                  Bandeja manual: sin agente conectado, contestas tú.{" "}
+                  {tr("Bandeja manual: sin agente conectado, contestas tú.")}{" "}
                   <Link
                     href="/agent"
                     className="whitespace-nowrap font-medium text-brand-text underline underline-offset-2 hover:text-brand"
                   >
-                    Ver en Agente →
-                  </Link>
+                    {tr("Ver en Agente →")}</Link>
                 </span>
               </p>
             ) : null}
@@ -328,7 +325,7 @@ export function ContactPanel({
         {/* Stepper de etapa */}
         {stages.length > 0 && leadId && (
           <section className="border-b p-4">
-            <p className="kicker mb-3">Etapa del pipeline</p>
+            <p className="kicker mb-3">{tr("Etapa del pipeline")}</p>
             <ol>
               {stages.map((s, i) => {
                 const done = currentIndex >= 0 && i < currentIndex;
@@ -345,7 +342,7 @@ export function ContactPanel({
                     )}
                     <button
                       onClick={() => void moveToStage(s.id)}
-                      aria-label={`Mover a ${s.name}`}
+                      aria-label={tr("Mover a {v0}", {v0: s.name})}
                       className={cn(
                         "relative z-10 mt-0.5 flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-full transition-colors",
                         done && "bg-brand text-brand-fg",
@@ -377,10 +374,10 @@ export function ContactPanel({
 
         {/* Notas */}
         <section className={cn("p-4", onDeleteConversation && "border-b")}>
-          <p className="kicker mb-2">Notas</p>
+          <p className="kicker mb-2">{tr("Notas")}</p>
           <Textarea
             rows={5}
-            placeholder="Notas internas sobre este contacto…"
+            placeholder={tr("Notas internas sobre este contacto…")}
             value={notes}
             disabled={!notesLoaded}
             onChange={(e) => setNotes(e.target.value)}
@@ -392,7 +389,7 @@ export function ContactPanel({
             disabled={savingNotes || !notesLoaded}
             onClick={() => void saveNotes()}
           >
-            {savingNotes ? "Guardando…" : "Guardar notas"}
+            {savingNotes ? tr("Guardando…") : tr("Guardar notas")}
           </Button>
         </section>
 
@@ -406,8 +403,7 @@ export function ContactPanel({
               className="flex items-center gap-1.5 rounded text-[13px] text-text-3 transition-colors hover:text-danger-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Trash2 className="h-3.5 w-3.5" strokeWidth={1.7} />
-              Eliminar conversación…
-            </button>
+              {tr("Eliminar conversación…")}</button>
           </section>
         )}
       </div>

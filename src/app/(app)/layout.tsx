@@ -1,3 +1,5 @@
+
+import { getI18n } from "@/server/i18n";
 import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
@@ -15,6 +17,8 @@ import { AvisoIaBanner } from "@/components/avisos/aviso-ia";
 export default async function AppLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { t: tr } = await getI18n();
+
   const session = await getSessionOrNull();
   if (!session) redirect("/login");
   const branding = await getBranding(session.organizationId);
@@ -32,7 +36,7 @@ export default async function AppLayout({
   return (
     <AppShell
       branding={branding}
-      userName={authSession?.user.name ?? "Usuario"}
+      userName={authSession?.user.name ?? tr("Usuario")}
       role={session.role}
       theme={theme}
       // Se resuelve aquí, en el servidor: el cliente no ve `SOURCE_COMMIT`.

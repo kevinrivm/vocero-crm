@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
@@ -46,6 +50,8 @@ const REGLAS = [
 ];
 
 export function TiktokClient() {
+  const { t: tr } = useI18n();
+
   const [connection, setConnection] = useState<Connection | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -61,7 +67,7 @@ export function TiktokClient() {
     void refetch();
   }, [refetch]);
 
-  if (!loaded) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (!loaded) return <p className="text-sm text-muted-foreground">{tr("Cargando…")}</p>;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -70,12 +76,9 @@ export function TiktokClient() {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <div>
             <p className="font-medium text-danger-text">
-              La API key de Zernio expiró o fue revocada.
-            </p>
+              {tr("La API key de Zernio expiró o fue revocada.")}</p>
             <p className="text-danger-text opacity-80">
-              Los envíos por TikTok están pausados. Pega una nueva abajo para
-              reconectar.
-            </p>
+              {tr("Los envíos por TikTok están pausados. Pega una nueva abajo para reconectar.")}</p>
           </div>
         </div>
       )}
@@ -85,31 +88,27 @@ export function TiktokClient() {
           <CheckCircle2 className="h-5 w-5 text-success" />
           <div className="flex-1 text-sm">
             <p className="font-medium text-success-text">
-              Conectado por Zernio
-              {connection.username ? `: @${connection.username}` : ""}
+              {tr("Conectado por Zernio")}{connection.username ? `: @${connection.username}` : ""}
             </p>
             <p className="text-success-text opacity-80">
-              Cuenta {connection.accountRef} · llave que termina en ····
-              {connection.tokenLast4}
-              {connection.hasWebhookSecret ? " · firma del webhook activa" : ""}
+              {tr("Cuenta ")}{connection.accountRef} {tr(" · llave que termina en ····")}{connection.tokenLast4}
+              {connection.hasWebhookSecret ? tr(" · firma del webhook activa") : ""}
             </p>
           </div>
-          <Badge variant="success">TikTok activo</Badge>
+          <Badge variant="success">{tr("TikTok activo")}</Badge>
         </div>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Antes de conectar: lo que TikTok exige</CardTitle>
+          <CardTitle>{tr("Antes de conectar: lo que TikTok exige")}</CardTitle>
           <CardDescription>
-            No son límites de este CRM: los pone TikTok a los mensajes directos
-            de una cuenta de negocio.
-          </CardDescription>
+            {tr("No son límites de este CRM: los pone TikTok a los mensajes directos de una cuenta de negocio.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="list-disc space-y-1.5 pl-5 text-sm text-text-2">
             {REGLAS.map((regla, i) => (
-              <li key={i}>{regla}</li>
+              <li key={i}>{systemText(tr.locale, regla)}</li>
             ))}
           </ul>
         </CardContent>
@@ -117,17 +116,14 @@ export function TiktokClient() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{connection ? "Reconectar TikTok" : "Conectar TikTok"}</CardTitle>
+          <CardTitle>{connection ? tr("Reconectar TikTok") : tr("Conectar TikTok")}</CardTitle>
           <CardDescription>
-            Los mensajes directos de tu cuenta entran a la misma bandeja que
-            WhatsApp, con su distintivo de canal. Llegan por Zernio, con tu
-            propia cuenta de Zernio.
-          </CardDescription>
+            {tr("Los mensajes directos de tu cuenta entran a la misma bandeja que WhatsApp, con su distintivo de canal. Llegan por Zernio, con tu propia cuenta de Zernio.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <ul className="list-disc space-y-1 pl-5 text-xs text-text-2">
             {PASOS.map((item, i) => (
-              <li key={i}>{item}</li>
+              <li key={i}>{systemText(tr.locale, item)}</li>
             ))}
           </ul>
 
@@ -143,11 +139,9 @@ export function TiktokClient() {
       <p className="flex items-start gap-2 text-xs text-text-2">
         <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
         <span>
-          El webhook lo da de alta Vocero en tu Zernio al conectar, limitado a
-          tus cuentas. Si un día dejan de llegar mensajes, revisa{" "}
+          {tr("El webhook lo da de alta Vocero en tu Zernio al conectar, limitado a tus cuentas. Si un día dejan de llegar mensajes, revisa")}{" "}
           <Link href="/settings/channels" className="font-semibold underline">
-            el estado de los canales
-          </Link>
+            {tr("el estado de los canales")}</Link>
           .
         </span>
       </p>

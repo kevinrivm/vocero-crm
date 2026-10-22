@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,8 +56,10 @@ const DAYS: { key: DayKey; label: string }[] = [
 const DEFAULT_INTERVAL: Interval = { start: "09:00", end: "18:00" };
 
 export function AgendaClient() {
+  const { t: tr } = useI18n();
+
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [slots, setSlots] = useState<{ label: string }[] | null>(null);
+  const [slots, setSlots] = useState<{ label: string; startUtc: string }[] | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -69,7 +75,7 @@ export function AgendaClient() {
         setSettings(data.settings);
       }
       if (avail?.ok) {
-        const data = (await avail.json()) as { slots: { label: string }[] };
+        const data = (await avail.json()) as { slots: { label: string; startUtc: string }[] };
         setSlots(data.slots.slice(0, 5));
       } else {
         setSlots([]);
@@ -80,7 +86,7 @@ export function AgendaClient() {
   async function refreshPreview() {
     const res = await fetch("/api/calendar/availability").catch(() => null);
     if (!res?.ok) return setSlots([]);
-    const data = (await res.json()) as { slots: { label: string }[] };
+    const data = (await res.json()) as { slots: { label: string; startUtc: string }[] };
     setSlots(data.slots.slice(0, 5));
   }
 
@@ -151,7 +157,7 @@ export function AgendaClient() {
       const data = (await res?.json().catch(() => null)) as {
         error?: { message?: string };
       } | null;
-      setError(data?.error?.message ?? "No se pudo guardar");
+      setError(data?.error?.message ?? tr("No se pudo guardar"));
       return;
     }
     const data = (await res.json()) as { settings: Settings };
@@ -160,17 +166,15 @@ export function AgendaClient() {
     void refreshPreview();
   }
 
-  if (!settings) return <p className="text-sm text-text-3">Cargando…</p>;
+  if (!settings) return <p className="text-sm text-text-3">{tr("Cargando…")}</p>;
 
   return (
     <div className="max-w-2xl space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle>Horario de atención</CardTitle>
+          <CardTitle>{tr("Horario de atención")}</CardTitle>
           <CardDescription>
-            En qué franjas puede agendarte un cliente. Las horas son las de tu
-            zona; un día sin franjas está cerrado.
-          </CardDescription>
+            {tr("En qué franjas puede agendarte un cliente. Las horas son las de tu zona; un día sin franjas está cerrado.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {DAYS.map((day) => {
@@ -188,10 +192,10 @@ export function AgendaClient() {
                       : "text-text-3 hover:bg-accent"
                   )}
                 >
-                  {day.label}
+                  {systemText(tr.locale, day.label)}
                 </button>
                 <div className="flex-1 space-y-1.5">
-                  {!open && <span className="text-sm text-text-3">Cerrado</span>}
+                  {!open && <span className="text-sm text-text-3">{tr("Cerrado")}</span>}
                   {intervals.map((iv, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <Input
@@ -202,7 +206,7 @@ export function AgendaClient() {
                         }
                         className="min-w-0 flex-1 sm:w-36 sm:flex-none"
                       />
-                      <span className="text-text-3">a</span>
+                      <span className="text-text-3">{tr("a")}</span>
                       <Input
                         type="time"
                         value={iv.end}
@@ -215,7 +219,7 @@ export function AgendaClient() {
                         type="button"
                         onClick={() => removeInterval(day.key, i)}
                         className="text-sm text-text-3 hover:text-foreground"
-                        aria-label="Quitar franja"
+                        aria-label={tr("Quitar franja")}
                       >
                         ×
                       </button>
@@ -227,8 +231,7 @@ export function AgendaClient() {
                       onClick={() => addInterval(day.key)}
                       className="text-xs text-brand-text hover:underline"
                     >
-                      + otra franja
-                    </button>
+                      {tr("+ otra franja")}</button>
                   )}
                 </div>
               </div>
@@ -239,11 +242,11 @@ export function AgendaClient() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Cómo se generan los huecos</CardTitle>
+          <CardTitle>{tr("Cómo se generan los huecos")}</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="slot">Duración de la cita (min)</Label>
+            <Label htmlFor="slot">{tr("Duración de la cita (min)")}</Label>
             <Input
               id="slot"
               type="number"
@@ -254,7 +257,7 @@ export function AgendaClient() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="buffer">Respiro entre citas (min)</Label>
+            <Label htmlFor="buffer">{tr("Respiro entre citas (min)")}</Label>
             <Input
               id="buffer"
               type="number"
@@ -265,7 +268,7 @@ export function AgendaClient() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="notice">Aviso mínimo (horas)</Label>
+            <Label htmlFor="notice">{tr("Aviso mínimo (horas)")}</Label>
             <Input
               id="notice"
               type="number"
@@ -276,7 +279,7 @@ export function AgendaClient() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ahead">Agenda abierta (días)</Label>
+            <Label htmlFor="ahead">{tr("Agenda abierta (días)")}</Label>
             <Input
               id="ahead"
               type="number"
@@ -287,7 +290,7 @@ export function AgendaClient() {
             />
           </div>
           <div className="col-span-2 space-y-1.5">
-            <Label htmlFor="tz">Zona horaria</Label>
+            <Label htmlFor="tz">{tr("Zona horaria")}</Label>
             <Input
               id="tz"
               value={settings.timezone}
@@ -300,12 +303,9 @@ export function AgendaClient() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Cómo se entrega la reunión</CardTitle>
+          <CardTitle>{tr("Cómo se entrega la reunión")}</CardTitle>
           <CardDescription>
-            El enlace fijo no depende de nadie. Los demás conectan con tu propia
-            cuenta del proveedor y, si alguna vez falla, la cita se agenda igual
-            y el enlace queda pendiente de reintentar.
-          </CardDescription>
+            {tr("El enlace fijo no depende de nadie. Los demás conectan con tu propia cuenta del proveedor y, si alguna vez falla, la cita se agenda igual y el enlace queda pendiente de reintentar.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           {CONNECTOR_ORDER.map((id) => {
@@ -329,15 +329,14 @@ export function AgendaClient() {
                     active && "text-brand-text"
                   )}
                 >
-                  {meta.label}
+                  {systemText(tr.locale, meta.label)}
                   {!meta.external && (
                     <span className="ml-2 text-[11px] font-normal text-text-3">
-                      sin dependencias
-                    </span>
+                      {tr("sin dependencias")}</span>
                   )}
                 </span>
                 <span className="mt-0.5 block text-xs text-text-2">
-                  {meta.description}
+                  {systemText(tr.locale, meta.description)}
                 </span>
               </button>
             );
@@ -348,18 +347,15 @@ export function AgendaClient() {
       {settings.connector === "enlace-fijo" && (
         <Card>
           <CardHeader>
-            <CardTitle>Tu sala de siempre</CardTitle>
+            <CardTitle>{tr("Tu sala de siempre")}</CardTitle>
             <CardDescription>
-              Se comparte tal cual al confirmar una cita. Si lo dejas vacío, las
-              citas se agendan igual y sin enlace — nadie promete un enlace que
-              no existe.
-            </CardDescription>
+              {tr("Se comparte tal cual al confirmar una cita. Si lo dejas vacío, las citas se agendan igual y sin enlace — nadie promete un enlace que no existe.")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Input
               value={settings.meetingLink ?? ""}
               onChange={(e) => patch({ meetingLink: e.target.value })}
-              placeholder="https://…  (opcional)"
+              placeholder={tr("https://…  (opcional)")}
             />
           </CardContent>
         </Card>
@@ -367,10 +363,10 @@ export function AgendaClient() {
 
       <div className="flex items-center gap-3">
         <Button onClick={save} disabled={saving}>
-          {saving ? "Guardando…" : "Guardar"}
+          {saving ? tr("Guardando…") : tr("Guardar")}
         </Button>
-        {saved && <span className="text-sm text-brand-text">Guardado</span>}
-        {error && <span className="text-sm text-destructive">{error}</span>}
+        {saved && <span className="text-sm text-brand-text">{tr("Guardado")}</span>}
+        {error && <span className="text-sm text-destructive">{systemText(tr.locale, error)}</span>}
       </div>
 
       {/* Las credenciales se guardan por su cuenta, no con el botón de arriba:
@@ -381,23 +377,20 @@ export function AgendaClient() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Próximos huecos</CardTitle>
+          <CardTitle>{tr("Próximos huecos")}</CardTitle>
           <CardDescription>
-            Lo que se le ofrecería a un cliente ahora mismo.
-          </CardDescription>
+            {tr("Lo que se le ofrecería a un cliente ahora mismo.")}</CardDescription>
         </CardHeader>
         <CardContent>
-          {slots === null && <p className="text-sm text-text-3">Calculando…</p>}
+          {slots === null && <p className="text-sm text-text-3">{tr("Calculando…")}</p>}
           {slots?.length === 0 && (
             <p className="text-sm text-text-3">
-              Sin huecos: revisa el horario, el aviso mínimo o si ya está todo
-              ocupado.
-            </p>
+              {tr("Sin huecos: revisa el horario, el aviso mínimo o si ya está todo ocupado.")}</p>
           )}
           {slots && slots.length > 0 && (
             <ul className="space-y-1 text-sm">
               {slots.map((s, i) => (
-                <li key={i}>{s.label}</li>
+                <li key={i}>{new Intl.DateTimeFormat(tr.intl, {timeZone: settings.timezone, weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}).format(new Date(s.startUtc))}</li>
               ))}
             </ul>
           )}

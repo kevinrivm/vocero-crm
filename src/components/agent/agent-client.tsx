@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, Sparkles, Trash2 } from "lucide-react";
@@ -39,6 +41,8 @@ type KbEntry = {
 };
 
 export function AgentClient() {
+  const { t: tr } = useI18n();
+
   const [profile, setProfile] = useState<Profile | null>(null);
   const [aiConfigured, setAiConfigured] = useState(true);
   const [aiMensaje, setAiMensaje] = useState<string | null>(null);
@@ -89,14 +93,13 @@ export function AgentClient() {
   if (!profile) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-        Cargando…
-      </div>
+        {tr("Cargando…")}</div>
     );
   }
 
   async function cargarPreset() {
     const ok = window.confirm(
-      `Cargar el rol «${ROLES.calificador.etiqueta}» reemplaza las instrucciones y las reglas de escalado, y enciende todas sus herramientas. ¿Continuar?`
+      tr("Cargar el rol «{v0}» reemplaza las instrucciones y las reglas de escalado, y enciende todas sus herramientas. ¿Continuar?", {v0: ROLES.calificador.etiqueta})
     );
     if (!ok) return;
     await fetch("/api/agent/profile/preset", {
@@ -122,7 +125,7 @@ export function AgentClient() {
       if (patch.enabled !== undefined) {
         setSwitchError(
           data?.error?.message ??
-            (patch.enabled ? "No se pudo encender el agente." : "No se pudo apagar el agente.")
+            (patch.enabled ? tr("No se pudo encender el agente.") : tr("No se pudo apagar el agente."))
         );
       }
       void refetch();
@@ -150,11 +153,11 @@ export function AgentClient() {
   return (
     <div className="h-full overflow-y-auto">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 sm:py-4">
-        <h2 className="text-[17px] font-bold tracking-tight">Agente de IA</h2>
+        <h2 className="text-[17px] font-bold tracking-tight">{tr("Agente de IA")}</h2>
         <div className="flex items-center gap-3">
-          {saved && <span className="text-xs text-primary">Guardado ✓</span>}
+          {saved && <span className="text-xs text-primary">{tr("Guardado ✓")}</span>}
           <span className="text-sm text-muted-foreground">
-            {profile.enabled ? "Encendido" : "Apagado"}
+            {profile.enabled ? tr("Encendido") : tr("Apagado")}
           </span>
           {/* El interruptor compartido (#53): el pomo propio de aquí era
               `absolute` sin `left`, arrancaba del centro de la pista y
@@ -165,7 +168,7 @@ export function AgentClient() {
           <Switch
             checked={profile.enabled}
             disabled={switchDisabled}
-            label="Agente encendido"
+            label={tr("Agente encendido")}
             onCheckedChange={(enabled) => void saveProfile({ enabled })}
           />
         </div>
@@ -178,7 +181,7 @@ export function AgentClient() {
                 : "w-full text-right text-xs text-muted-foreground"
             }
           >
-            {switchError ?? "Se enciende cuando conectes tu agente."}
+            {switchError ?? tr("Se enciende cuando conectes tu agente.")}
           </p>
         )}
       </header>
@@ -193,19 +196,17 @@ export function AgentClient() {
         <div className="mx-4 mt-4 rounded-lg border border-brand-soft bg-brand-tint p-5 text-center sm:mx-6 sm:mt-6 sm:p-6">
           <Sparkles className="mx-auto mb-2 h-8 w-8 text-primary" />
           <p className="font-medium">
-            {aiMensaje ? "Tu agente no puede pensar" : "Tu agente no tiene con qué pensar"}
+            {aiMensaje ? tr("Tu agente no puede pensar") : tr("Tu agente no tiene con qué pensar")}
           </p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
             {aiMensaje ??
-              "Piensa a través del CRM con la llave de Ajustes → IA: elige el proveedor, el modelo y pega tu llave, sin reiniciar nada."}{" "}
-            (Si tu agente usa su propia llave, puedes ignorar este aviso.)
-          </p>
+              tr("Piensa a través del CRM con la llave de Ajustes → IA: elige el proveedor, el modelo y pega tu llave, sin reiniciar nada.")}{" "}
+            {tr("(Si tu agente usa su propia llave, puedes ignorar este aviso.)")}</p>
           <Link
             href="/settings/ai"
             className="mt-3 inline-block text-sm font-medium text-brand-text underline underline-offset-2"
           >
-            Ir a Ajustes → IA →
-          </Link>
+            {tr("Ir a Ajustes → IA →")}</Link>
         </div>
       )}
 
@@ -238,6 +239,8 @@ function RolSection({
   onTools: (tools: ClaveHerramienta[]) => void;
   onPreset: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const rol = ROLES[profile.role as keyof typeof ROLES] ?? ROLES.calificador;
   const visibles = HERRAMIENTAS.filter((h) => !h.agenda || agendaEnabled);
   const encendida = (clave: ClaveHerramienta) => profile.tools.includes(clave);
@@ -254,12 +257,12 @@ function RolSection({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <CardTitle>
-              Rol: {rol.etiqueta}
+              {tr("Rol: ")}{rol.etiqueta}
             </CardTitle>
             <CardDescription>{rol.descripcion}</CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={onPreset}>
-            Cargar el rol {rol.etiqueta}
+            {tr("Cargar el rol ")}{rol.etiqueta}
           </Button>
         </div>
       </CardHeader>
@@ -281,8 +284,7 @@ function RolSection({
           ))}
         </ul>
         <p className="text-xs text-muted-foreground">
-          El agente toma los cambios en unos minutos, sin redesplegar nada.
-        </p>
+          {tr("El agente toma los cambios en unos minutos, sin redesplegar nada.")}</p>
       </CardContent>
     </Card>
   );
@@ -295,20 +297,21 @@ function ProfileSection({
   profile: Profile;
   onSave: (patch: Partial<Profile>) => Promise<boolean>;
 }) {
+  const { t: tr } = useI18n();
+
   const [form, setForm] = useState(profile);
   useEffect(() => setForm(profile), [profile]);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Comportamiento</CardTitle>
+        <CardTitle>{tr("Comportamiento")}</CardTitle>
         <CardDescription>
-          Cómo se presenta y actúa el agente al responder a tus clientes.
-        </CardDescription>
+          {tr("Cómo se presenta y actúa el agente al responder a tus clientes.")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="agent-name">Nombre del agente</Label>
+          <Label htmlFor="agent-name">{tr("Nombre del agente")}</Label>
           <Input
             id="agent-name"
             value={form.name}
@@ -316,39 +319,39 @@ function ProfileSection({
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="agent-tone">Tono</Label>
+          <Label htmlFor="agent-tone">{tr("Tono")}</Label>
           <Input
             id="agent-tone"
-            placeholder="p. ej. cercano y directo, con usted"
+            placeholder={tr("p. ej. cercano y directo, con usted")}
             value={form.tone ?? ""}
             onChange={(e) => setForm({ ...form, tone: e.target.value })}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="agent-instructions">Instrucciones</Label>
+          <Label htmlFor="agent-instructions">{tr("Instrucciones")}</Label>
           <Textarea
             id="agent-instructions"
             rows={5}
-            placeholder="Qué debe y no debe hacer el agente…"
+            placeholder={tr("Qué debe y no debe hacer el agente…")}
             value={form.instructions ?? ""}
             onChange={(e) => setForm({ ...form, instructions: e.target.value })}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="agent-escalation">Reglas de escalado</Label>
+          <Label htmlFor="agent-escalation">{tr("Reglas de escalado")}</Label>
           <Textarea
             id="agent-escalation"
             rows={3}
-            placeholder="Cuándo pasar la conversación a un humano…"
+            placeholder={tr("Cuándo pasar la conversación a un humano…")}
             value={form.escalationRules ?? ""}
             onChange={(e) => setForm({ ...form, escalationRules: e.target.value })}
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="agent-greeting">Saludo</Label>
+          <Label htmlFor="agent-greeting">{tr("Saludo")}</Label>
           <Input
             id="agent-greeting"
-            placeholder="Saludo para conversaciones nuevas"
+            placeholder={tr("Saludo para conversaciones nuevas")}
             value={form.greeting ?? ""}
             onChange={(e) => setForm({ ...form, greeting: e.target.value })}
           />
@@ -362,8 +365,7 @@ function ProfileSection({
             void onSave({ name, tone, instructions, escalationRules, greeting });
           }}
         >
-          Guardar comportamiento
-        </Button>
+          {tr("Guardar comportamiento")}</Button>
       </CardContent>
     </Card>
   );
@@ -378,6 +380,8 @@ function KbSection({
   kbSize: { chars: number; warnAt: number; warning: boolean } | null;
   onChanged: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState("");
   const [block, setBlock] = useState("");
@@ -415,35 +419,30 @@ function KbSection({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Knowledge base</CardTitle>
+            <CardTitle>{tr("Knowledge base")}</CardTitle>
             <CardDescription>
-              La única fuente de verdad del agente: lo que no está aquí, no lo
-              afirma.
-            </CardDescription>
+              {tr("La única fuente de verdad del agente: lo que no está aquí, no lo afirma.")}</CardDescription>
           </div>
           {kbSize && (
             <Badge variant={kbSize.warning ? "warning" : "secondary"}>
-              {kbSize.chars.toLocaleString("es-MX")} caracteres
-            </Badge>
+              {kbSize.chars.toLocaleString(tr.intl)} {tr(" caracteres")}</Badge>
           )}
         </div>
         {kbSize?.warning && (
           <p className="text-xs text-warning-text">
-            El conocimiento se acerca al límite del contexto del modelo (v1 lo
-            inyecta completo en cada turno). Considera depurar entradas.
-          </p>
+            {tr("El conocimiento se acerca al límite del contexto del modelo (v1 lo inyecta completo en cada turno). Considera depurar entradas.")}</p>
         )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2 rounded-md border p-3">
-          <p className="text-sm font-medium">Nueva pregunta / respuesta</p>
+          <p className="text-sm font-medium">{tr("Nueva pregunta / respuesta")}</p>
           <Input
-            placeholder="Pregunta (p. ej. ¿Hacen envíos?)"
+            placeholder={tr("Pregunta (p. ej. ¿Hacen envíos?)")}
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
           />
           <Textarea
-            placeholder="Respuesta"
+            placeholder={tr("Respuesta")}
             rows={2}
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
@@ -453,21 +452,19 @@ function KbSection({
             onClick={() => void addQa()}
             disabled={!question.trim() || !answer.trim()}
           >
-            <Plus className="h-4 w-4" /> Agregar P/R
-          </Button>
+            <Plus className="h-4 w-4" /> {tr(" Agregar P/R")}</Button>
         </div>
 
         <div className="space-y-2 rounded-md border p-3">
-          <p className="text-sm font-medium">Nuevo bloque de texto libre</p>
+          <p className="text-sm font-medium">{tr("Nuevo bloque de texto libre")}</p>
           <Textarea
-            placeholder="Horarios, direcciones, políticas…"
+            placeholder={tr("Horarios, direcciones, políticas…")}
             rows={3}
             value={block}
             onChange={(e) => setBlock(e.target.value)}
           />
           <Button size="sm" onClick={() => void addBlock()} disabled={!block.trim()}>
-            <Plus className="h-4 w-4" /> Agregar bloque
-          </Button>
+            <Plus className="h-4 w-4" /> {tr(" Agregar bloque")}</Button>
         </div>
 
         <ul className="space-y-2">
@@ -486,7 +483,7 @@ function KbSection({
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Eliminar entrada"
+                aria-label={tr("Eliminar entrada")}
                 onClick={() => void remove(e.id)}
               >
                 <Trash2 className="h-4 w-4" />
@@ -495,8 +492,7 @@ function KbSection({
           ))}
           {entries.length === 0 && (
             <p className="py-2 text-center text-xs text-muted-foreground">
-              Sin entradas todavía: agrega lo que el agente debe saber.
-            </p>
+              {tr("Sin entradas todavía: agrega lo que el agente debe saber.")}</p>
           )}
         </ul>
       </CardContent>

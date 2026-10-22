@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { RateDto } from "@/lib/analytics";
@@ -37,6 +41,8 @@ export function Section({
   children: ReactNode;
   id?: string;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <section
       id={id}
@@ -57,12 +63,12 @@ export function Section({
         )}
       >
         {error ? (
-          <p className="py-6 text-center text-sm text-danger-text">{error}</p>
+          <p className="py-6 text-center text-sm text-danger-text">{systemText(tr.locale, error)}</p>
         ) : !hasData ? (
-          <p className="py-6 text-center text-sm text-text-3">Calculando…</p>
+          <p className="py-6 text-center text-sm text-text-3">{tr("Calculando…")}</p>
         ) : empty ? (
           <p className="py-6 text-center text-sm text-text-3">
-            {emptyText ?? "No hay datos en este periodo."}
+            {emptyText ?? tr("No hay datos en este periodo.")}
           </p>
         ) : (
           children
@@ -85,8 +91,10 @@ export function Rate({
   unit?: string;
   className?: string;
 }) {
+  const { t: tr } = useI18n();
+
   if (rate.value === null) {
-    return <span className={cn("text-text-3", className)}>sin datos</span>;
+    return <span className={cn("text-text-3", className)}>{tr("sin datos")}</span>;
   }
   return (
     <span className={cn("inline-flex flex-wrap items-baseline gap-x-1.5", className)}>
@@ -94,8 +102,8 @@ export function Rate({
         {rate.value}%
       </span>
       <span className="text-xs text-text-3">
-        de {rate.sample} {unit}
-        {!rate.reliable && " · muestra chica"}
+        {tr("de ")}{rate.sample} {unit}
+        {!rate.reliable && tr(" · muestra chica")}
       </span>
     </span>
   );

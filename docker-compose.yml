@@ -39,7 +39,7 @@
 # ============================================================
 services:
   app:
-    image: ghcr.io/kevinrivm/vocero-crm:${VOCERO_CRM_VERSION:-2.0.0}
+    image: ghcr.io/kevinrivm/vocero-crm:${VOCERO_CRM_VERSION:-2.1.0}
     build: .
     restart: unless-stopped
     environment:
@@ -87,7 +87,7 @@ services:
   # con la que Nea le contesta al CRM. Sin dominio público: el CRM le habla
   # por la red interna.
   nea:
-    image: ghcr.io/kevinrivm/nea-agent:${NEA_VERSION:-2.0.0}
+    image: ghcr.io/kevinrivm/nea-agent:${NEA_VERSION:-2.1.0}
     restart: unless-stopped
     environment:
       CRM_BASE_URL: http://app:3000

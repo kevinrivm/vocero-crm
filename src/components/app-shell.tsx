@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
@@ -53,6 +55,8 @@ export function AppShell({
   aviso?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const { t: tr } = useI18n();
+
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
 
@@ -75,7 +79,7 @@ export function AppShell({
     <div className="flex h-dvh overflow-hidden bg-background">
       {navOpen && (
         <button
-          aria-label="Cerrar el menú"
+          aria-label={tr("Cerrar el menú")}
           tabIndex={-1}
           onClick={() => setNavOpen(false)}
           className="fixed inset-0 z-40 bg-overlay lg:hidden"
@@ -100,7 +104,7 @@ export function AppShell({
         <header className="nav-dark flex h-12 shrink-0 items-center gap-1.5 border-b bg-subtle px-2 text-foreground lg:hidden">
           <button
             onClick={() => setNavOpen(true)}
-            aria-label="Abrir el menú"
+            aria-label={tr("Abrir el menú")}
             aria-expanded={navOpen}
             className="rounded-md p-2 text-text-2 hover:bg-accent hover:text-foreground"
           >

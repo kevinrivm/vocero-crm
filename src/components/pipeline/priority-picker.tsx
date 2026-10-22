@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { cn } from "@/lib/utils";
 import type { PriorityValue } from "@/lib/types";
 import { PRIORITY_LABELS, PRIORITY_VALUES } from "@/server/leads/priority";
@@ -12,6 +16,8 @@ const TONO: Record<PriorityValue, string> = {
 
 /** Etiqueta de prioridad. Solo se pinta cuando alguien la fijó. */
 export function PriorityBadge({ value }: { value: PriorityValue }) {
+  const { t: tr } = useI18n();
+
   return (
     <span
       className={cn(
@@ -19,7 +25,7 @@ export function PriorityBadge({ value }: { value: PriorityValue }) {
         TONO[value]
       )}
     >
-      {PRIORITY_LABELS[value]}
+      {systemText(tr.locale, PRIORITY_LABELS[value])}
     </span>
   );
 }
@@ -36,6 +42,8 @@ export function PriorityPicker({
   value: PriorityValue | null;
   onChange: (value: PriorityValue | null) => void;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {PRIORITY_VALUES.map((p) => (
@@ -48,7 +56,7 @@ export function PriorityPicker({
             value === p ? TONO[p] : "text-text-2 hover:bg-accent"
           )}
         >
-          {PRIORITY_LABELS[p]}
+          {systemText(tr.locale, PRIORITY_LABELS[p])}
         </button>
       ))}
       <button
@@ -61,8 +69,7 @@ export function PriorityPicker({
             : "text-text-3 hover:bg-accent"
         )}
       >
-        Sin prioridad
-      </button>
+        {tr("Sin prioridad")}</button>
     </div>
   );
 }

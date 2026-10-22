@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useState } from "react";
 import { ExternalLink, Megaphone } from "lucide-react";
 import type { AnuncioDto } from "@/lib/types";
@@ -51,12 +53,14 @@ export function MiniaturaDeAnuncio({
  * el conjunto no vienen ahí, y pedirlos exigiría la API de Marketing.
  */
 export function AnuncioOrigen({ anuncio }: { anuncio: AnuncioDto }) {
+  const { t: tr } = useI18n();
+
   // La imagen puede no estar (caducó antes de copiarse, host no permitido) o
   // dejar de servirse: la tarjeta sigue diciendo lo importante sin ella.
   const [imagenRota, setImagenRota] = useState(false);
   const etiqueta = etiquetaDeOrigen(anuncio.sourceType);
   const titular = titularDeOrigen(anuncio.headline, anuncio.sourceType);
-  const fecha = new Date(anuncio.capturedAt).toLocaleDateString("es-MX", {
+  const fecha = new Date(anuncio.capturedAt).toLocaleDateString(tr.intl, {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -69,7 +73,7 @@ export function AnuncioOrigen({ anuncio }: { anuncio: AnuncioDto }) {
     >
       <p className="flex items-center gap-1.5 text-[13px] font-medium text-info-text">
         <Megaphone className="h-4 w-4 shrink-0" strokeWidth={1.7} />
-        {etiqueta === "Anuncio" ? "Llegó por un anuncio" : "Llegó por una publicación"}
+        {etiqueta === "Anuncio" ? tr("Llegó por un anuncio") : tr("Llegó por una publicación")}
       </p>
 
       <div className="mt-2 flex items-start gap-2.5">
@@ -77,7 +81,7 @@ export function AnuncioOrigen({ anuncio }: { anuncio: AnuncioDto }) {
           // eslint-disable-next-line @next/next/no-img-element -- adjunto privado servido con sesión; no hay host que optimizar
           <img
             src={`/api/media/${anuncio.imageAssetId}`}
-            alt={`Creativo: ${titular}`}
+            alt={tr("Creativo: {v0}", {v0: titular})}
             loading="lazy"
             onError={() => setImagenRota(true)}
             className="h-14 w-14 shrink-0 rounded border border-info-soft bg-background object-cover"
@@ -97,17 +101,17 @@ export function AnuncioOrigen({ anuncio }: { anuncio: AnuncioDto }) {
 
       <div className="mt-2 space-y-0.5 text-[11px] text-text-3">
         <p>
-          Primer mensaje · {fecha}
-          {anuncio.mediaType === "video" ? " · con video" : ""}
+          {tr("Primer mensaje · ")}{fecha}
+          {anuncio.mediaType === "video" ? tr(" · con video") : ""}
         </p>
         {anuncio.sourceId && (
           <p className="truncate font-mono" title={anuncio.sourceId}>
-            ID {anuncio.sourceId}
+            {tr("ID ")}{anuncio.sourceId}
           </p>
         )}
         {/* Solo la presencia, y solo en una instancia que atribuye: el valor
             del identificador de clic no sale del servidor. */}
-        {anuncio.hasCtwaClid && <p>Meta identificó el clic</p>}
+        {anuncio.hasCtwaClid && <p>{tr("Meta identificó el clic")}</p>}
       </div>
 
       {anuncio.sourceUrl && (
@@ -117,7 +121,7 @@ export function AnuncioOrigen({ anuncio }: { anuncio: AnuncioDto }) {
           rel="noopener noreferrer"
           className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-brand-text underline underline-offset-2 hover:text-brand"
         >
-          Ver {etiqueta.toLowerCase()}
+          {tr("Ver ")}{etiqueta.toLowerCase()}
           <ExternalLink className="h-3 w-3" strokeWidth={1.8} />
         </a>
       )}

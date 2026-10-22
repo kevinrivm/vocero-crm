@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LOCALES } from "@/lib/i18n/locale";
 import { apiError, parseBody, withAuth } from "@/lib/api";
 import { getSessionOrNull } from "@/lib/auth/session";
 import { isValidHex, resolveAccentSet } from "@/lib/branding";
@@ -19,6 +20,7 @@ const putSchema = z.object({
   accent: z.string().refine(isValidHex, "Color hex inválido (#rrggbb)"),
   /** La moneda del negocio: la única que el tablero suma. */
   currency: z.enum(CURRENCIES),
+  locale: z.enum(LOCALES).optional(),
 });
 
 export const PUT = withAuth(async (session, req: Request) => {
@@ -34,6 +36,7 @@ export const PUT = withAuth(async (session, req: Request) => {
   await saveBranding(session.organizationId, {
     ...body.data,
     favicon: actual.favicon,
+    locale: body.data.locale ?? actual.locale,
   });
   return Response.json({ ok: true });
 });

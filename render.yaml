@@ -37,7 +37,7 @@ services:
     runtime: image
     image:
       # Pública: sin `creds`. Es linux/amd64, lo único que corre Render.
-      url: ghcr.io/kevinrivm/vocero-crm:2.0.0
+      url: ghcr.io/kevinrivm/vocero-crm:2.1.0
     plan: starter
     # Misma región para el servicio y la base; no se cambia después.
     # region: oregon   # ohio · virginia · frankfurt · singapore
@@ -99,7 +99,7 @@ services:
     name: vocero-nea
     runtime: image
     image:
-      url: ghcr.io/kevinrivm/nea-agent:2.0.0
+      url: ghcr.io/kevinrivm/nea-agent:2.1.0
     plan: starter
     envVars:
       - key: PORT

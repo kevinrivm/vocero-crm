@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import type { FunnelStepDto } from "@/lib/analytics";
 import { Rate } from "./section";
 
@@ -10,13 +12,14 @@ import { Rate } from "./section";
  * dueño busca aquí es dónde cae el escalón, no la silueta.
  */
 export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
+  const { t: tr } = useI18n();
+
   const max = Math.max(1, ...steps.map((s) => s.reached));
 
   if (steps.every((s) => s.reached === 0)) {
     return (
       <p className="py-4 text-sm text-text-3">
-        Ningún prospecto de este periodo tiene movimientos registrados todavía.
-      </p>
+        {tr("Ningún prospecto de este periodo tiene movimientos registrados todavía.")}</p>
     );
   }
 
@@ -33,7 +36,7 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
             <div
               className="mt-1 h-2 w-full overflow-hidden rounded-[4px] bg-subtle"
               role="img"
-              aria-label={`${step.reached} prospectos llegaron a ${step.name}`}
+              aria-label={tr("{v0} prospectos llegaron a {v1}", {v0: step.reached, v1: step.name})}
             >
               {step.reached > 0 && (
                 <div
@@ -48,8 +51,8 @@ export function Funnel({ steps }: { steps: FunnelStepDto[] }) {
             </div>
             {siguiente && step.advanceRate && step.reached > 0 && (
               <p className="mt-1 text-[11px] text-text-3">
-                pasan a {siguiente.name}:{" "}
-                <Rate rate={step.advanceRate} unit="prospectos" className="text-[11px]" />
+                {tr("pasan a ")}{siguiente.name}:{" "}
+                <Rate rate={step.advanceRate} unit={tr("prospectos")} className="text-[11px]" />
               </p>
             )}
           </li>

@@ -5,6 +5,21 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
+## 2.1.0 — 2026-10-22
+
+Interfaz en español y portugués de Brasil. El propietario elige el idioma
+predeterminado en Ajustes → Marca y cada navegador puede elegir otro en el
+acceso o el menú. La primera renderización, ayuda, controles y formatos
+regionales usan la preferencia resuelta.
+
+### Actualizar desde 2.0.0
+
+Actualizar la imagen basta: no hay migración nueva ni configuración obligatoria.
+Las instalaciones existentes conservan español. Moneda, huso, datos guardados,
+plantillas de WhatsApp e idioma del agente permanecen independientes.
+La API de marca acepta locale opcional; clientes antiguos conservan el valor
+guardado. Véase [Idiomas](docs/idiomas.md).
+
 ## 2.0.0 — 2026-10-20
 
 El agente sale del CRM y se conecta por contrato. Vocero se queda con lo suyo

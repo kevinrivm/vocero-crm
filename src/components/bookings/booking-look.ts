@@ -1,3 +1,4 @@
+import { systemText, type Locale } from "@/lib/i18n";
 import type { BookingListItem } from "@/server/agenda/queries";
 
 /** 215 — Cómo se ve y cómo se nombra una cita, igual en las cuatro vistas. */
@@ -12,15 +13,15 @@ export const STATUS_LABEL: Record<Booking["status"], string> = {
 };
 
 /** Un bloqueo no se "agenda" ni se "cancela": está activo o se quitó. */
-export function statusLabel(b: Booking): string {
-  if (b.kind === "block") return b.status === "cancelada" ? "Quitado" : "Activo";
-  return STATUS_LABEL[b.status];
+export function statusLabel(b: Booking, locale: Locale = "es"): string {
+  if (b.kind === "block") return systemText(locale, b.status === "cancelada" ? "Quitado" : "Activo");
+  return systemText(locale, STATUS_LABEL[b.status]);
 }
 
 /** Lo que se lee en la rejilla: el contacto o, en un bloqueo, su nota. */
-export function bookingTitle(b: Booking): string {
-  if (b.kind === "block") return b.notes?.trim() || "Bloqueo";
-  return b.contact?.name.trim() || "Sin contacto";
+export function bookingTitle(b: Booking, locale: Locale = "es"): string {
+  if (b.kind === "block") return b.notes?.trim() || systemText(locale, "Bloqueo");
+  return b.contact?.name.trim() || systemText(locale, "Sin contacto");
 }
 
 /**

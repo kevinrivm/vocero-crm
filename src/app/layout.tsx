@@ -7,6 +7,9 @@ import { normalizeThemePreference, THEME_COOKIE } from "@/lib/theme";
 import { getBranding } from "@/server/branding";
 import { enabledChannels } from "@/server/channels/enabled";
 import { productName } from "@/lib/channels";
+import { systemText } from "@/lib/i18n";
+import { getI18n } from "@/server/i18n";
+import { I18nProvider } from "@/components/i18n-provider";
 import "./globals.css";
 
 // Las tres voces de la marca, las mismas de vocerocrm.com. next/font las
@@ -33,11 +36,13 @@ const plexMono = IBM_Plex_Mono({
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
+  const { t: tr } = await getI18n();
+
   const branding = await getBranding().catch(() => DEFAULT_BRANDING);
-  const producto = productName([...enabledChannels()]);
+  const producto = systemText(tr.locale, productName([...enabledChannels()]));
   return {
     title: `${branding.name} — ${producto}`,
-    description: `${producto} con agente de IA y Laboratorio de auto-evaluación`,
+    description: tr("{v0} con agente de IA y Laboratorio de auto-evaluación", {v0: producto}),
     // El `?v=` cambia con la marca: los navegadores guardan el favicon con una
     // insistencia notable y, sin eso, el logo nuevo tarda días en aparecer.
     icons: { icon: faviconHref(branding) },
@@ -48,12 +53,13 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const branding = await getBranding().catch(() => DEFAULT_BRANDING);
+  const { locale, companyLocale, preference } = await getI18n();
   const theme = normalizeThemePreference(
     (await cookies()).get(THEME_COOKIE)?.value
   );
   return (
     <html
-      lang="es"
+      lang={locale}
       className={`${archivo.variable} ${instrumentSerif.variable} ${plexMono.variable}`}
       // La preferencia siempre es explícita: el tema viaja resuelto en el HTML
       // del servidor, así que no hay divergencia con el cliente ni parpadeo.
@@ -65,7 +71,7 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{ __html: accentCssVariables(branding.accent) }}
         />
       </head>
-      <body className="font-sans">{children}</body>
+      <body className="font-sans"><I18nProvider locale={locale} companyLocale={companyLocale} preference={preference}>{children}</I18nProvider></body>
     </html>
   );
 }

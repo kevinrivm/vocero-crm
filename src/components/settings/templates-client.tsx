@@ -1,5 +1,9 @@
 "use client";
 
+import { plural, systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -101,6 +105,8 @@ function normalizeName(value: string): string {
 }
 
 export function TemplatesClient() {
+  const { t: tr } = useI18n();
+
   const [templates, setTemplates] = useState<TemplateDto[] | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
@@ -137,8 +143,8 @@ export function TemplatesClient() {
         if (!silent) {
           setSyncMsg(
             data.updated > 0
-              ? `${data.updated} plantilla(s) actualizada(s)`
-              : "Todo al día"
+              ? plural(tr.locale, data.updated, {one:"{count} plantilla actualizada",other:"{count} plantillas actualizadas"})
+              : tr("Todo al día")
           );
         }
         if (!silent || data.updated > 0) void refetch();
@@ -147,10 +153,10 @@ export function TemplatesClient() {
         const data = (await res?.json().catch(() => null)) as {
           error?: { message?: string };
         } | null;
-        setSyncMsg(data?.error?.message ?? "No se pudo sincronizar");
+        setSyncMsg(data?.error?.message ?? tr("No se pudo sincronizar"));
       }
     },
-    [refetch]
+    [refetch, tr]
   );
 
   useEffect(() => {
@@ -166,28 +172,25 @@ export function TemplatesClient() {
       <section className="space-y-3" aria-labelledby="tpl-list-title">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h3 id="tpl-list-title" className="text-base font-semibold">
-            Tus plantillas
-          </h3>
+            {tr("Tus plantillas")}</h3>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               disabled={syncing}
               onClick={() => void sync()}
-              title="Consulta a Meta el estado de revisión"
+              title={tr("Consulta a Meta el estado de revisión")}
             >
               <RefreshCw className={`h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-              Actualizar estado
-            </Button>
+              {tr("Actualizar estado")}</Button>
             {!creating && (
               <Button size="sm" onClick={() => setCreating(true)}>
                 <Plus className="h-4 w-4" />
-                Nueva plantilla
-              </Button>
+                {tr("Nueva plantilla")}</Button>
             )}
           </div>
         </div>
-        {syncMsg && <p className="text-xs text-muted-foreground">{syncMsg}</p>}
+        {syncMsg && <p className="text-xs text-muted-foreground">{systemText(tr.locale, syncMsg)}</p>}
 
         {creating && (
           <CreateForm
@@ -200,19 +203,18 @@ export function TemplatesClient() {
         )}
 
         {templates === null ? (
-          <p className="text-sm text-muted-foreground">Cargando plantillas…</p>
+          <p className="text-sm text-muted-foreground">{tr("Cargando plantillas…")}</p>
         ) : empty ? (
           !creating && (
             <EmptyState
               icon={FileText}
               className="rounded-lg border border-dashed"
-              title="Todavía no tienes plantillas"
-              description="Crea la primera para poder escribirle a un cliente cuando pasen las 24 horas. Puedes empezar con un ejemplo."
+              title={tr("Todavía no tienes plantillas")}
+              description={tr("Crea la primera para poder escribirle a un cliente cuando pasen las 24 horas. Puedes empezar con un ejemplo.")}
               action={
                 <Button size="sm" onClick={() => setCreating(true)}>
                   <Plus className="h-4 w-4" />
-                  Crear mi primera plantilla
-                </Button>
+                  {tr("Crear mi primera plantilla")}</Button>
               }
             />
           )
@@ -224,12 +226,12 @@ export function TemplatesClient() {
                   <div className="min-w-0">
                     <p className="break-all font-mono text-sm font-medium">{t.name}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {templateLanguageName(t.language)} ·{" "}
-                      {CATEGORY[t.category as Category]?.label ?? t.category}
+                      {systemText(tr.locale, templateLanguageName(t.language))} ·{" "}
+                      {systemText(tr.locale, CATEGORY[t.category as Category]?.label ?? t.category)}
                     </p>
                   </div>
                   <Badge variant={STATUS_BADGE[t.status].variant}>
-                    {STATUS_BADGE[t.status].label}
+                    {systemText(tr.locale, STATUS_BADGE[t.status].label)}
                   </Badge>
                 </div>
                 <p className="mt-3 whitespace-pre-wrap text-sm">{t.body}</p>
@@ -240,7 +242,7 @@ export function TemplatesClient() {
                   )}
                 >
                   {t.status === "rejected" && t.rejectionReason
-                    ? `Motivo del rechazo: ${t.rejectionReason}. ${STATUS_BADGE.rejected.hint}`
+                    ? tr("Motivo del rechazo: {v0}. {v1}", {v0: t.rejectionReason, v1: systemText(tr.locale, STATUS_BADGE.rejected.hint)})
                     : STATUS_BADGE[t.status].hint}
                 </p>
               </li>
@@ -254,6 +256,8 @@ export function TemplatesClient() {
 
 /** La explicación: para qué sirven, cómo se aprueban y dónde se usan. */
 function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
+  const { t: tr } = useI18n();
+
   const [open, setOpen] = useState(defaultOpen);
   // Se abre sola la primera vez que la lista llega vacía.
   useEffect(() => {
@@ -263,18 +267,18 @@ function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
   const steps = [
     {
       icon: Plus,
-      title: "Créala aquí",
-      text: "Escribe el mensaje y marca con {{1}}, {{2}}… lo que cambia en cada envío, como el nombre o la fecha.",
+      title: tr("Créala aquí"),
+      text: tr("Escribe el mensaje y marca con {{1}}, {{2}}… lo que cambia en cada envío, como el nombre o la fecha."),
     },
     {
       icon: Clock3,
-      title: "Meta la revisa",
-      text: "Tarda de unos minutos a 24 horas. El estado cambia solo a «Aprobada» o «Rechazada», con el motivo.",
+      title: tr("Meta la revisa"),
+      text: tr("Tarda de unos minutos a 24 horas. El estado cambia solo a «Aprobada» o «Rechazada», con el motivo."),
     },
     {
       icon: Send,
-      title: "Úsala",
-      text: "En la Bandeja, cuando la ventana de 24 h está cerrada, elígela, llena las variables y envía. Para escribirle primero a alguien, usa «Escribir primero» en Contactos.",
+      title: tr("Úsala"),
+      text: tr("En la Bandeja, cuando la ventana de 24 h está cerrada, elígela, llena las variables y envía. Para escribirle primero a alguien, usa «Escribir primero» en Contactos."),
     },
   ];
 
@@ -288,51 +292,44 @@ function HowItWorks({ defaultOpen }: { defaultOpen: boolean }) {
       >
         <Sparkles className="h-5 w-5 shrink-0 text-primary" />
         <span className="flex-1">
-          <span className="block text-sm font-semibold">¿Para qué sirven las plantillas?</span>
+          <span className="block text-sm font-semibold">{tr("¿Para qué sirven las plantillas?")}</span>
           <span className="block text-xs text-muted-foreground">
-            Son el único mensaje que WhatsApp te deja enviar pasadas 24 horas.
-          </span>
+            {tr("Son el único mensaje que WhatsApp te deja enviar pasadas 24 horas.")}</span>
         </span>
         <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} />
       </button>
       {open && (
         <div className="space-y-4 border-t p-4 text-sm">
           <p className="text-muted-foreground">
-            WhatsApp solo te deja escribir con libertad durante las 24 horas
-            que siguen al último mensaje de tu cliente. Pasado ese tiempo —o
-            para escribirle a alguien que nunca te ha escrito— necesitas un
-            mensaje que Meta haya aprobado antes: una plantilla.
-          </p>
+            {tr("WhatsApp solo te deja escribir con libertad durante las 24 horas que siguen al último mensaje de tu cliente. Pasado ese tiempo —o para escribirle a alguien que nunca te ha escrito— necesitas un mensaje que Meta haya aprobado antes: una plantilla.")}</p>
           <ol className="grid gap-3 sm:grid-cols-3">
             {steps.map((s, i) => (
-              <li key={s.title} className="rounded-md border bg-background p-3">
+              <li key={systemText(tr.locale, s.title)} className="rounded-md border bg-background p-3">
                 <p className="flex items-center gap-2 font-medium">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
                     {i + 1}
                   </span>
-                  {s.title}
+                  {systemText(tr.locale, s.title)}
                 </p>
                 <p className="mt-1.5 text-xs text-muted-foreground">{s.text}</p>
               </li>
             ))}
           </ol>
           <details className="rounded-md bg-subtle p-3">
-            <summary className="cursor-pointer font-medium">Consejos para que Meta la apruebe</summary>
+            <summary className="cursor-pointer font-medium">{tr("Consejos para que Meta la apruebe")}</summary>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
-              <li>No empieces ni termines el mensaje con una variable, y no pongas dos variables juntas.</li>
-              <li>Di quién escribe y por qué: «Hola {"{{1}}"}, soy Ana de Clínica Sol…».</li>
-              <li>Escribe ejemplos reales para cada variable: es lo que ve quien la revisa.</li>
-              <li>Utilidad es solo para dar seguimiento a algo que el cliente pidió. Si el mensaje promociona algo, Meta la cambia a Marketing, que cuesta más por conversación.</li>
-              <li>El idioma que elijas debe ser el del texto.</li>
+              <li>{tr("No empieces ni termines el mensaje con una variable, y no pongas dos variables juntas.")}</li>
+              <li>{tr("Di quién escribe y por qué: «Hola ")}{"{{1}}"}{tr(", soy Ana de Clínica Sol…».")}</li>
+              <li>{tr("Escribe ejemplos reales para cada variable: es lo que ve quien la revisa.")}</li>
+              <li>{tr("Utilidad es solo para dar seguimiento a algo que el cliente pidió. Si el mensaje promociona algo, Meta la cambia a Marketing, que cuesta más por conversación.")}</li>
+              <li>{tr("El idioma que elijas debe ser el del texto.")}</li>
             </ul>
           </details>
           <p className="flex flex-wrap gap-4 text-xs">
             <Link className="inline-flex items-center gap-1 underline" href="/inbox">
-              <Inbox className="h-3.5 w-3.5" /> Ir a la Bandeja
-            </Link>
+              <Inbox className="h-3.5 w-3.5" /> {tr(" Ir a la Bandeja")}</Link>
             <Link className="inline-flex items-center gap-1 underline" href="/contacts">
-              <Send className="h-3.5 w-3.5" /> Ir a Contactos
-            </Link>
+              <Send className="h-3.5 w-3.5" /> {tr(" Ir a Contactos")}</Link>
           </p>
         </div>
       )}
@@ -347,6 +344,8 @@ function CreateForm({
   onCreated: () => void;
   onCancel: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [name, setName] = useState("");
   const [language, setLanguage] = useState(DEFAULT_TEMPLATE_LANGUAGE);
   const [category, setCategory] = useState<Category>("UTILITY");
@@ -361,7 +360,7 @@ function CreateForm({
   const warnings = bodyError ? [] : templateWarnings(body);
   const preview = renderBody(
     body,
-    Array.from({ length: variableCount }, (_, i) => examples[i]?.trim() || `[variable ${i + 1}]`)
+    Array.from({ length: variableCount }, (_, i) => examples[i]?.trim() || tr("[variable {v0}]", {v0: i + 1}))
   );
 
   function applyStarter(s: (typeof STARTERS)[number]) {
@@ -405,7 +404,7 @@ function CreateForm({
       const data = (await res?.json().catch(() => null)) as {
         error?: { message?: string };
       } | null;
-      setError(data?.error?.message ?? "No se pudo crear la plantilla");
+      setError(data?.error?.message ?? tr("No se pudo crear la plantilla"));
       return;
     }
     onCreated();
@@ -414,19 +413,17 @@ function CreateForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Nueva plantilla</CardTitle>
+        <CardTitle>{tr("Nueva plantilla")}</CardTitle>
         <CardDescription>
-          Se envía a revisión de Meta al crearla. Mientras la revisan puedes
-          seguir usando el CRM.
-        </CardDescription>
+          {tr("Se envía a revisión de Meta al crearla. Mientras la revisan puedes seguir usando el CRM.")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="space-y-2">
-          <p className="text-xs font-medium text-muted-foreground">Empieza con un ejemplo (opcional)</p>
+          <p className="text-xs font-medium text-muted-foreground">{tr("Empieza con un ejemplo (opcional)")}</p>
           <div className="flex flex-wrap gap-2">
             {STARTERS.map((s) => (
               <Button key={s.name} type="button" variant="outline" size="sm" onClick={() => applyStarter(s)}>
-                {s.title}
+                {systemText(tr.locale, s.title)}
               </Button>
             ))}
           </div>
@@ -434,7 +431,7 @@ function CreateForm({
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
-            <Label htmlFor="tpl-name">Nombre interno</Label>
+            <Label htmlFor="tpl-name">{tr("Nombre interno")}</Label>
             <Input
               id="tpl-name"
               placeholder="seguimiento_cotizacion"
@@ -443,11 +440,10 @@ function CreateForm({
               maxLength={60}
             />
             <p className="text-xs text-muted-foreground">
-              Solo minúsculas, números y guion bajo. Tus clientes no lo ven.
-            </p>
+              {tr("Solo minúsculas, números y guion bajo. Tus clientes no lo ven.")}</p>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="tpl-lang">Idioma del mensaje</Label>
+            <Label htmlFor="tpl-lang">{tr("Idioma del mensaje")}</Label>
             <select
               id="tpl-lang"
               value={language}
@@ -455,10 +451,10 @@ function CreateForm({
               className="flex h-9 w-full rounded-md border border-input bg-card px-3 text-sm"
             >
               {TEMPLATE_LANGUAGE_GROUPS.map((g) => (
-                <optgroup key={g.id} label={g.label}>
+                <optgroup key={g.id} label={systemText(tr.locale, g.label)}>
                   {TEMPLATE_LANGUAGES.filter((l) => l.group === g.id).map((l) => (
                     <option key={l.code} value={l.code}>
-                      {l.name}
+                      {systemText(tr.locale, l.name)}
                     </option>
                   ))}
                 </optgroup>
@@ -468,7 +464,7 @@ function CreateForm({
         </div>
 
         <fieldset className="space-y-1.5">
-          <legend className="text-sm font-medium">¿Para qué es?</legend>
+          <legend className="text-sm font-medium">{tr("¿Para qué es?")}</legend>
           <div className="grid gap-2 sm:grid-cols-2">
             {(Object.keys(CATEGORY) as Category[]).map((c) => (
               <label
@@ -486,8 +482,8 @@ function CreateForm({
                   onChange={() => setCategory(c)}
                   className="sr-only"
                 />
-                <span className="block font-medium">{CATEGORY[c].label}</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">{CATEGORY[c].description}</span>
+                <span className="block font-medium">{systemText(tr.locale, CATEGORY[c].label)}</span>
+                <span className="mt-0.5 block text-xs text-muted-foreground">{systemText(tr.locale, CATEGORY[c].description)}</span>
               </label>
             ))}
           </div>
@@ -495,10 +491,10 @@ function CreateForm({
 
         <div className="space-y-1.5">
           <div className="flex items-end justify-between gap-2">
-            <Label htmlFor="tpl-body">Mensaje</Label>
+            <Label htmlFor="tpl-body">{tr("Mensaje")}</Label>
             <Button type="button" variant="ghost" size="sm" onClick={insertVariable}>
               <Plus className="h-3.5 w-3.5" />
-              Insertar variable {`{{${countVariables(body) + 1}}}`}
+              {tr("Insertar variable ")}{`{{${countVariables(body) + 1}}}`}
             </Button>
           </div>
           <Textarea
@@ -509,27 +505,24 @@ function CreateForm({
             onChange={(e) => setBody(e.target.value)}
           />
           {bodyError ? (
-            <p className="text-xs text-destructive">{bodyError}</p>
+            <p className="text-xs text-destructive">{systemText(tr.locale, bodyError)}</p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Las variables se llenan al enviar: {"{{1}}"} puede ser el nombre
-              del cliente, {"{{2}}"} una fecha…
-            </p>
+              {tr("Las variables se llenan al enviar: ")}{"{{1}}"} {tr(" puede ser el nombre del cliente, ")}{"{{2}}"} {tr(" una fecha…")}</p>
           )}
           {warnings.map((w) => (
-            <p key={w} className="flex items-start gap-1.5 text-xs text-warning-text">
+            <p key={systemText(tr.locale, w)} className="flex items-start gap-1.5 text-xs text-warning-text">
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              {w}
+              {systemText(tr.locale, w)}
             </p>
           ))}
         </div>
 
         {variableCount > 0 && (
           <div className="space-y-2">
-            <p className="text-sm font-medium">Ejemplo de cada variable</p>
+            <p className="text-sm font-medium">{tr("Ejemplo de cada variable")}</p>
             <p className="text-xs text-muted-foreground">
-              Meta los usa para revisar la plantilla. No se envían a tus clientes.
-            </p>
+              {tr("Meta los usa para revisar la plantilla. No se envían a tus clientes.")}</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {Array.from({ length: variableCount }, (_, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -538,7 +531,7 @@ function CreateForm({
                   </Label>
                   <Input
                     id={`tpl-example-${i + 1}`}
-                    placeholder={i === 0 ? "Ana" : "p. ej. martes 14"}
+                    placeholder={i === 0 ? "Ana" : tr("p. ej. martes 14")}
                     value={examples[i] ?? ""}
                     onChange={(e) => {
                       const next = [...examples];
@@ -555,7 +548,7 @@ function CreateForm({
 
         {body.trim() && !bodyError && (
           <div className="space-y-1.5">
-            <p className="text-sm font-medium">Así lo verá tu cliente</p>
+            <p className="text-sm font-medium">{tr("Así lo verá tu cliente")}</p>
             <div className="rounded-lg bg-chat p-4">
               <div className="ml-auto max-w-[85%] rounded-lg border border-bubble-out-border bg-bubble-out px-3 py-2 text-sm text-bubble-out-text shadow-sm">
                 <p className="whitespace-pre-wrap">{preview}</p>
@@ -565,22 +558,20 @@ function CreateForm({
           </div>
         )}
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-destructive">{systemText(tr.locale, error)}</p>}
         <div className="flex flex-wrap gap-2">
           <Button
             disabled={saving || !name.trim() || !body.trim() || bodyError !== null}
             onClick={() => void create()}
           >
-            {saving ? "Enviando a Meta…" : "Crear y enviar a revisión"}
+            {saving ? tr("Enviando a Meta…") : tr("Crear y enviar a revisión")}
           </Button>
           <Button variant="outline" disabled={saving} onClick={onCancel}>
-            Cancelar
-          </Button>
+            {tr("Cancelar")}</Button>
         </div>
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
           <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Cuando Meta la apruebe aparecerá en la Bandeja, lista para enviar.
-        </p>
+          {tr("Cuando Meta la apruebe aparecerá en la Bandeja, lista para enviar.")}</p>
       </CardContent>
     </Card>
   );
