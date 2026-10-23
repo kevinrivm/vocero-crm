@@ -282,6 +282,11 @@ Abre directo en la Bandeja, sin la barra del navegador. Si se va la red, dice
 «Sin conexión» en vez de mostrar conversaciones viejas: no guarda datos de tus
 clientes en el teléfono.
 
+Si necesitas distribuir un APK propio con cámara, archivos, descargas y recepción
+de «Compartir» de Android, hay un [contenedor Android opcional](apps/android/README.md).
+Reutiliza esta interfaz y la marca de tu instancia. Se compila y firma con tu
+propia clave; no incluye Firebase ni sustituye la PWA.
+
 ### 📄 Plantillas · 👥 Multi-usuario · 🔐 Self-hosted
 
 Plantillas con varias variables `{{1}}…{{n}}` y aprobación de Meta

@@ -39,7 +39,7 @@
 # ============================================================
 services:
   app:
-    image: ghcr.io/kevinrivm/vocero-crm:${VOCERO_CRM_VERSION:-2.2.0}
+    image: ghcr.io/kevinrivm/vocero-crm:${VOCERO_CRM_VERSION:-2.3.0}
     build: .
     restart: unless-stopped
     environment:

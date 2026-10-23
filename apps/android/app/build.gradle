@@ -1,0 +1,48 @@
+plugins { id 'com.android.application' }
+
+def archivoMarca = rootProject.file('marca/config.json')
+if (!archivoMarca.exists()) throw new GradleException('Ejecuta primero node preparar.mjs --servidor https://tu-instancia')
+def marca = new groovy.json.JsonSlurper().parse(archivoMarca)
+def firma = ['ANDROID_KEYSTORE', 'ANDROID_STORE_PASSWORD', 'ANDROID_KEY_ALIAS', 'ANDROID_KEY_PASSWORD'].collectEntries { [(it): System.getenv(it)] }
+def completa = firma.values().every { it }
+
+android {
+    namespace 'org.vocero.android'
+    compileSdk 36
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+    defaultConfig {
+        applicationId marca.paquete
+        minSdk 29
+        targetSdk 36
+        versionCode 1
+        versionName '0.1.0'
+        buildConfigField 'String', 'SERVIDOR', groovy.json.JsonOutput.toJson(marca.servidor)
+    }
+    buildFeatures { buildConfig true }
+    sourceSets.main.res.srcDirs += rootProject.file('marca/res')
+    signingConfigs {
+        if (completa) {
+            propia {
+                storeFile file(firma.ANDROID_KEYSTORE)
+                storePassword firma.ANDROID_STORE_PASSWORD
+                keyAlias firma.ANDROID_KEY_ALIAS
+                keyPassword firma.ANDROID_KEY_PASSWORD
+            }
+        }
+    }
+    buildTypes {
+        debug { manifestPlaceholders = [httpPruebas: 'true'] }
+        release {
+            manifestPlaceholders = [httpPruebas: 'false']
+            if (completa) signingConfig signingConfigs.propia
+        }
+    }
+    lint { abortOnError true; warningsAsErrors false }
+}
+
+gradle.taskGraph.whenReady { graph ->
+    if (graph.allTasks.any { it.name.toLowerCase().contains('release') }) {
+        if (!marca.servidor.startsWith('https://')) throw new GradleException('Release exige HTTPS')
+        if (!completa) throw new GradleException('Release exige las cuatro variables de firma propia; nunca usa la clave debug')
+    }
+}

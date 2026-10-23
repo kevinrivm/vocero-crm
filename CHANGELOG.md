@@ -5,6 +5,19 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
+## 2.3.0 — propuesta, sin publicar
+
+- **Contenedor Android opcional** (053), complemento de la PWA: cámara/archivos,
+  descargas autenticadas, recibir imágenes/PDF desde Compartir y pantalla sin red.
+  Usa la marca y el login originales. El operador compila y firma su APK; no
+  agrega Firebase, servicios, migraciones ni contratos al servidor.
+
+**Actualizar desde 2.2.0:** no hay migraciones ni variables nuevas. La web sigue
+funcionando sin el APK; para usarlo sigue [la guía Android](apps/android/README.md).
+Esta versión y las etiquetas de los manifiestos son una propuesta para revisión:
+no existe una imagen 2.3.0 publicada por esta contribución ni debe desplegarse
+esa etiqueta antes de que el mantenedor publique el release.
+
 ## 2.2.0 — 2026-10-23
 
 Lo que aprendimos de las mejores bandejas abiertas, hecho a la manera de

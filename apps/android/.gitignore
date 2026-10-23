@@ -1,0 +1,8 @@
+/.gradle/
+/local.properties
+/marca/
+*.apk
+*.aab
+*.jks
+*.keystore
+google-services.json

@@ -56,7 +56,7 @@ app = "vocero-crm"
 primary_region = "qro"
 
 [build]
-  image = "ghcr.io/kevinrivm/vocero-crm:2.2.0"
+  image = "ghcr.io/kevinrivm/vocero-crm:2.3.0"
 
 [env]
   # No es secreta y depende del nombre de la app: cámbiala junto con `app`, o

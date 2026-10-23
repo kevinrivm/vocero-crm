@@ -37,7 +37,7 @@ services:
     runtime: image
     image:
       # Pública: sin `creds`. Es linux/amd64, lo único que corre Render.
-      url: ghcr.io/kevinrivm/vocero-crm:2.2.0
+      url: ghcr.io/kevinrivm/vocero-crm:2.3.0
     plan: starter
     # Misma región para el servicio y la base; no se cambia después.
     # region: oregon   # ohio · virginia · frankfurt · singapore

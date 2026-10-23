@@ -1,0 +1,28 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <queries>
+        <intent><action android:name="android.media.action.IMAGE_CAPTURE" /></intent>
+        <intent><action android:name="android.intent.action.VIEW" /><data android:mimeType="application/pdf" /></intent>
+    </queries>
+    <application android:label="@string/nombre_marca" android:icon="@drawable/icono_marca"
+        android:theme="@style/TemaContenedor" android:allowBackup="false"
+        android:fullBackupContent="false" android:dataExtractionRules="@xml/sin_copias"
+        android:usesCleartextTraffic="${httpPruebas}" android:supportsRtl="true">
+        <activity android:name=".Principal" android:exported="true" android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize" android:configChanges="keyboardHidden|orientation|screenSize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" /><data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity>
+        <provider android:name=".ArchivosPrivados" android:authorities="${applicationId}.archivos"
+            android:exported="false" android:grantUriPermissions="true" />
+    </application>
+</manifest>
