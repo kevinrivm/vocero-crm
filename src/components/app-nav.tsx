@@ -9,7 +9,7 @@ import { BotonInstalar } from "@/components/pwa";
 import { BotonActivarAvisos } from "@/components/activar-avisos";
 import { limpiarBorradores } from "@/lib/borradores";
 import type { Branding } from "@/lib/branding";
-import type { ThemePreference } from "@/lib/theme";
+import type { Apariencia } from "@/lib/temas";
 import { cn, initials } from "@/lib/utils";
 import { appNavGroups, isNavActive, SETTINGS_ITEM, type NavItem } from "@/lib/nav";
 import { signOut } from "@/lib/auth/client";
@@ -63,7 +63,7 @@ export function AppNav({
   branding,
   userName,
   role,
-  theme,
+  apariencia,
   commit,
   agenda = false,
   kicker = "CRM · WhatsApp",
@@ -73,7 +73,7 @@ export function AppNav({
   branding: Branding;
   userName: string;
   role: string;
-  theme: ThemePreference;
+  apariencia: Apariencia;
   /**
    * Commit resuelto en el servidor. Gana al de build porque puede venir de la
    * plataforma cuando quien construyó no lo pasó como build-arg — y en ese
@@ -240,7 +240,7 @@ export function AppNav({
       unread={unread}
       userName={userName}
       role={role}
-      theme={theme}
+      apariencia={apariencia}
       campana={campana}
       version={versionTexto}
       versionTitulo={versionTitulo}
@@ -318,7 +318,7 @@ export function AppNav({
         </span>
         <span className="flex shrink-0 items-center">
           {campana}
-          <ThemeToggle initial={theme} />
+          <ThemeToggle initial={apariencia} />
           <button
             aria-label="Cerrar sesión"
             title="Cerrar sesión"
@@ -366,7 +366,7 @@ function Riel({
   unread,
   userName,
   role,
-  theme,
+  apariencia,
   campana,
   version,
   versionTitulo,
@@ -378,7 +378,7 @@ function Riel({
   unread: number;
   userName: string;
   role: string;
-  theme: ThemePreference;
+  apariencia: Apariencia;
   campana: React.ReactNode;
   version: React.ReactNode;
   versionTitulo: string;
@@ -474,7 +474,7 @@ function Riel({
               </div>
               <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[13.5px] text-text-2">
                 Tema
-                <ThemeToggle initial={theme} />
+                <ThemeToggle initial={apariencia} />
               </div>
               <BotonActivarAvisos className={navItemClass(false)} />
               <BotonInstalar className={navItemClass(false)} />

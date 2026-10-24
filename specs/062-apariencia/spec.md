@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-24
 
-**Status**: Especificada antes de escribir código.
+**Status**: Especificada antes de escribir código. Implementada; unitarias (cada tema contra los pisos, tema propio, cookie, ruta) y arnés E2E (23/23) en verde.
 
 **Input**: Kevin, el 2026-10-24: «en la configuración, ahí donde dice Marca,
 poner diversos temas, estaría divertido. Incluso tipo de letras y tamaños.

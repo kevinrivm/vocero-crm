@@ -17,8 +17,14 @@
   :root {
     color-scheme: light;
 
-    /* 061 — La familia de la interfaz (ver layout.tsx). */
+    /* 061 — La familia de la interfaz (ver layout.tsx). 062 la cambia con
+       data-letra. */
     --font-sans: var(--font-urbanist), var(--font-archivo);
+    /* 062 — Tamaño (zoom de la app) y densidad (filas y espacio entre
+       tarjetas). Los cambia Ajustes → Apariencia con data-tamano y
+       data-densidad. */
+    --escala: 1;
+    --hueco: 12px;
 
     /* Neutros: papel frío de la landing */
     --bg: #ffffff;
@@ -455,5 +461,22 @@
     --text: var(--bubble-out-text);
     --text-3: var(--bubble-out-muted);
     color: var(--text);
+  }
+}
+
+/* 062 — Ajustes → Apariencia: letra, tamaño y densidad. */
+:root[data-letra="archivo"] { --font-sans: var(--font-archivo), var(--font-urbanist); }
+:root[data-letra="inter"] { --font-sans: var(--font-inter), var(--font-urbanist); }
+:root[data-letra="plex"] { --font-sans: var(--font-plex-sans), var(--font-urbanist); }
+:root[data-tamano="chico"] { --escala: 0.93; }
+:root[data-tamano="grande"] { --escala: 1.1; }
+:root[data-densidad="compacta"] { --row-py: 7px; --hueco: 8px; }
+:root[data-densidad="espaciosa"] { --row-py: 15px; --hueco: 16px; }
+@layer components {
+  /* El zoom va en la app y no en <body>: la altura de la app se corrige por
+     la escala para que siga midiendo la pantalla exacta. */
+  .app-escala {
+    zoom: var(--escala);
+    height: calc(100dvh / var(--escala));
   }
 }

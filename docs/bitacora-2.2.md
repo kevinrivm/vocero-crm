@@ -950,3 +950,53 @@ oscuro, a 1440 y a 390.
    `--ignore-pattern ".claude/**"`; el CI no los ve.
 3. **Varios arneses** buscaban en el menú de texto lo que ahora vive en el
    menú de la cuenta (avisos, instalar, cerrar sesión). Abren ese menú primero.
+
+## 2026-10-24 — 062: Ajustes → Apariencia
+
+**Qué pidió Kevin**: «diversos temas, como Ableton… incluso tipo de letra y
+tamaños», en Ajustes, con un tema del negocio que cada quien pueda cambiar.
+
+**Qué cambió**:
+
+- **`src/lib/temas.ts`** (puro):
+  - 8 temas listos: Menta, Noche, Vocero, Vocero oscuro, Papel, Carbón,
+    Medianoche y Alto contraste. Cada uno con modo, pareja y tokens; Menta y
+    Noche son la base de `globals.css`.
+  - El tema propio, armado con tres colores (fondo, texto y marco), que no
+    se acepta si no se lee.
+  - Letras (Urbanist, Archivo, Inter, IBM Plex Sans), tamaños (93 %, 100 % y
+    110 %) y densidades.
+  - La resolución cookie → negocio → Vocero, validada con Zod.
+- **El layout raíz** escribe `data-tema`, `data-letra`, `data-tamano` y
+  `data-densidad` en el servidor, e inyecta los temas listos en el `<head>`:
+  sin parpadeo y con cambio en vivo.
+  - El tamaño es un `zoom` en la app, con su altura corregida por la escala.
+  - La densidad cambia `--row-py` y el espacio entre tarjetas (`--hueco`).
+- **El predeterminado del negocio** va en `organization.metadata.apariencia`,
+  por `PUT /api/settings/appearance`, solo para quien configura (si no, 403).
+  La elección de cada persona va en la cookie `vocero-apariencia`. Quien ya
+  tenía el oscuro con el botón de antes ve la pareja oscura del tema del
+  negocio.
+- **El sol y la luna** saltan a la pareja del tema.
+- **La pantalla**:
+  - tarjetas de tema con su miniatura de la Bandeja;
+  - los tres colores del propio, con su aviso;
+  - letra, tamaño y densidad;
+  - «Guardar para mí», «Guardar como predeterminado del negocio» y «Usar el
+    del negocio».
+
+**Cómo se probó**:
+
+- `temas.test.ts`: cada tema pasa los pisos de la 061, más el tema propio, la
+  resolución de la cookie y la copia de la miniatura.
+- `apariencia-route.test.ts`: el 403 y los 422.
+- `nav.test.ts`, puesto al día con el enlace nuevo.
+- `e2e-apariencia.mjs`: 23/23.
+- Los arneses del diseño y la Bandeja siguen en verde con la apariencia
+  conectada: diseño 40/40, responsive, filtros, reenviar, atajos, avisos,
+  borradores, PWA, eventos, notas, búsqueda e imágenes.
+
+**Tiempos reales**: self-test 280/280 a las 01:16 (24 oct).
+
+**Capturas** (`docs/062/`): la Bandeja con cada uno de los 8 temas
+(`tema-…`), Papel, el tema propio, Inter grande compacta y 390 px.

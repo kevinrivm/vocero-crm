@@ -133,6 +133,8 @@ export function settingsSections({
 
   const negocio: SettingsLink[] = [
     { href: "/settings/branding", label: "Marca" },
+    // 062 — Tema, letra, tamaño y densidad (cada quien la suya).
+    { href: "/settings/appearance", label: "Apariencia" },
     { href: "/settings/templates", label: "Plantillas" },
     // 049 — lo que el equipo inserta con «/atajo» en la Bandeja.
     { href: "/settings/quick-replies", label: "Respuestas rápidas" },

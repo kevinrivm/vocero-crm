@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import type { Branding } from "@/lib/branding";
-import type { ThemePreference } from "@/lib/theme";
+import type { Apariencia } from "@/lib/temas";
 import type { ResolvedCommit } from "@/lib/version";
 import { AppNav } from "@/components/app-nav";
 import { BrandLogo } from "@/components/brand-mark";
@@ -28,7 +28,7 @@ export function AppShell({
   branding,
   userName,
   role,
-  theme,
+  apariencia,
   commit,
   agenda = false,
   kicker,
@@ -38,7 +38,7 @@ export function AppShell({
   branding: Branding;
   userName: string;
   role: string;
-  theme: ThemePreference;
+  apariencia: Apariencia;
   /** Commit resuelto en el servidor, con su procedencia (ver `resolveCommit`). */
   commit?: ResolvedCommit;
   /** 015 — ¿esta instancia tiene agenda? Lo decide el servidor. */
@@ -78,7 +78,7 @@ export function AppShell({
   return (
     // 061 · D1 — El marco: en escritorio la app son tarjetas separadas sobre
     // un fondo suave; en el teléfono la pantalla entera es la tarjeta.
-    <div className="app-marco flex h-dvh overflow-hidden lg:gap-3 lg:p-3">
+    <div className="app-marco app-escala flex overflow-hidden lg:gap-[var(--hueco)] lg:p-[var(--hueco)]">
       {navOpen && (
         <button
           aria-label="Cerrar el menú"
@@ -93,14 +93,14 @@ export function AppShell({
         commit={commit}
         userName={userName}
         role={role}
-        theme={theme}
+        apariencia={apariencia}
         agenda={agenda}
         kicker={kicker}
         open={navOpen}
         onClose={() => setNavOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col bg-background lg:gap-3 lg:bg-transparent">
+      <div className="flex min-w-0 flex-1 flex-col bg-background lg:gap-[var(--hueco)] lg:bg-transparent">
         <header className="flex h-12 shrink-0 items-center gap-1.5 border-b bg-background px-2 text-foreground lg:hidden">
           <button
             onClick={() => setNavOpen(true)}

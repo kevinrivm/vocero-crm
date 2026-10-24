@@ -409,7 +409,7 @@ export function InboxClient({
   return (
     // 061 · D3 — En escritorio, la lista, el hilo y el panel son tarjetas
     // separadas sobre el marco.
-    <div className="flex h-full lg:gap-3">
+    <div className="flex h-full lg:gap-[var(--hueco)]">
       {/* Móvil: una columna a la vez. La lista cede la pantalla completa al
           hilo en cuanto hay conversación elegida (patrón maestro-detalle). */}
       <section
@@ -429,7 +429,7 @@ export function InboxClient({
 
       <section
         className={cn(
-          "flex min-w-0 flex-1 flex-col lg:gap-3",
+          "flex min-w-0 flex-1 flex-col lg:gap-[var(--hueco)]",
           !selected && "max-md:hidden"
         )}
       >

@@ -226,7 +226,7 @@ export function ConversationList({
   return (
     // 061 · D3 — El buscador en cápsula, aparte y arriba; debajo, la lista en
     // su tarjeta. En el teléfono va igual, sin el marco alrededor.
-    <div className="flex h-full flex-col bg-background lg:gap-3 lg:bg-transparent">
+    <div className="flex h-full flex-col bg-background lg:gap-[var(--hueco)] lg:bg-transparent">
       <div className="px-4 pt-3 lg:p-0">
         <div className="flex items-center gap-2 rounded-full border border-border-strong bg-chip px-3.5 py-[7px] shadow-sm transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-[3px] focus-within:ring-brand-soft lg:border-transparent lg:bg-background lg:px-4 lg:py-3 lg:shadow-tarjeta">
           <Search className="h-4 w-4 shrink-0 text-text-3" strokeWidth={1.7} />
