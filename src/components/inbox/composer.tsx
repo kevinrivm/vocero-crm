@@ -302,7 +302,8 @@ export function Composer({
       <div
         role="region"
         aria-label="Chat: adjuntar imagen"
-        className="relative flex min-h-0 flex-1 flex-col"
+        // 061 — El hilo con su compositor es una tarjeta en escritorio.
+        className="relative flex min-h-0 flex-1 flex-col bg-chat lg:tarjeta lg:overflow-hidden"
         onDragEnter={(e) => {
           if (!isFileDrag(e)) return;
           e.preventDefault();
@@ -493,7 +494,7 @@ export function Composer({
 
   if (onNota && modo === "nota") {
     return withDropZone(
-      <div className="border-t bg-background px-[18px] pb-3.5 pt-3">
+      <div className="bg-chat px-[18px] pb-3.5 pt-2">
         {pestanas}
         <div
           data-modo="nota"
@@ -547,7 +548,7 @@ export function Composer({
 
   if (!conversation.windowOpen && conversation.channel === "tiktok") {
     return withDropZone(
-      <div className="border-t bg-background px-[18px] py-3.5">
+      <div className="bg-chat px-[18px] py-3.5">
         {pestanas}
         <div className="flex items-start gap-2 rounded-md border border-warning-soft bg-warning-tint p-3 text-sm text-warning-text">
           <Clock3 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.7} />
@@ -572,7 +573,7 @@ export function Composer({
   const canal = CHANNEL_LABEL[conversation.channel];
   if (!conversation.windowOpen && human && !human.open) {
     return withDropZone(
-      <div className="border-t bg-background px-[18px] py-3.5">
+      <div className="bg-chat px-[18px] py-3.5">
         {pestanas}
         <div
           data-window="closed"
@@ -595,7 +596,7 @@ export function Composer({
 
   if (!conversation.windowOpen && !human) {
     return withDropZone(
-      <div className="border-t bg-background px-[18px] py-3.5">
+      <div className="bg-chat px-[18px] py-3.5">
         {pestanas}
         <div className="mb-3 flex items-start gap-2 rounded-md border border-warning-soft bg-warning-tint p-3 text-sm text-warning-text">
           <Clock3 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.7} />
@@ -625,7 +626,7 @@ export function Composer({
   const soloPersona = !conversation.windowOpen && Boolean(human?.open);
 
   return withDropZone(
-    <div className="relative border-t bg-background px-[18px] pb-3.5 pt-3">
+    <div className="relative bg-chat px-[18px] pb-3.5 pt-2">
       {pestanas}
 
       {soloPersona && (
@@ -721,8 +722,10 @@ export function Composer({
           }}
         />
       ) : (
-      /* La caja de escritura en píldora, como la del mockup de la landing */
-      <div className="flex items-end gap-2 rounded-[23px] border border-border-strong bg-background py-1.5 pl-2 pr-1.5 shadow-sm transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-[3px] focus-within:ring-brand-soft">
+      /* 061 · D5 — La caja en cápsula y, aparte, el botón redondo de enviar
+         (o grabar), como en la referencia del diseño de tarjetas. */
+      <div className="flex items-end gap-2.5">
+      <div className="flex min-w-0 flex-1 items-end gap-2 rounded-[23px] border border-border bg-background py-1.5 pl-2 pr-3 shadow-sm transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-[3px] focus-within:ring-brand-soft">
         <input
           ref={fileRef}
           type="file"
@@ -815,6 +818,7 @@ export function Composer({
           }}
           className="max-h-[120px] w-full resize-none self-center bg-transparent py-1 text-sm leading-relaxed outline-none placeholder:text-text-3"
         />
+      </div>
         {puedeGrabar ? (
           <button
             onClick={() => {
@@ -825,11 +829,11 @@ export function Composer({
             aria-label="Grabar nota de voz"
             title="Grabar nota de voz"
             className={cn(
-              "flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-brand text-brand-fg transition-[opacity,background-color] hover:bg-brand-hover",
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-enviar text-enviar-texto shadow-sm transition-[opacity,transform] hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               sending && "opacity-40"
             )}
           >
-            <Mic className="h-4 w-4" strokeWidth={1.7} />
+            <Mic className="h-[18px] w-[18px]" strokeWidth={1.8} />
           </button>
         ) : (
           <button
@@ -837,11 +841,11 @@ export function Composer({
             disabled={sending || !canSubmit}
             aria-label="Enviar"
             className={cn(
-              "flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-brand text-brand-fg transition-[opacity,background-color] hover:bg-brand-hover",
+              "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-enviar text-enviar-texto shadow-sm transition-[opacity,transform] hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               (sending || !canSubmit) && "opacity-40"
             )}
           >
-            <Send className="h-4 w-4" strokeWidth={1.7} />
+            <Send className="h-[18px] w-[18px]" strokeWidth={1.8} />
           </button>
         )}
       </div>

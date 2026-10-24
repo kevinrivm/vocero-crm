@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
-import { Archivo, IBM_Plex_Mono, Instrument_Serif } from "next/font/google";
+import { Archivo, IBM_Plex_Mono, Instrument_Serif, Urbanist } from "next/font/google";
 import { accentCssVariables, DEFAULT_BRANDING } from "@/lib/branding";
 import { faviconHref } from "@/lib/favicon";
 import { appIconHref, NAV_INK, shortAppName } from "@/lib/pwa";
@@ -11,11 +11,19 @@ import { enabledChannels } from "@/server/channels/enabled";
 import { productName } from "@/lib/channels";
 import "./globals.css";
 
-// Las tres voces de la marca, las mismas de vocerocrm.com. next/font las
-// descarga en BUILD y las sirve self-hosted (sin CDN en runtime: soberanía).
+// Las voces de la marca. next/font las descarga en BUILD y las sirve
+// self-hosted (sin CDN en runtime: soberanía). 061 — La interfaz va en
+// Urbanist (geométrica y ligera, como la referencia del diseño de tarjetas);
+// Archivo, la de vocerocrm.com, queda cargada para elegirla (062).
+// `--font-sans` se arma en globals.css a partir de estas.
+const urbanist = Urbanist({
+  subsets: ["latin"],
+  variable: "--font-urbanist",
+  display: "swap",
+});
 const archivo = Archivo({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-archivo",
   display: "swap",
 });
 const instrumentSerif = Instrument_Serif({
@@ -66,7 +74,7 @@ export default async function RootLayout({
   return (
     <html
       lang="es"
-      className={`${archivo.variable} ${instrumentSerif.variable} ${plexMono.variable}`}
+      className={`${urbanist.variable} ${archivo.variable} ${instrumentSerif.variable} ${plexMono.variable}`}
       // La preferencia siempre es explícita: el tema viaja resuelto en el HTML
       // del servidor, así que no hay divergencia con el cliente ni parpadeo.
       data-theme={theme}

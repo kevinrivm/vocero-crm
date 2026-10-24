@@ -73,15 +73,15 @@ console.log("== Setup ==");
 let r = await req.post(`${BASE}/api/auth/sign-up/email`, {
   headers: { origin: BASE },
   data: {
-    email: "e2e@vocero.test",
-    password: "password-e2e-123",
+    email: process.env.E2E_EMAIL ?? "e2e@vocero.test",
+    password: process.env.E2E_PASSWORD ?? "password-e2e-123",
     name: "Operador E2E",
   },
 });
 if (!r.ok())
   r = await req.post(`${BASE}/api/auth/sign-in/email`, {
     headers: { origin: BASE },
-    data: { email: "e2e@vocero.test", password: "password-e2e-123" },
+    data: { email: process.env.E2E_EMAIL ?? "e2e@vocero.test", password: process.env.E2E_PASSWORD ?? "password-e2e-123" },
   });
 ok("login", r.ok());
 await req.put(`${BASE}/api/settings/whatsapp`, {
@@ -300,21 +300,22 @@ ok(
 );
 const medirColumnas = () =>
   desk.evaluate(() => {
-    const aside = document.querySelector("aside");
+    // 061 — En escritorio el menú es el riel de iconos (una tarjeta).
+    const riel = document.querySelector('nav[aria-label="Secciones"].tarjeta');
     const secs = [...document.querySelectorAll("main > div > section")];
     return {
-      aside: aside ? Math.round(aside.getBoundingClientRect().width) : 0,
+      aside: riel ? Math.round(riel.getBoundingClientRect().width) : 0,
       secs: secs.map((s) => Math.round(s.getBoundingClientRect().width)),
     };
   });
 // El panel abre con transición de 220 ms: medir apenas aparece el compositor
 // atraparía un ancho a medio camino.
 const columnasOk = (t) =>
-  t.aside === 224 && t.secs[0] === 360 && t.secs.at(-1) === 320;
+  t.aside === 76 && t.secs[0] === 340 && t.secs.at(-1) === 320;
 await until(async () => columnasOk(await medirColumnas()), 8000);
 const tres = await medirColumnas();
 ok(
-  "escritorio conserva lateral 224px + lista 360px + hilo + detalles 320px",
+  "escritorio: riel 76px + lista 340px + hilo + detalles 320px",
   columnasOk(tres),
   JSON.stringify(tres)
 );
@@ -332,21 +333,24 @@ const luminancia = (rgb) => {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 // El contexto no manda la cookie de tema: la página está en claro.
+// 061 — Ya no hay barra azul marino: el riel es una tarjeta clara y la
+// entrada activa va rellena con la tinta del tema.
 const barra = await desk.evaluate(() => {
-  const aside = document.querySelector("aside");
+  const riel = document.querySelector('nav[aria-label="Secciones"].tarjeta');
+  const activa = riel?.querySelector('[aria-current="page"]');
   return {
     tema: document.documentElement.dataset.theme,
-    fondo: aside ? getComputedStyle(aside).backgroundColor : "",
-    tinta: aside ? getComputedStyle(aside).color : "",
-    pagina: getComputedStyle(document.body).backgroundColor,
+    fondo: riel ? getComputedStyle(riel).backgroundColor : "",
+    activa: activa ? getComputedStyle(activa).backgroundColor : "",
+    icono: activa ? getComputedStyle(activa).color : "",
   };
 });
 ok(
-  "con el tema claro, la barra lateral es azul marino y su texto claro",
+  "con el tema claro, el riel es una tarjeta clara y la activa va en tinta oscura",
   barra.tema === "light" &&
-    luminancia(barra.fondo) < 0.05 &&
-    luminancia(barra.tinta) > 0.6 &&
-    luminancia(barra.pagina) > 0.8,
+    luminancia(barra.fondo) > 0.8 &&
+    luminancia(barra.activa) < 0.05 &&
+    luminancia(barra.icono) > 0.6,
   JSON.stringify(barra)
 );
 
@@ -442,20 +446,27 @@ await until(async () => {
   return dialogo.isVisible();
 }, 20000);
 const oscuro = await desk.evaluate(() => {
-  const aside = document.querySelector("aside");
   const dlg = document.querySelector('[role="dialog"][aria-label="Nuevo contacto"]');
+  // 061 — Lo que se compara es la tarjeta contra el marco que asoma entre ellas.
+  const marco = getComputedStyle(document.documentElement).getPropertyValue("--marco-2").trim();
+  const prueba = document.createElement("span");
+  prueba.style.color = marco;
+  document.body.appendChild(prueba);
+  const marcoRgb = getComputedStyle(prueba).color;
+  prueba.remove();
   return {
     tema: document.documentElement.dataset.theme,
-    barra: aside ? getComputedStyle(aside).backgroundColor : "",
+    barra: marcoRgb,
     pagina: getComputedStyle(document.body).backgroundColor,
     dialogo: dlg ? getComputedStyle(dlg).backgroundColor : "",
   };
 });
 ok(
-  "en oscuro, la barra es más oscura que la página (≥ 1.25:1)",
+  // El mismo piso que vigila tests/unit/contraste-temas.test.ts (061).
+  "en oscuro, el marco es más oscuro que las tarjetas (≥ 1.15:1)",
   oscuro.tema === "dark" &&
     luminancia(oscuro.barra) < luminancia(oscuro.pagina) &&
-    contraste(oscuro.barra, oscuro.pagina) >= 1.25,
+    contraste(oscuro.barra, oscuro.pagina) >= 1.15,
   JSON.stringify(oscuro)
 );
 ok(

@@ -16,6 +16,12 @@
 import { mkdirSync } from "node:fs";
 import { chromium, request } from "playwright";
 
+/** 061 — En escritorio, avisos, instalar y cerrar sesión viven en el menú de la cuenta del riel. */
+async function abrirCuenta(p) {
+  const c = p.getByRole("button", { name: "Tu cuenta" });
+  if ((await c.isVisible().catch(() => false)) && (await c.getAttribute("aria-expanded")) !== "true") await c.click();
+}
+
 const BASE = process.env.APP_BASE_URL ?? "http://localhost:3000";
 const EMAIL = process.env.E2E_EMAIL ?? "e2e-avisos-sistema@vocero.test";
 const PASSWORD = process.env.E2E_PASSWORD ?? "password-e2e-avisos";
@@ -135,6 +141,7 @@ try {
   const oculta = (v) => page.evaluate((x) => (window.__oculta = x), v);
 
   console.log("\n== AC1 · «Activar avisos» ==");
+  await abrirCuenta(page);
   const activar = page.getByRole("button", { name: "Activar avisos" });
   ok("con el permiso sin decidir, el menú ofrece «Activar avisos»", await activar.isVisible());
   await activar.click();
@@ -199,6 +206,7 @@ try {
   const pn = await negado.newPage();
   await pn.goto(`${BASE}/inbox`);
   await pn.getByText(NOMBRES.b).first().waitFor({ timeout: 20000 });
+  await abrirCuenta(pn);
   ok("con el permiso negado, no aparece «Activar avisos»", (await pn.getByRole("button", { name: "Activar avisos" }).count()) === 0);
   await negado.close();
 

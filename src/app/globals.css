@@ -17,34 +17,37 @@
   :root {
     color-scheme: light;
 
+    /* 061 — La familia de la interfaz (ver layout.tsx). */
+    --font-sans: var(--font-urbanist), var(--font-archivo);
+
     /* Neutros: papel frío de la landing */
     --bg: #ffffff;
-    --bg-subtle: #f6f8fc;
-    --bg-panel: #eef2f9;
-    --bg-hover: #e9eef8;
+    --bg-subtle: #eef4f0;
+    --bg-panel: #e7efea;
+    --bg-hover: #dfe9e3;
     /* Lo que flota sobre la página: diálogos, cajones, menús. En claro es el
        mismo blanco de siempre; en oscuro se aclara para despegarse. */
     --bg-raised: #ffffff;
-    --text: #0a1730;
-    --text-2: #42506b;
-    --text-3: #8391aa;
-    --text-4: #aab4c8;
-    --border: #e8edf6;
-    --border-strong: #dde5f1;
+    --text: #141a17;
+    --text-2: #47524d;
+    --text-3: #5f6a65;
+    --text-4: #8a958f;
+    --border: #e1e9e4;
+    --border-strong: #cfdad3;
     /* Chips dentro de una fila y la fila bajo el cursor. En claro coinciden
        con --bg y --bg-subtle; en oscuro NO: ahí --bg-subtle es más oscuro que
        --bg y un chip con fondo --bg desaparece dentro de la fila. */
     --chip-bg: #ffffff;
-    --row-hover: #f6f8fc;
+    --row-hover: #eef4f0;
     /* 215 — Lo no hábil del calendario de Citas (ver .cal-off). */
-    --cal-off: #f6f8fc;
+    --cal-off: #eef4f0;
 
     /* Chat: el cliente entra en verde WhatsApp, el CRM contesta en el acento */
-    --chat-bg: #f6f8fc;
-    --bubble-in: #eaf7ef;
-    --bubble-in-border: #d7eede;
-    --bubble-out: var(--accent-tint);
-    --bubble-out-border: var(--accent-soft);
+    --chat-bg: #eef4f0;
+    --bubble-in: #151b18;
+    --bubble-in-border: #151b18;
+    --bubble-out: #ffffff;
+    --bubble-out-border: #d8e2dc;
     --bubble-out-text: var(--text);
 
     /* Acento (default: azul Vocero; el white-label lo sobreescribe) */
@@ -64,7 +67,7 @@
     /* 039: fondo del fragmento citado dentro de una burbuja (cualquier color). */
     --quote-bg: rgba(0, 0, 0, 0.05);
     --quote-bg-hover: rgba(0, 0, 0, 0.09);
-    --bg-active: var(--accent-tint);
+    --bg-active: #e6f0ea;
 
     /* Estado: color puro + tríada (tint = fondo, soft = borde, text = tinta) */
     --success: #1fb35b;
@@ -93,16 +96,39 @@
     --knob: #ffffff;
 
     /* Radios y sombras (las de la landing, con tinte azul marino) */
-    --radius-sm: 9px;
-    --radius: 12px;
-    --radius-lg: 16px;
-    --shadow-sm: 0 1px 2px rgba(8, 27, 82, 0.06);
-    --shadow-md: 0 14px 40px -16px rgba(8, 27, 82, 0.16);
+    --radius-sm: 10px;
+    --radius: 14px;
+    --radius-lg: 20px;
+    --shadow-sm: 0 1px 2px rgba(20, 40, 30, 0.05);
+    --shadow-md: 0 14px 40px -16px rgba(20, 40, 30, 0.16);
     --shadow-pop: 0 30px 80px -20px rgba(8, 27, 82, 0.22),
       0 8px 24px -12px rgba(8, 27, 82, 0.12);
 
     /* Densidad de filas de conversación */
     --row-py: 11px;
+
+    /* 061 — Diseño de tarjetas (Menta). El marco es el fondo que se ve entre
+       las tarjetas; la tarjeta, cada zona (riel, lista, hilo, panel). */
+    --marco-1: #f1eee5;
+    --marco-2: #cde1d5;
+    --radio-tarjeta: 24px;
+    --sombra-tarjeta: 0 1px 2px rgba(20, 40, 30, 0.04),
+      0 10px 30px -14px rgba(20, 40, 30, 0.16);
+    /* El riel de iconos y el botón de enviar: ni el acento ni el gris, la
+       tinta del tema (como en la referencia). */
+    --riel-activo: #151b18;
+    --riel-activo-texto: #ffffff;
+    --enviar: #151b18;
+    --enviar-texto: #ffffff;
+    /* Lo que va DENTRO de una burbuja (ver .burbuja-in / .burbuja-out): su
+       texto, lo secundario (hora, cita), los enlaces y una superficie para lo
+       que se apoya encima (un documento, el audio). */
+    --bubble-in-text: #f3f6f4;
+    --bubble-in-muted: #a7b2ac;
+    --bubble-in-link: #8fcbff;
+    --bubble-in-raised: #252c28;
+    --bubble-in-line: #3a443f;
+    --bubble-out-muted: #5f6a65;
   }
 
   /*
@@ -119,40 +145,40 @@
     /* Escalera de superficies, de la más honda a la más alta. --bg-subtle es
        el hueco (hilo del chat, columnas del pipeline, fuera de horario), como
        el papel gris del tema claro. */
-    --bg-subtle: #141c30;
-    --bg: #1c263c;
-    --row-hover: #212c45;
-    --bg-raised: #222d47;
-    --chip-bg: #26334d;
-    --bg-panel: #2c3a57;
-    --bg-hover: #2f3d5e;
+    --bg-subtle: #121916;
+    --bg: #1a2320;
+    --row-hover: #202a26;
+    --bg-raised: #212b27;
+    --chip-bg: #26312c;
+    --bg-panel: #2c3833;
+    --bg-hover: #33413a;
     /* 215 — Lo no hábil del calendario: el mismo hueco que en claro. */
-    --cal-off: #141c30;
-    --text: #e8eefc;
-    --text-2: #bac6e3;
+    --cal-off: #121916;
+    --text: #eaf1ed;
+    --text-2: #b8c5be;
     /* ≥ 4.5:1 incluso sobre el hover más claro: la `.kicker` mide 10.5px. */
-    --text-3: #9aa9ca;
+    --text-3: #a5b2ab;
     /* Solo iconos y deshabilitado (≥ 3:1), nunca texto de lectura. */
-    --text-4: #7888ad;
+    --text-4: #76847d;
     /* Bordes ≥ 1.6:1 contra la página (214) y ≥ 1.4:1 contra lo que flota. */
-    --border: #36476f;
-    --border-strong: #4a5d8e;
+    --border: #3d4e46;
+    --border-strong: #506259;
 
     /* Chat */
-    --chat-bg: #141c30;
-    --bubble-in: #173d2c;
-    --bubble-in-border: #2a5e45;
+    --chat-bg: #121916;
+    --bubble-in: #e6eee9;
+    --bubble-in-border: #e6eee9;
 
     /* Acento: respaldo con el azul Vocero calculado para este fondo; el
        white-label lo recalcula (ver resolveAccentSet en lib/branding). */
-    --accent: #256bff;
-    --accent-hover: #4883ff;
-    --accent-soft: #1f3f82;
-    --accent-tint: #1e3567;
+    --accent: #0d5bff;
+    --accent-hover: #3475ff;
+    --accent-soft: #143c82;
+    --accent-tint: #16335e;
     --accent-text: #6f9eff;
     --accent-fg: #ffffff;
     --accent-ink: var(--accent-text);
-    --ring: var(--accent-hover);
+    --ring: var(--accent-text);
     --accent-veil: rgba(0, 0, 0, 0.22);
     --quote-bg: rgba(255, 255, 255, 0.07);
     --quote-bg-hover: rgba(255, 255, 255, 0.12);
@@ -188,6 +214,26 @@
     --shadow-md: 0 14px 40px -16px rgba(0, 0, 0, 0.6);
     --shadow-pop: 0 30px 80px -20px rgba(0, 0, 0, 0.75),
       0 8px 24px -12px rgba(0, 0, 0, 0.5);
+
+    /* 061 — Noche: la pareja oscura de Menta. Se invierten las burbujas: el
+       cliente en claro, la respuesta en una tarjeta un escalón arriba. */
+    --bubble-out: #26312c;
+    --bubble-out-border: #3b4a43;
+    --bubble-out-text: #eaf1ed;
+    --bubble-out-muted: #a3b0a9;
+    --bubble-in-text: #111613;
+    --bubble-in-muted: #4f5b55;
+    --bubble-in-link: #0b4bd1;
+    --bubble-in-raised: #d6e0da;
+    --bubble-in-line: #b9c6be;
+    --bg-active: #25332c;
+    --marco-1: #090d0b;
+    --marco-2: #0d1210;
+    --sombra-tarjeta: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.55);
+    --riel-activo: #e6eee9;
+    --riel-activo-texto: #111613;
+    --enviar: #e6eee9;
+    --enviar-texto: #111613;
   }
 
   /*
@@ -310,19 +356,14 @@
 
   /* Fondo del hilo: un leve resplandor del acento en la esquina, como en el
      mockup de la landing. Si el navegador no sabe color-mix, queda el plano. */
+  /* 061 — El fondo del hilo: el lavado del tema, con un brillo suave del
+     marco arriba (ya no el resplandor del acento: el chat es neutro, como en
+     la referencia, y el acento se queda para lo que se toca). */
   .thread-bg {
     background-color: var(--chat-bg);
     background-image: radial-gradient(
       circle at 82% 0%,
-      color-mix(in srgb, var(--accent) 7%, transparent),
-      transparent 55%
-    );
-  }
-  /* En oscuro el 7% no se percibe y el hilo vacío se ve como un hueco. */
-  :root[data-theme="dark"] .thread-bg {
-    background-image: radial-gradient(
-      circle at 82% 0%,
-      color-mix(in srgb, var(--accent) 16%, transparent),
+      color-mix(in srgb, var(--marco-2) 55%, transparent),
       transparent 60%
     );
   }
@@ -377,5 +418,42 @@
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+@layer components {
+  /* 061 — El fondo de marco: se ve entre las tarjetas (y es toda la página en
+     el teléfono, donde la tarjeta ocupa la pantalla). */
+  .app-marco {
+    background: linear-gradient(150deg, var(--marco-1) 0%, var(--marco-2) 100%);
+  }
+  .tarjeta {
+    background: var(--bg);
+    border-radius: var(--radio-tarjeta);
+    box-shadow: var(--sombra-tarjeta);
+  }
+
+  /* 061 — Dentro de una burbuja se redeclaran los neutros, como hace .nav-dark
+     con la barra: así la hora (text-3), la cita (quote), los enlaces
+     (accent-ink) y un documento (bg) se leen sobre la burbuja oscura sin
+     tocar cada componente. */
+  .burbuja-in {
+    --text: var(--bubble-in-text);
+    --text-2: var(--bubble-in-text);
+    --text-3: var(--bubble-in-muted);
+    --text-4: var(--bubble-in-muted);
+    --accent-ink: var(--bubble-in-link);
+    --bg: var(--bubble-in-raised);
+    --bg-subtle: var(--bubble-in-raised);
+    --border: var(--bubble-in-line);
+    --border-strong: var(--bubble-in-line);
+    --quote-bg: rgba(127, 127, 127, 0.18);
+    --quote-bg-hover: rgba(127, 127, 127, 0.28);
+    color: var(--text);
+  }
+  .burbuja-out {
+    --text: var(--bubble-out-text);
+    --text-3: var(--bubble-out-muted);
+    color: var(--text);
   }
 }

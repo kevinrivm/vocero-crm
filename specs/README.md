@@ -33,6 +33,8 @@ producto** — y saberlo antes de leerla ahorra una confusión.
 | `049-respuestas-rapidas` | Ciclo completo | spec, plan, tasks (respuestas rápidas con «/» en el compositor, administradas en Ajustes; migración aditiva `0024`) |
 | `050-notas-internas` | Ciclo completo | spec, plan, tasks (notas internas en el hilo, en su propia tabla; migración aditiva `0025`; enmienda el contrato SSE con `note.new` y `note.deleted`) |
 | `051-borrador-por-conversacion` | Ligero | spec (lo escrito en una conversación vuelve al regresar; en el navegador, se borra al enviar, a los 7 días y al cerrar sesión) |
+| `061-diseno-tarjetas` | Ligero | spec (diseño de tarjetas inspirado en la referencia 6: marco, riel de iconos, Bandeja en tarjetas, cliente en burbuja oscura, compositor en cápsula; tema Menta / Noche) |
+| `062-apariencia` | Ligero | spec (Ajustes → Apariencia: temas listos, tema propio, letra, tamaño y densidad; predeterminado del negocio y elección por persona) |
 | `055-atajos-de-teclado` | Ligero | spec (Ctrl+K para ir a una pantalla o conversación, «?» para la ayuda; Alt+J/K, «/», Alt+R y Alt+N en la Bandeja) |
 | `054-eventos-en-el-hilo` | Ligero | spec (cambios de etapa y traspaso a una persona pintados en el hilo, con lo que ya se guarda; `GET …/eventos`) |
 | `056-avisos-y-sin-conexion` | Ligero | spec (avisos del sistema con Vocero oculto, sin push; banda «sin conexión» y reconexión del SSE con espera creciente) |

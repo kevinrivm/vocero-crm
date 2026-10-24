@@ -132,7 +132,7 @@ function contrast(a: Rgb, b: Rgb): number {
 }
 
 /** Fondo de referencia del tema oscuro (debe seguir a `--bg` de globals.css). */
-const DARK_BG: Rgb = { r: 0x1c, g: 0x26, b: 0x3c };
+const DARK_BG: Rgb = { r: 0x1a, g: 0x23, b: 0x20 };
 
 /**
  * Fondo de referencia de la barra lateral (debe seguir a `--bg` de `.nav-dark`).
@@ -169,7 +169,7 @@ type DarkRecipe = { bg: Rgb; minContrast: number; soft: number; tint: number; te
 // Página oscura: con 3:1 el azul Vocero conserva la tinta blanca (4.5:1); el
 // tint más denso (0.78) hace que la fila seleccionada se vea sin leer el color
 // del texto (≥ 1.25:1 contra el fondo).
-const PAGE_DARK: DarkRecipe = { bg: DARK_BG, minContrast: 3, soft: 0.64, tint: 0.78, text: 0.34 };
+const PAGE_DARK: DarkRecipe = { bg: DARK_BG, minContrast: 3, soft: 0.56, tint: 0.72, text: 0.34 };
 // Barra lateral: la receta de siempre, para que se vea igual que antes.
 const NAV_DARK: DarkRecipe = { bg: NAV_BG, minContrast: 3.5, soft: 0.72, tint: 0.88, text: 0.28 };
 

@@ -10,7 +10,7 @@ import {
   resolveNavAccentSet,
 } from "@/lib/branding";
 
-const DARK_BG = "#1c263c";
+const DARK_BG = "#1a2320";
 const NAV_BG = "#0b1327";
 
 /** Contraste WCAG entre dos hex, para afirmar sobre legibilidad y no sobre

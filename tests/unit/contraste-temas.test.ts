@@ -80,19 +80,23 @@ function arriba(vars: Vars, a: string, b: string) {
   ).toBeGreaterThan(luminancia(hex(vars, b)));
 }
 
-describe("tema oscuro: el bicolor no desaparece", () => {
-  it("la barra es claramente más oscura que la página (≥ 1.25:1)", () => {
-    // La barra pinta `bg-subtle` DENTRO de `.nav-dark`; la página, `--bg`.
-    const barra = hex(nav, "--bg-subtle");
-    const pagina = hex(oscuro, "--bg");
-    expect(luminancia(barra)).toBeLessThan(luminancia(pagina));
-    expect(contraste(barra, pagina)).toBeGreaterThanOrEqual(1.25);
-    // …y el hueco de la página (hilo, columnas) tampoco se confunde con ella.
-    expect(contraste(barra, hex(oscuro, "--bg-subtle"))).toBeGreaterThanOrEqual(1.1);
+describe("061 — las tarjetas se despegan del marco", () => {
+  // La barra azul marino (.nav-dark) ya no es el menú: en escritorio es el riel
+  // de iconos, una tarjeta más. Lo que tiene que verse es la tarjeta contra el
+  // marco que asoma entre ellas.
+  it("en claro y en oscuro, la tarjeta y el marco no se confunden", () => {
+    piso(claro, "--bg", "--marco-2", 1.1);
+    piso(oscuro, "--bg", "--marco-2", 1.15);
+    arriba(oscuro, "--bg", "--marco-2");
   });
 
-  it("en claro la barra sigue siendo azul marino sobre blanco", () => {
-    expect(contraste(hex(nav, "--bg-subtle"), hex(claro, "--bg"))).toBeGreaterThanOrEqual(15);
+  it("el riel activo y el botón de enviar se ven y su icono se lee", () => {
+    for (const t of [claro, oscuro]) {
+      piso(t, "--riel-activo", "--bg", 3);
+      piso(t, "--riel-activo-texto", "--riel-activo", 4.5);
+      piso(t, "--enviar", "--chat-bg", 3);
+      piso(t, "--enviar-texto", "--enviar", 4.5);
+    }
   });
 });
 
@@ -135,12 +139,18 @@ describe("tema oscuro: escalera de superficies", () => {
     piso(oscuro, "--border-strong", "--bg-raised", 2);
   });
 
-  it("las burbujas se despegan del hilo", () => {
-    piso(oscuro, "--bubble-in", "--chat-bg", 1.3);
-    piso(oscuro, "--bubble-in-border", "--chat-bg", 2);
-    piso(oscuro, "--accent-tint", "--chat-bg", 1.3); // --bubble-out
-    piso(oscuro, "--text", "--bubble-in", 7);
-    piso(oscuro, "--text", "--accent-tint", 7);
+  it("las burbujas se despegan del hilo y lo de adentro se lee", () => {
+    // 061 — Cada burbuja lleva su texto, su gris (hora, cita) y sus enlaces.
+    for (const t of [claro, oscuro]) {
+      piso(t, "--bubble-in", "--chat-bg", 1.3);
+      piso(t, "--bubble-in-text", "--bubble-in", 7);
+      piso(t, "--bubble-in-muted", "--bubble-in", 4.5);
+      piso(t, "--bubble-in-link", "--bubble-in", 4.5);
+      piso(t, "--bubble-in-text", "--bubble-in-raised", 7);
+      piso(t, "--bubble-out-text", "--bubble-out", 7);
+      piso(t, "--bubble-out-muted", "--bubble-out", 4.5);
+      piso(t, "--bubble-out-border", "--chat-bg", 1.15);
+    }
   });
 });
 

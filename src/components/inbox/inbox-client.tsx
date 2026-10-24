@@ -407,12 +407,14 @@ export function InboxClient({
   );
 
   return (
-    <div className="flex h-full">
+    // 061 · D3 — En escritorio, la lista, el hilo y el panel son tarjetas
+    // separadas sobre el marco.
+    <div className="flex h-full lg:gap-3">
       {/* Móvil: una columna a la vez. La lista cede la pantalla completa al
           hilo en cuanto hay conversación elegida (patrón maestro-detalle). */}
       <section
         className={cn(
-          "w-full shrink-0 overflow-hidden border-r md:w-[300px] lg:w-[360px]",
+          "w-full shrink-0 overflow-hidden md:w-[300px] md:border-r lg:w-[340px] lg:overflow-visible lg:border-r-0",
           selected && "max-md:hidden"
         )}
       >
@@ -427,13 +429,13 @@ export function InboxClient({
 
       <section
         className={cn(
-          "flex min-w-0 flex-1 flex-col",
+          "flex min-w-0 flex-1 flex-col lg:gap-3",
           !selected && "max-md:hidden"
         )}
       >
         {selected ? (
           <>
-            <header className="flex items-center justify-between gap-1 border-b bg-background px-2 py-2.5 md:px-4">
+            <header className="flex items-center justify-between gap-1 border-b bg-background px-2 py-2.5 md:px-4 lg:tarjeta lg:border-b-0 lg:px-5 lg:py-3">
               {/* Volver a la lista: en móvil el hilo ocupa toda la pantalla. */}
               <button
                 onClick={() => setSelectedId(null)}
@@ -449,7 +451,7 @@ export function InboxClient({
                   size="md"
                 />
                 <div className="min-w-0">
-                  <p className="flex min-w-0 items-center gap-1.5 text-[15px] font-bold leading-tight tracking-tight">
+                  <p className="flex min-w-0 items-center gap-1.5 text-[15px] font-bold leading-tight tracking-tight lg:text-[18px] lg:font-semibold">
                     {multiChannel && <ChannelBadge channel={selected.channel} />}
                     <span className="truncate">{selected.contact.name}</span>
                   </p>
@@ -550,7 +552,7 @@ export function InboxClient({
             </Composer>
           </>
         ) : (
-          <div className="thread-bg flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
+          <div className="thread-bg flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center lg:tarjeta">
             <p className="font-serif text-[24px] italic leading-tight text-text-2">
               Elige una conversación para ver el hilo
             </p>
@@ -571,13 +573,13 @@ export function InboxClient({
 
       <section
         className={cn(
-          "shrink-0 overflow-hidden border-l transition-[width] duration-200",
+          "shrink-0 overflow-hidden border-l transition-[width] duration-200 xl:tarjeta xl:border-l-0",
           // Debajo de xl no hay ancho para una tercera columna: el panel se
           // vuelve un cajón que entra desde la derecha, encima del hilo.
           "max-xl:fixed max-xl:inset-y-0 max-xl:right-0 max-xl:z-40 max-xl:w-auto max-xl:bg-popover max-xl:transition-transform",
           panelOpen && selected
             ? "w-[320px] max-xl:translate-x-0 max-xl:shadow-pop"
-            : "w-0 border-l-0 max-xl:translate-x-full"
+            : "w-0 border-l-0 max-xl:translate-x-full xl:hidden"
         )}
       >
         {selected && (

@@ -224,9 +224,34 @@ export function ConversationList({
   }
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="border-b px-4 pb-3 pt-4">
-        <div className="mb-3 flex items-center gap-2">
+    // 061 · D3 — El buscador en cápsula, aparte y arriba; debajo, la lista en
+    // su tarjeta. En el teléfono va igual, sin el marco alrededor.
+    <div className="flex h-full flex-col bg-background lg:gap-3 lg:bg-transparent">
+      <div className="px-4 pt-3 lg:p-0">
+        <div className="flex items-center gap-2 rounded-full border border-border-strong bg-chip px-3.5 py-[7px] shadow-sm transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-[3px] focus-within:ring-brand-soft lg:border-transparent lg:bg-background lg:px-4 lg:py-3 lg:shadow-tarjeta">
+          <Search className="h-4 w-4 shrink-0 text-text-3" strokeWidth={1.7} />
+          <input
+            ref={inputRef}
+            placeholder="Buscar por nombre o teléfono…"
+            aria-label="Buscar conversación"
+            defaultValue=""
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full bg-transparent text-[13px] outline-none placeholder:text-text-3"
+          />
+          {query && (
+            <button
+              onClick={clearQuery}
+              aria-label="Limpiar búsqueda"
+              className="shrink-0 rounded-full p-0.5 text-text-3 hover:bg-accent hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" strokeWidth={2} />
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col bg-background lg:tarjeta lg:overflow-hidden">
+      <header className="border-b px-4 pb-3 pt-3.5">
+        <div className="flex items-center gap-2">
           <h2 className="text-[17px] font-bold tracking-tight">Bandeja</h2>
           <span className="font-mono text-[12px] text-text-3">{conversations.length}</span>
           {multiChannel && (
@@ -261,26 +286,6 @@ export function ConversationList({
                 );
               })}
             </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2 rounded-full border border-border-strong bg-chip px-3.5 py-[7px] shadow-sm transition-[border-color,box-shadow] focus-within:border-brand focus-within:ring-[3px] focus-within:ring-brand-soft">
-          <Search className="h-4 w-4 shrink-0 text-text-3" strokeWidth={1.7} />
-          <input
-            ref={inputRef}
-            placeholder="Buscar por nombre o teléfono…"
-            aria-label="Buscar conversación"
-            defaultValue=""
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-transparent text-[13px] outline-none placeholder:text-text-3"
-          />
-          {query && (
-            <button
-              onClick={clearQuery}
-              aria-label="Limpiar búsqueda"
-              className="shrink-0 rounded-full p-0.5 text-text-3 hover:bg-accent hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" strokeWidth={2} />
-            </button>
           )}
         </div>
       </header>
@@ -433,9 +438,6 @@ export function ConversationList({
               const active = selectedId === c.id;
               return (
                 <li key={c.id} className="relative border-b border-border">
-                  {active && (
-                    <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
-                  )}
                   <button
                     onClick={() => onSelect(c.id)}
                     // 055 — Cuál está abierta, para Alt+J/K y los lectores de pantalla.
@@ -459,7 +461,7 @@ export function ConversationList({
                           <span
                             className={cn(
                               "truncate text-sm",
-                              unread ? "font-[680]" : "font-semibold"
+                              unread ? "font-semibold" : "font-medium"
                             )}
                           >
                             {c.contact.name}
@@ -548,6 +550,7 @@ export function ConversationList({
             })}
           </ul>
         )}
+      </div>
       </div>
     </div>
   );

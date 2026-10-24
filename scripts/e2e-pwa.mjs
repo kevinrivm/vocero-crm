@@ -18,6 +18,12 @@ import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
 
+/** 061 — En escritorio, avisos, instalar y cerrar sesión viven en el menú de la cuenta del riel. */
+async function abrirCuenta(p) {
+  const c = p.getByRole("button", { name: "Tu cuenta" });
+  if ((await c.isVisible().catch(() => false)) && (await c.getAttribute("aria-expanded")) !== "true") await c.click();
+}
+
 const BASE = process.env.APP_BASE_URL ?? "http://localhost:3000";
 const EMAIL = process.env.E2E_PWA_EMAIL ?? "e2e-pwa@vocero.test";
 const PASSWORD = process.env.E2E_PWA_PASSWORD ?? "password-e2e-pwa";
@@ -145,6 +151,7 @@ try {
     };
     window.dispatchEvent(e);
   });
+  await abrirCuenta(page);
   await boton.waitFor({ timeout: 5000 }).catch(() => {});
   ok("con el aviso aparece en el pie del menú", (await boton.count()) === 1);
   await page.screenshot({ path: ".tmp/e2e-048-boton-instalar.png" });

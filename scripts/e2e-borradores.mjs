@@ -10,6 +10,12 @@
 import { mkdirSync } from "node:fs";
 import { chromium } from "playwright";
 
+/** 061 — En escritorio, avisos, instalar y cerrar sesión viven en el menú de la cuenta del riel. */
+async function abrirCuenta(p) {
+  const c = p.getByRole("button", { name: "Tu cuenta" });
+  if ((await c.isVisible().catch(() => false)) && (await c.getAttribute("aria-expanded")) !== "true") await c.click();
+}
+
 const BASE = process.env.APP_BASE_URL ?? "http://localhost:3000";
 const EMAIL = process.env.E2E_EMAIL ?? "e2e-borradores@vocero.test";
 const PASSWORD = process.env.E2E_PASSWORD ?? "password-e2e-borradores";
@@ -132,6 +138,7 @@ try {
   console.log("\n== AC6 · cerrar sesión los borra todos ==");
   const antesLogout = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("vocero.borrador.")).length);
   ok("había borradores", antesLogout >= 2, String(antesLogout));
+  await abrirCuenta(page);
   await page.getByRole("button", { name: "Cerrar sesión" }).click();
   await page.waitForURL(/\/login/, { timeout: 15000 }).catch(() => {});
   const despuesLogout = await page.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("vocero.borrador.")).length);

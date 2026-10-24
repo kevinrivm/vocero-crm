@@ -8,6 +8,7 @@ import type { ThemePreference } from "@/lib/theme";
 import type { ResolvedCommit } from "@/lib/version";
 import { AppNav } from "@/components/app-nav";
 import { BrandLogo } from "@/components/brand-mark";
+import { cn } from "@/lib/utils";
 import { BandaSinConexion } from "@/components/banda-sin-conexion";
 import { AtajosGlobales } from "@/components/atajos-globales";
 
@@ -56,6 +57,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const esBandeja = pathname === "/inbox" || pathname.startsWith("/inbox/");
   const [navOpen, setNavOpen] = useState(false);
 
   // Navegar = cerrar el cajón. Sin esto, tocar "Pipeline" deja el velo encima
@@ -74,7 +76,9 @@ export function AppShell({
   }, [navOpen]);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-background">
+    // 061 · D1 — El marco: en escritorio la app son tarjetas separadas sobre
+    // un fondo suave; en el teléfono la pantalla entera es la tarjeta.
+    <div className="app-marco flex h-dvh overflow-hidden lg:gap-3 lg:p-3">
       {navOpen && (
         <button
           aria-label="Cerrar el menú"
@@ -96,10 +100,8 @@ export function AppShell({
         onClose={() => setNavOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Misma pieza que la barra lateral (`nav-dark`): en el teléfono la
-            franja azul marino de arriba es lo que queda del bicolor. */}
-        <header className="nav-dark flex h-12 shrink-0 items-center gap-1.5 border-b bg-subtle px-2 text-foreground lg:hidden">
+      <div className="flex min-w-0 flex-1 flex-col bg-background lg:gap-3 lg:bg-transparent">
+        <header className="flex h-12 shrink-0 items-center gap-1.5 border-b bg-background px-2 text-foreground lg:hidden">
           <button
             onClick={() => setNavOpen(true)}
             aria-label="Abrir el menú"
@@ -117,7 +119,16 @@ export function AppShell({
         {/* 055 — Ctrl+K y «?» desde cualquier pantalla. */}
         <AtajosGlobales agenda={agenda} role={role} />
 
-        <main className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</main>
+        {/* La Bandeja trae sus propias tarjetas (lista, hilo, panel); el resto
+            de las pantallas vive en una sola. */}
+        <main
+          className={cn(
+            "min-h-0 min-w-0 flex-1 overflow-hidden bg-background",
+            esBandeja ? "lg:bg-transparent" : "lg:tarjeta"
+          )}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

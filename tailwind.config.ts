@@ -85,6 +85,17 @@ const config: Config = {
         "bubble-out": "var(--bubble-out)",
         "bubble-out-border": "var(--bubble-out-border)",
         "bubble-out-text": "var(--bubble-out-text)",
+        // 061 — Diseño de tarjetas.
+        "bubble-in-text": "var(--bubble-in-text)",
+        activo: "var(--bg-active)",
+        riel: {
+          activo: "var(--riel-activo)",
+          "activo-texto": "var(--riel-activo-texto)",
+        },
+        enviar: {
+          DEFAULT: "var(--enviar)",
+          texto: "var(--enviar-texto)",
+        },
         success: {
           DEFAULT: "var(--success)",
           tint: "var(--success-tint)",
@@ -118,11 +129,13 @@ const config: Config = {
         sm: "var(--radius-sm)",
         md: "var(--radius)",
         lg: "var(--radius-lg)",
+        tarjeta: "var(--radio-tarjeta)",
       },
       boxShadow: {
         sm: "var(--shadow-sm)",
         md: "var(--shadow-md)",
         pop: "var(--shadow-pop)",
+        tarjeta: "var(--sombra-tarjeta)",
       },
       // Las tres voces de la marca (ver src/app/layout.tsx, donde next/font
       // las descarga en build y las sirve self-hosted, sin CDN en runtime).

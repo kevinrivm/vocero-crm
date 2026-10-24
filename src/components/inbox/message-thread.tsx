@@ -536,14 +536,15 @@ export function MessageThread({
               <div
                 data-message-id={m.id}
                 className={cn(
-                  // Burbujas del mockup de la landing: el cliente entra en
-                  // verde WhatsApp, el CRM contesta con el lavado del acento.
+                  // 061 · D4 — El cliente en la burbuja oscura, la respuesta en
+                  // pastilla clara. `burbuja-in` / `burbuja-out` redeclaran los
+                  // neutros adentro (hora, cita, enlaces) para que se lean.
                   // `flow-root` contiene la hora (un float): desde la 059 la
                   // burbuja va envuelta y ya no es un elemento flex que lo haga.
-                  "flow-root rounded-[14px] border px-3 pb-1.5 pt-2 text-[13.5px] leading-[1.45] shadow-sm",
+                  "flow-root rounded-[18px] border px-3.5 pb-1.5 pt-2 text-[13.5px] leading-[1.45] shadow-sm",
                   out
-                    ? "border-bubble-out-border bg-bubble-out text-bubble-out-text"
-                    : "border-bubble-in-border bg-bubble-in",
+                    ? "burbuja-out border-bubble-out-border bg-bubble-out"
+                    : "burbuja-in border-bubble-in-border bg-bubble-in",
                   !grouped && (out ? "rounded-tr-[5px]" : "rounded-tl-[5px]"),
                   resaltado === m.id && "ring-2 ring-brand"
                 )}

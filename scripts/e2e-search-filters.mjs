@@ -182,7 +182,7 @@ await cSel.selectOption(empty);
 await cp.waitForTimeout(900);
 const emptyCount = (await cRows()).length;
 ok(`etapa '${empty}' sin contactos → pantalla estable (${emptyCount} filas)`,
-   emptyCount >= 0 && (await cp.getByText("Contactos").first().isVisible()));
+   emptyCount >= 0 && (await cp.getByPlaceholder(/Buscar/).first().isVisible()));
 await cp.screenshot({ path: ".tmp/e2e-contacts.png" });
 
 await browser.close();

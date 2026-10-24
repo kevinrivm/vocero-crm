@@ -885,3 +885,68 @@ el fallo de la 049 (abajo).
    - El arnés ahora vacía la caja antes de teclear.
 2. **El tope de inicios de sesión** volvió a cortar una pasada. Se reinició el
    servidor.
+
+## 2026-10-24 — 061: diseño de tarjetas (referencia 6)
+
+**Qué pidió Kevin**: las dos versiones sobre crm.s4luia.com (#166, #167) le
+gustaron, pero «se puede hacer algo más bonito». Pidió referencias en la web.
+De 10 que le mostré en una galería, eligió la 6: tarjetas blancas separadas
+sobre un marco suave, un riel de iconos y el cliente en burbuja oscura.
+
+**Tiempos reales**: specs 061 y 062 en commit a las 23:49 (23 oct). El
+self-test general quedó 280/280 a las 00:46.
+
+**Qué cambió**:
+
+- **Tokens**: el claro pasa a **Menta** y el oscuro a **Noche**. Hay tokens
+  nuevos de marco, tarjeta, riel, envío y burbujas (texto, gris, enlace y
+  superficie propios).
+- **Marco y tarjetas** en escritorio: el riel, el buscador en cápsula, la
+  lista, la cabecera del hilo, el hilo y el panel, con radio 24 y 12 px entre
+  ellas. En el teléfono, la pantalla entera es la tarjeta.
+- **El riel de iconos** reemplaza al menú lateral de texto en escritorio:
+  - la activa va rellena con la tinta del tema;
+  - la Bandeja muestra su número;
+  - abajo van la campana, Ajustes y la cuenta. La cuenta trae tema,
+    «Activar avisos», «Instalar app», cerrar sesión y la versión.
+
+  En el teléfono sigue el cajón, ya sin la barra azul marino.
+- **Burbujas**: el cliente va oscuro (claro en Noche) y la respuesta en
+  pastilla. `.burbuja-in` y `.burbuja-out` redeclaran los neutros adentro: la
+  hora, la cita, los enlaces y los documentos se leen sin tocar cada
+  componente.
+- **El compositor** es una cápsula, con el botón redondo de enviar o grabar
+  aparte, en la tinta del tema.
+- **La letra** es Urbanist; Archivo queda cargada para la 062.
+- **Del acento oscuro**: el fondo de referencia del cálculo (`DARK_BG`) sigue
+  a Noche, y el tint y el soft se ajustaron para que la fila elegida y el
+  anillo de foco pasen sus pisos.
+
+**Cómo se probó**:
+
+- `contraste-temas.test.ts` cambia la barra bicolor (ya no existe) por:
+  - tarjeta contra marco;
+  - el riel activo y el envío;
+  - lo de adentro de cada burbuja.
+- Unitarias: 1 366, con banderas apagadas y encendidas.
+- Arnés nuevo `e2e-diseno-061.mjs`: 40/40, en claro y oscuro, a 1440 y 390.
+- Arneses de la Bandeja y vecinos en verde: filtros, reenviar, eventos,
+  atajos, notas, avisos, conexión, borradores, PWA, imágenes, citar,
+  búsqueda, respuestas rápidas, notas de voz, ligas y anuncio de origen.
+- `e2e-responsive` todo en verde, con los checks del menú puestos al día;
+  también pasó el del cerebro, que fallaba antes.
+- Self-test general en base limpia: **280/280**.
+
+**Capturas**: `docs/061/antes-…` (2.4.0) y `docs/061/despues-…`, en claro y
+oscuro, a 1440 y a 390.
+
+**Lo que salió mal**:
+
+1. **El indicador de Next en dev** tapaba la cuenta del riel y los clics de
+   los arneses se quedaban esperando. Se apagó (`devIndicators: false`, solo
+   dev).
+2. **`pnpm lint` revisaba los worktrees** de las sesiones 060a y 060b dentro
+   de `.claude/worktrees` (8 300 errores ajenos). Se corrió con
+   `--ignore-pattern ".claude/**"`; el CI no los ve.
+3. **Varios arneses** buscaban en el menú de texto lo que ahora vive en el
+   menú de la cuenta (avisos, instalar, cerrar sesión). Abren ese menú primero.
