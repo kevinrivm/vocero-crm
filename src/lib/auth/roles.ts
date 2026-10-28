@@ -1,14 +1,36 @@
 /**
- * Quién puede CONFIGURAR la instancia: conectar el número, pegar la llave de
- * IA, escribir el agente, encenderlo. En la raíz son dos roles: el `owner`
- * que crea la organización en el primer registro y el `admin` que Better Auth
- * conoce (hoy nadie lo asigna, pero es un rol de configuración y no de
- * operación). Un `member` del equipo atiende la Bandeja: no puede hacer
- * ninguno de los pasos de la guía de inicio, así que no se le enseña.
- *
- * Vive en `lib/` porque lo consultan los dos lados: el menú (cliente) y la
- * redirección de la raíz (servidor).
+ * Roles del sistema Multi-Tenant y Multi-Agente:
+ * - `superadmin`: acceso global a todas las empresas, panel /superadmin y configuración.
+ * - `admin` / `owner`: dueño/administrador de una empresa específica.
+ * - `agente` / `member`: operador que atiende chats e inbox.
  */
-export function canConfigure(role: string | null | undefined): boolean {
+export type Role = "superadmin" | "admin" | "agente" | "owner" | "member";
+
+export function isSuperAdmin(
+  role: string | null | undefined,
+  globalRole?: string | null | undefined
+): boolean {
+  return role === "superadmin" || globalRole === "superadmin";
+}
+
+/**
+ * Quién puede CONFIGURAR la empresa: conectar número, credenciales de IA,
+ * perfil de agente, ajustes y equipo.
+ */
+export function canConfigure(
+  role: string | null | undefined,
+  globalRole?: string | null | undefined
+): boolean {
+  if (isSuperAdmin(role, globalRole)) return true;
   return role === "owner" || role === "admin";
+}
+
+/**
+ * Rol que únicamente atiende chats (Bandeja y Chat Interno).
+ */
+export function isAgentOnly(
+  role: string | null | undefined,
+  globalRole?: string | null | undefined
+): boolean {
+  return !canConfigure(role, globalRole);
 }

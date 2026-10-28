@@ -30,6 +30,7 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
+  role: text("role", { enum: ["superadmin", "user"] }).notNull().default("user"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -80,7 +81,11 @@ export const organization = pgTable("organization", {
   name: text("name").notNull(),
   slug: text("slug").unique(),
   logo: text("logo"),
+  status: text("status", { enum: ["active", "suspended"] })
+    .notNull()
+    .default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
   metadata: text("metadata"),
 });
 
@@ -358,6 +363,9 @@ export const conversation = pgTable(
     contactId: text("contact_id")
       .notNull()
       .references(() => contact.id, { onDelete: "cascade" }),
+    assignedUserId: text("assigned_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     /** Conversación del Laboratorio: jamás toca la API de WhatsApp. */
     isTest: boolean("is_test").notNull().default(false),
     /**
@@ -1393,5 +1401,36 @@ export const conversationNote = pgTable(
   },
   (t) => [
     index("conversation_note_conv_idx").on(t.organizationId, t.conversationId, t.createdAt),
+  ]
+);
+
+/* ============================================================
+ * Comunicación interna entre agentes (Chat interno)
+ * ============================================================ */
+
+export const internalMessage = pgTable(
+  "internal_message",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    senderId: text("sender_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    recipientId: text("recipient_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    channel: text("channel").notNull().default("general"),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("internal_msg_org_created_idx").on(t.organizationId, t.createdAt),
+    index("internal_msg_org_channel_idx").on(
+      t.organizationId,
+      t.channel,
+      t.createdAt
+    ),
   ]
 );
