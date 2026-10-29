@@ -1,0 +1,44 @@
+{
+  "name": "vocero-windows",
+  "version": "0.1.0",
+  "description": "Contenedor Windows opcional del CRM de la instancia",
+  "author": "Colaboradores de Vocero CRM",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "src/entrada.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.mjs",
+    "dist": "electron-builder --win nsis --publish never"
+  },
+  "devDependencies": {
+    "electron": "43.8.3",
+    "electron-builder": "26.15.3"
+  },
+  "dependencies": {
+    "electron-updater": "6.8.9"
+  },
+  "build": {
+    "appId": "org.vocero.desktop",
+    "productName": "CRM",
+    "asar": true,
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "runAfterFinish": false,
+      "artifactName": "CRM-Setup-${version}.${ext}"
+    },
+    "publish": null
+  }
+}

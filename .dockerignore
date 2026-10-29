@@ -1,4 +1,6 @@
 node_modules
+# Cliente opcional: no forma parte de la imagen del servidor.
+apps/windows
 .next
 .git
 .env*

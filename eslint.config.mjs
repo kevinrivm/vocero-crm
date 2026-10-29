@@ -6,6 +6,8 @@ const config = [
   {
     ignores: [
       "node_modules/**",
+      "apps/windows/node_modules/**",
+      "apps/windows/dist/**",
       ".next/**",
       "dist/**",
       "drizzle/**",

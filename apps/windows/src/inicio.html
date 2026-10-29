@@ -1,0 +1,12 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CRM</title><link rel="stylesheet" href="crm-local://inicio/estilo.css"></head>
+<body><main><p class="etiqueta">ESCRITORIO</p><h1 id="titulo">Conectar tu CRM</h1>
+<p id="descripcion">Elige la instancia de tu negocio. Iniciarás sesión en su pantalla habitual.</p>
+<form id="formulario"><label for="servidor">Dirección del servidor</label><input id="servidor" type="url" required placeholder="https://crm.ejemplo.com" autocomplete="url">
+<p class="ayuda">Cambiar de servidor cierra la sesión y borra los datos locales.</p>
+<label class="opcion"><input id="inicio" type="checkbox"> Iniciar con Windows</label>
+<label class="opcion"><input id="avisos" type="checkbox"> Permitir avisos del sistema</label>
+<p class="ayuda">La campana del CRM y «No molestar» de Windows siguen mandando. Con el programa cerrado no hay avisos.</p>
+<label class="opcion"><input id="citas" type="checkbox"> Avisar al comenzar una cita (si la instancia tiene Agenda)</label>
+<label for="feed">Feed de actualizaciones (opcional)</label><input id="feed" type="url" placeholder="https://descargas.ejemplo.com/windows/" autocomplete="off">
+<p class="ayuda">Solo del operador de confianza: este servidor puede distribuir programas para tu PC. Los cambios del feed se aplican al reiniciar.</p>
+<p id="error" role="alert"></p><div class="acciones"><button type="submit">Guardar y abrir</button><button id="reintentar" type="button" hidden>Reintentar conexión</button></div></form></main><script type="module" src="crm-local://inicio/inicio.js"></script></body></html>

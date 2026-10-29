@@ -5,6 +5,17 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
+## Sin versión — propuesta 060, pendiente de revisión
+
+Contenedor Windows opcional (060): instancia elegida por el operador, marca PWA,
+sesión original cifrada con Windows, bandeja, avisos SSE existentes, archivos y
+actualizaciones optativas. Sin servicios, tablas ni contratos nuevos.
+
+**Actualizar desde 2.4.0:** el servidor no necesita migraciones ni variables
+adicionales para este contenedor. La PWA sigue siendo la opción recomendada.
+Versión propuesta para revisión; no hay tag, imagen ni instalador publicado.
+Compilación y límites: [apps/windows/README.md](apps/windows/README.md).
+
 ## 2.6.1 — 2026-10-29
 
 Mantenimiento. Actualizar es redesplegar con la etiqueta `2.6.1`: no hay

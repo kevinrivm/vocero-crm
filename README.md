@@ -920,3 +920,10 @@ aprender a convertirte en Meta Tech Provider y monetizar con tu agencia de IA?
 de producción (webhook firmado, ingesta idempotente, cifrado de tokens) vienen
 de un proyecto de referencia privado en producción, portados y simplificados
 para este repo.
+
+## Contenedor Windows (propuesta 060)
+
+La PWA sigue siendo la instalación recomendada. Para operadores que necesitan
+bandeja e inicio opcional con Windows, [apps/windows](apps/windows/README.md)
+contiene un contenedor independiente con la sesión y los avisos SSE del CRM.
+No requiere Android, servicios externos ni cambios de base de datos.

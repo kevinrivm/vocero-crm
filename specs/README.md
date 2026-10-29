@@ -84,3 +84,8 @@ Toda feature declara su carril **antes** de escribir código y deja su `spec.md`
 aquí, ciclo completo o ligero. Un spec escrito después de implementar se marca
 como tal en su encabezado: es documentación, no diseño, y confundirlos hace
 creer dentro de un año que esas decisiones se tomaron antes de programar.
+
+## Propuesta 060
+
+[060 — Contenedor Windows opcional](060-windows-opcional/spec.md): carril ligero,
+sin migraciones ni contratos nuevos; independiente de la propuesta Android.
