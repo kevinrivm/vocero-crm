@@ -5,6 +5,17 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
+## Sin publicar — Contenedor Android opcional (053)
+
+- **Contenedor Android opcional** (053), complemento de la PWA: cámara/archivos,
+  descargas autenticadas, recibir imágenes/PDF desde Compartir y pantalla sin red.
+  Usa la marca y el login originales. El operador compila y firma su APK; no
+  agrega Firebase, servicios, migraciones ni contratos al servidor.
+
+No hay migraciones ni variables nuevas. La web sigue funcionando sin el APK; para
+usarlo sigue [la guía Android](apps/android/README.md). El número de versión lo
+decide el mantenedor al publicar el release.
+
 ## 2.6.1 — 2026-10-29
 
 Mantenimiento. Actualizar es redesplegar con la etiqueta `2.6.1`: no hay

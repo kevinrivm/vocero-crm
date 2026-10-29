@@ -1,0 +1,9 @@
+<resources>
+    <style name="TemaContenedor" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">@color/color_marca</item>
+        <item name="android:navigationBarColor">@color/color_marca</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+</resources>
