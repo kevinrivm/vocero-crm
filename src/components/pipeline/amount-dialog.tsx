@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useState } from "react";
 import { formatMoneyCents, parseMoneyToCents } from "@/lib/money";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,8 @@ export function AmountDialog({
   onCancel: () => void;
   onSave: (cents: number | null) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [texto, setTexto] = useState(
     amountCents === null ? "" : (amountCents / 100).toFixed(2)
   );
@@ -45,14 +49,14 @@ export function AmountDialog({
       className="fixed inset-0 z-50 flex items-center justify-center bg-overlay p-4"
       role="dialog"
       aria-modal="true"
-      aria-label="Monto y prioridad"
+      aria-label={tr("Monto y prioridad")}
     >
       <div className="w-full max-w-sm rounded-lg border bg-popover p-4 shadow-pop">
-        <h3 className="font-semibold">Monto y prioridad</h3>
+        <h3 className="font-semibold">{tr("Monto y prioridad")}</h3>
         <p className="mt-0.5 text-xs text-text-3">{leadName}</p>
 
         <label className="mt-3 block text-xs font-medium" htmlFor="monto">
-          Cuánto vale este trato ({currency})
+          {tr("Cuánto vale este trato (")}{currency})
         </label>
         <Input
           id="monto"
@@ -60,23 +64,22 @@ export function AmountDialog({
           inputMode="decimal"
           autoFocus
           onChange={(e) => setTexto(e.target.value)}
-          placeholder="12,500.00"
+          placeholder={tr("12,500.00")}
           className="mt-1"
         />
         {invalido ? (
           <p className="mt-1 text-xs text-danger-text">
-            No reconozco ese número. Escríbelo como 12500 o 12,500.00
-          </p>
+            {tr("No reconozco ese número. Escríbelo como 12500 o 12,500.00")}</p>
         ) : (
           <p className="mt-1 text-xs text-text-3">
             {parsed === null
-              ? "Déjalo vacío para quitar el monto."
-              : `Se guardará como ${formatMoneyCents(parsed, currency)}`}
+              ? tr("Déjalo vacío para quitar el monto.")
+              : tr("Se guardará como {v0}", {v0: formatMoneyCents(parsed, currency, tr.intl)})}
           </p>
         )}
 
         <div className="mt-4">
-          <p className="text-xs font-medium">Prioridad</p>
+          <p className="text-xs font-medium">{tr("Prioridad")}</p>
           <div className="mt-1.5">
             <PriorityPicker value={priority} onChange={onPriorityChange} />
           </div>
@@ -84,11 +87,9 @@ export function AmountDialog({
 
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="ghost" onClick={onCancel}>
-            Cancelar
-          </Button>
+            {tr("Cancelar")}</Button>
           <Button disabled={invalido} onClick={() => onSave(parsed)}>
-            Guardar
-          </Button>
+            {tr("Guardar")}</Button>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { normalizeLocale, type Locale } from "@/lib/i18n/locale";
 import { DEFAULT_CURRENCY, isCurrency, type Currency } from "@/lib/money";
 
 /**
@@ -36,6 +37,7 @@ export type BrandingFavicon = {
 };
 
 export type Branding = {
+  locale: Locale;
   name: string;
   accent: string; // hex del acento base elegido
   /** Moneda del negocio: la única que el tablero suma. */
@@ -45,6 +47,7 @@ export type Branding = {
 };
 
 export const DEFAULT_BRANDING: Branding = {
+  locale: "es",
   name: "Vocero",
   // El azul eléctrico de vocerocrm.com: la instancia recién instalada se ve
   // igual que la landing. Una agencia lo cambia en Configuración → Marca.
@@ -290,5 +293,5 @@ export function normalizeBranding(input: Partial<Branding> | null): Branding {
     f && typeof f.mime === "string" && Number.isFinite(f.version)
       ? { mime: f.mime, version: Math.max(1, Math.floor(f.version)) }
       : null;
-  return { name, accent, currency, favicon };
+  return { name, accent, currency, favicon, locale: normalizeLocale(input?.locale) };
 }

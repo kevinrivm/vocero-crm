@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -28,19 +32,21 @@ export function SettingsNav({
   messenger?: boolean;
   tiktok?: boolean;
 }) {
+  const { t: tr } = useI18n();
+
   const pathname = usePathname();
   const sections = settingsSections({ agenda, atribucion, instagram, messenger, tiktok });
   return (
     <nav
-      aria-label="Ajustes"
+      aria-label={tr("Ajustes")}
       className="flex shrink-0 gap-4 overflow-x-auto border-b px-2 py-2 sm:w-48 sm:flex-col sm:gap-5 sm:overflow-visible sm:border-b-0 sm:border-r sm:p-3"
     >
       {sections.map((section) => (
         <div
-          key={section.title}
+          key={systemText(tr.locale, section.title)}
           className="flex shrink-0 items-center gap-1 sm:flex-col sm:items-stretch sm:gap-0.5"
         >
-          <span className="kicker mr-1 shrink-0 sm:mb-1 sm:mr-0 sm:px-3">{section.title}</span>
+          <span className="kicker mr-1 shrink-0 sm:mb-1 sm:mr-0 sm:px-3">{systemText(tr.locale, section.title)}</span>
           {section.links.map((t) => {
             const active = pathname.startsWith(t.href);
             return (
@@ -56,7 +62,7 @@ export function SettingsNav({
                     : "text-text-2 hover:bg-accent hover:text-foreground"
                 )}
               >
-                {t.label}
+                {systemText(tr.locale, t.label)}
               </Link>
             );
           })}

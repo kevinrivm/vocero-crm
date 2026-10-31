@@ -13,6 +13,7 @@ const config = [
       "next-env.d.ts",
       ".tmp-seed-demo.mjs",
       ".tmp-*.mjs",
+      ".tmp/**",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

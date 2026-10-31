@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useRef, useState } from "react";
 import { Clock3, Inbox, Megaphone, SlidersHorizontal, Search, Sparkles, UserRound, X } from "lucide-react";
 import type { ConversationDto } from "@/lib/types";
@@ -16,17 +18,7 @@ import { EVENTO_BORRADOR, leerBorrador } from "@/lib/borradores";
 import { atajoBandeja, esCampoDeTexto, sirveEscribiendo, vecina } from "@/lib/atajos";
 import { hayDialogoAbierto } from "@/components/atajos-globales";
 import { etiquetaVence, porVencer } from "@/lib/filtros-bandeja";
-
-/* Puntos de etapa: los tokens del tema, no hex copiados del tema claro —
-   así siguen al acento white-label y se recalculan en oscuro. */
-const STAGE_DOT: Record<string, string> = {
-  Nuevo: "var(--text-3)",
-  "En conversación": "var(--accent)",
-  Interesado: "var(--warning)",
-  Cliente: "var(--success)",
-  Perdido: "var(--danger)",
-};
-const STAGE_DOT_FALLBACK = "var(--text-3)";
+import { stageColor } from "@/lib/stage-color";
 
 /**
  * Foco por teclado de chips y selector: el anillo de `ui/button`, acento
@@ -45,6 +37,8 @@ function InboxEmptyState({
   onSeeded: () => void;
   channels: readonly Channel[];
 }) {
+  const { t: tr } = useI18n();
+
   const [seeding, setSeeding] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -62,8 +56,8 @@ function InboxEmptyState({
     <EmptyState
       icon={Inbox}
       className="h-full"
-      title="Sin conversaciones todavía"
-      description={emptyInboxDescription(channels.map((ch) => CHANNEL_LABEL[ch]))}
+      title={tr("Sin conversaciones todavía")}
+      description={emptyInboxDescription(channels.map((ch) => CHANNEL_LABEL[ch]), tr.locale)}
       action={
         !failed && (
           <Button
@@ -73,7 +67,7 @@ function InboxEmptyState({
             onClick={() => void seed()}
           >
             <Sparkles className="h-4 w-4" strokeWidth={1.7} />
-            {seeding ? "Cargando demo…" : "Cargar datos de demostración"}
+            {seeding ? tr("Cargando demo…") : tr("Cargar datos de demostración")}
           </Button>
         )
       }
@@ -95,6 +89,8 @@ export function ConversationList({
   onSelect: (id: string) => void;
   onSeeded: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [query, setQuery] = useState("");
   // 052 (enmienda) — Dos pestañas y un botón «Filtrar» con lo demás.
   const [filter, setFilter] = useState<"all" | "unread">("all");
@@ -198,8 +194,8 @@ export function ConversationList({
   const visible = filter === "unread" ? filtrado.filter((c) => c.unreadCount > 0) : filtrado;
   visibleRef.current = visible.map((c) => c.id);
   const pestanas: { id: typeof filter; label: string; count: number }[] = [
-    { id: "all", label: "Todas", count: filtrado.length },
-    { id: "unread", label: "No leídas", count: unreadCount },
+    { id: "all", label: tr("Todas"), count: filtrado.length },
+    { id: "unread", label: tr("No leídas"), count: unreadCount },
   ];
   const nFiltros = (stage !== "all" ? 1 : 0) + (soloPorVencer ? 1 : 0) + (soloAnuncios ? 1 : 0);
   function limpiarFiltros() {
@@ -232,8 +228,8 @@ export function ConversationList({
           <Search className="h-4 w-4 shrink-0 text-text-3" strokeWidth={1.7} />
           <input
             ref={inputRef}
-            placeholder="Buscar por nombre o teléfono…"
-            aria-label="Buscar conversación"
+            placeholder={tr("Buscar por nombre o teléfono…")}
+            aria-label={tr("Buscar conversación")}
             defaultValue=""
             onChange={(e) => setQuery(e.target.value)}
             className="w-full bg-transparent text-[13px] outline-none placeholder:text-text-3"
@@ -241,7 +237,7 @@ export function ConversationList({
           {query && (
             <button
               onClick={clearQuery}
-              aria-label="Limpiar búsqueda"
+              aria-label={tr("Limpiar búsqueda")}
               className="shrink-0 rounded-full p-0.5 text-text-3 hover:bg-accent hover:text-foreground"
             >
               <X className="h-3.5 w-3.5" strokeWidth={2} />
@@ -252,7 +248,7 @@ export function ConversationList({
       <div className="flex min-h-0 flex-1 flex-col bg-background lg:tarjeta lg:overflow-hidden">
       <header className="border-b px-4 pb-3 pt-3.5">
         <div className="flex items-center gap-2">
-          <h2 className="text-[17px] font-bold tracking-tight">Bandeja</h2>
+          <h2 className="text-[17px] font-bold tracking-tight">{tr("Bandeja")}</h2>
           <span className="font-mono text-[12px] text-text-3">{conversations.length}</span>
           {multiChannel && (
             <div className="ml-auto flex items-center gap-1">
@@ -265,8 +261,8 @@ export function ConversationList({
                     aria-pressed={on}
                     title={
                       on
-                        ? "Ver todas las bandejas"
-                        : `Ver solo ${CHANNEL_LABEL[ch]}`
+                        ? tr("Ver todas las bandejas")
+                        : tr("Ver solo {v0}", {v0: CHANNEL_LABEL[ch]})
                     }
                     className={cn(
                       "flex items-center gap-1 rounded-full border py-[3px] pl-[5px] pr-2 text-[11.5px] font-medium transition-colors",
@@ -295,7 +291,7 @@ export function ConversationList({
           se ve abajo como etiquetas que se quitan con ✕. */}
       <div className="border-b px-4">
         <div className="flex items-center gap-4">
-          <div role="tablist" aria-label="Qué conversaciones ver" className="flex items-center gap-4">
+          <div role="tablist" aria-label={tr("Qué conversaciones ver")} className="flex items-center gap-4">
             {pestanas.map((f) => (
               <button
                 key={f.id}
@@ -329,27 +325,27 @@ export function ConversationList({
               )}
             >
               <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={1.9} />
-              {nFiltros > 0 ? `Filtrar · ${nFiltros}` : "Filtrar"}
+              {nFiltros > 0 ? tr("Filtrar · {v0}", {v0: nFiltros}) : tr("Filtrar")}
             </button>
             {menuFiltros && (
               <div
                 role="dialog"
-                aria-label="Filtros de la bandeja"
+                aria-label={tr("Filtros de la bandeja")}
                 className="absolute right-0 top-full z-30 mt-1 w-[min(280px,calc(100vw-2rem))] space-y-3 rounded-xl border border-border-strong bg-popover p-3 text-popover-foreground shadow-xl"
               >
                 {stages.length > 0 && (
                   <label className="block space-y-1">
-                    <span className="kicker text-text-3">Etapa</span>
+                    <span className="kicker text-text-3">{tr("Etapa")}</span>
                     <select
                       value={stage}
                       onChange={(e) => setStage(e.target.value)}
-                      aria-label="Filtrar por etapa del embudo"
+                      aria-label={tr("Filtrar por etapa del embudo")}
                       className={cn(
                         "w-full rounded-md border border-border-strong bg-background px-2 py-1.5 text-[13px]",
                         FOCO_SEPARADO
                       )}
                     >
-                      <option value="all">Toda etapa</option>
+                      <option value="all">{tr("Toda etapa")}</option>
                       {stages.map((s) => (
                         <option key={s} value={s}>
                           {s}
@@ -367,7 +363,7 @@ export function ConversationList({
                       onChange={(e) => setSoloPorVencer(e.target.checked)}
                       className="h-4 w-4 accent-[var(--accent)]"
                     />
-                    <span className="flex-1">Por vencer</span>
+                    <span className="flex-1">{tr("Por vencer")}</span>
                     <span className="font-mono text-[11px] text-text-3">{venciendo.length}</span>
                   </label>
                 )}
@@ -379,12 +375,12 @@ export function ConversationList({
                       onChange={(e) => setSoloAnuncios(e.target.checked)}
                       className="h-4 w-4 accent-[var(--accent)]"
                     />
-                    <span className="flex-1">De anuncios</span>
+                    <span className="flex-1">{tr("De anuncios")}</span>
                     <span className="font-mono text-[11px] text-text-3">{deAnuncios.length}</span>
                   </label>
                 )}
                 {stages.length === 0 && venciendo.length === 0 && deAnuncios.length === 0 && nFiltros === 0 && (
-                  <p className="text-[13px] text-text-3">Todavía no hay nada por qué filtrar.</p>
+                  <p className="text-[13px] text-text-3">{tr("Todavía no hay nada por qué filtrar.")}</p>
                 )}
                 {nFiltros > 0 && (
                   <button
@@ -392,8 +388,7 @@ export function ConversationList({
                     onClick={limpiarFiltros}
                     className="block w-full text-right text-[12.5px] font-semibold text-brand-ink hover:underline"
                   >
-                    Limpiar filtros
-                  </button>
+                    {tr("Limpiar filtros")} </button>
                 )}
               </div>
             )}
@@ -406,10 +401,10 @@ export function ConversationList({
               <FiltroPuesto texto={`Etapa: ${stage}`} onQuitar={() => setStage("all")} />
             )}
             {soloPorVencer && (
-              <FiltroPuesto texto="Por vencer" onQuitar={() => setSoloPorVencer(false)} />
+              <FiltroPuesto texto={tr("Por vencer")} onQuitar={() => setSoloPorVencer(false)} />
             )}
             {soloAnuncios && (
-              <FiltroPuesto texto="De anuncios" onQuitar={() => setSoloAnuncios(false)} />
+              <FiltroPuesto texto={tr("De anuncios")} onQuitar={() => setSoloAnuncios(false)} />
             )}
           </div>
         )}
@@ -417,7 +412,7 @@ export function ConversationList({
 
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <p className="p-6 text-center text-xs text-text-3">Cargando…</p>
+          <p className="p-6 text-center text-xs text-text-3">{tr("Cargando…")}</p>
         ) : conversations.length === 0 ? (
           <InboxEmptyState onSeeded={onSeeded} channels={channels} />
         ) : visible.length === 0 ? (
@@ -428,8 +423,8 @@ export function ConversationList({
             filter === "all" &&
             nFiltros === 0 &&
             !conversations.some((c) => c.channel === inbox)
-              ? `Nadie ha escrito por ${CHANNEL_LABEL[inbox]} todavía.`
-              : "Sin resultados para este filtro."}
+              ? tr("Nadie ha escrito por {v0} todavía.", {v0: CHANNEL_LABEL[inbox]})
+              : tr("Sin resultados para este filtro.")}
           </p>
         ) : (
           <ul>
@@ -473,7 +468,7 @@ export function ConversationList({
                             unread ? "font-semibold text-brand-ink" : "text-text-3"
                           )}
                         >
-                          {formatTime(c.lastMessageAt)}
+                          {formatTime(c.lastMessageAt, tr.locale)}
                         </span>
                       </span>
                       <span className="mt-0.5 flex items-center justify-between gap-2">
@@ -488,11 +483,11 @@ export function ConversationList({
                             const borrador = leerBorrador("responder", c.id);
                             return borrador ? (
                               <>
-                                <span className="font-semibold text-brand-ink">Borrador:</span>{" "}
+                                <span className="font-semibold text-brand-ink">{tr("Borrador:")}</span>{" "}
                                 {borrador.replace(/\s+/g, " ")}
                               </>
                             ) : (
-                              previewText(c.preview)
+                              previewText(c.preview, tr.locale)
                             );
                           })()}
                         </span>
@@ -508,7 +503,7 @@ export function ConversationList({
                             <span
                               className="h-[7px] w-[7px] rounded-full"
                               style={{
-                                background: STAGE_DOT[c.stageName] ?? STAGE_DOT_FALLBACK,
+                                background: stageColor(c.stageName),
                               }}
                             />
                             {c.stageName}
@@ -527,8 +522,7 @@ export function ConversationList({
                         {c.handoffAt && (
                           <span className="inline-flex items-center gap-1 rounded-full border border-warning-soft bg-warning-tint px-2 py-0.5 text-[11px] text-warning-text">
                             <UserRound className="h-3 w-3" strokeWidth={1.7} />
-                            Atención humana
-                          </span>
+                            {tr("Atención humana")}</span>
                         )}
                         {c.anuncio && (
                           <span
@@ -558,13 +552,14 @@ export function ConversationList({
 
 /** 052 (enmienda) — Un filtro puesto desde «Filtrar», con su ✕ para quitarlo. */
 function FiltroPuesto({ texto, onQuitar }: { texto: string; onQuitar: () => void }) {
+  const { t: tr } = useI18n();
   return (
     <span className="inline-flex items-center gap-1 rounded-full border border-brand-soft bg-brand-tint py-0.5 pl-2.5 pr-1 text-[12px] font-semibold text-brand-text">
       {texto}
       <button
         type="button"
         onClick={onQuitar}
-        aria-label={`Quitar filtro ${texto}`}
+        aria-label={tr("Quitar {v0}", {v0: texto})}
         className="rounded-full p-0.5 hover:bg-brand-soft"
       >
         <X className="h-3 w-3" strokeWidth={2.2} />

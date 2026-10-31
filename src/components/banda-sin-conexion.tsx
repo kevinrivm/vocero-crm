@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import { WifiOff } from "lucide-react";
 import { RETRASO_BANDA_MS } from "@/lib/avisos-sistema";
@@ -11,6 +13,7 @@ import { reintentarConexiones, useCaidaDesde } from "./estado-conexion";
  * tiempo real» si el canal lleva más de 4 s caído. Al volver, se va sola.
  */
 export function BandaSinConexion() {
+  const { t: tr } = useI18n();
   const caidaDesde = useCaidaDesde();
   const [enLinea, setEnLinea] = useState(true);
   const [ahora, setAhora] = useState(() => Date.now());
@@ -45,8 +48,8 @@ export function BandaSinConexion() {
       <WifiOff className="h-4 w-4 shrink-0" strokeWidth={1.8} aria-hidden />
       <span className="min-w-0 flex-1">
         {enLinea
-          ? "Sin conexión en tiempo real. Reintentando…"
-          : "Sin internet. Los mensajes nuevos aparecerán al volver la red."}
+          ? tr("Sin conexión en tiempo real. Reintentando…")
+          : tr("Sin internet. Los mensajes nuevos aparecerán al volver la red.")}
       </span>
       {enLinea && (
         <button
@@ -54,8 +57,7 @@ export function BandaSinConexion() {
           onClick={reintentarConexiones}
           className="rounded-md px-2 py-0.5 font-semibold underline-offset-2 hover:underline"
         >
-          Reintentar ahora
-        </button>
+          {tr("Reintentar ahora")} </button>
       )}
     </div>
   );

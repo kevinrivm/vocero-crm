@@ -44,3 +44,6 @@ Thumbs.db
 .dev-media/
 # Capturas y salidas de los self-tests (p. ej. scripts/e2e-responsive.mjs)
 scratch/
+
+# Archivos de clientes guardados por el CRM local
+/media/

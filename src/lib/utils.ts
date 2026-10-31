@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { Locale } from "@/lib/i18n/locale";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -43,7 +44,25 @@ export function avatarColor(seed: string): string {
   return AVATAR_COLORS[hash % AVATAR_COLORS.length] ?? AVATAR_COLORS[0];
 }
 
-export function formatPhone(phone: string | null | undefined): string {
+export function formatBrazilianPhone(phone: string): string {
+  // Solo dígitos canónicos o puntuación telefónica usual; las letras y las
+  // identidades como `ig:5511...` nunca se convierten en teléfono.
+  if (!/^\+?[\d\s().-]+$/.test(phone)) return phone;
+  const digits = phone.replace(/\D/g, "");
+  const match = /^55([1-9]\d)(\d{8,9})$/.exec(digits);
+  if (!match) return phone;
+  const ddd = match[1]!;
+  const subscriber = match[2]!;
+  const local = subscriber.length === 9
+    ? `${subscriber.slice(0, 5)}-${subscriber.slice(5)}`
+    : `${subscriber.slice(0, 4)}-${subscriber.slice(4)}`;
+  return `+55 (${ddd}) ${local}`;
+}
+
+export function formatPhone(phone: string | null | undefined, locale: Locale = "es"): string {
   // 003: contactos BSUID pueden no tener teléfono.
-  return phone ? `+${phone}` : "Sin teléfono";
+  if (!phone) return locale === "pt-BR" ? "Sem telefone" : "Sin teléfono";
+  if (!/^\+?[\d\s().-]+$/.test(phone)) return phone;
+  const formatted = locale === "pt-BR" ? formatBrazilianPhone(phone) : phone;
+  return formatted.startsWith("+") ? formatted : `+${formatted}`;
 }

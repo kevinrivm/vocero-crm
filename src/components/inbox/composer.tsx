@@ -1,4 +1,9 @@
-﻿"use client";
+"use client";
+
+import { systemText } from "@/lib/i18n";
+
+
+import { useI18n } from "@/components/i18n-provider";
 
 import { atajoBandeja } from "@/lib/atajos";
 import { hayDialogoAbierto } from "@/components/atajos-globales";
@@ -68,6 +73,7 @@ export function Composer({
    */
   onNota?: (texto: string) => Promise<string | null>;
 }) {
+  const { t: tr } = useI18n();
   // 051 — Lo que quedó escrito en esta conversación vuelve al regresar a ella.
   const [text, setText] = useState(() => leerBorrador("responder", conversation.id));
   const [sending, setSending] = useState(false);
@@ -270,7 +276,7 @@ export function Composer({
       return;
     }
     if (!textoLibre) {
-      setError("La ventana está cerrada: no se puede adjuntar una imagen. Solo sale una plantilla.");
+      setError(tr("La ventana está cerrada: no se puede adjuntar una imagen. Solo sale una plantilla."));
       return;
     }
     const result = validarImagenAdjunta(files, origen);
@@ -301,7 +307,7 @@ export function Composer({
     return (
       <div
         role="region"
-        aria-label="Chat: adjuntar imagen"
+        aria-label={tr("Chat: adjuntar imagen")}
         // 061 — El hilo con su compositor es una tarjeta en escritorio. El
         // fondo (con sus dibujos) es de la tarjeta: hilo y compositor van
         // transparentes encima, así los dibujos no se cortan entre los dos.
@@ -344,8 +350,7 @@ export function Composer({
             className="pointer-events-none absolute inset-2 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-brand bg-brand-tint p-4"
           >
             <p className="rounded-md bg-background px-4 py-3 text-center text-sm font-semibold text-brand-ink shadow-sm">
-              Suelta la imagen para adjuntarla
-            </p>
+              {tr("Suelta la imagen para adjuntarla")} </p>
           </div>
         )}
       </div>
@@ -451,11 +456,11 @@ export function Composer({
   // 050 — Las pestañas van arriba en TODAS las ramas: anotar no depende de
   // la ventana de Meta, y con la ventana cerrada es cuando más se necesita.
   const pestanas = onNota ? (
-    <div role="tablist" aria-label="Qué escribir" className="mb-2 flex gap-1">
+    <div role="tablist" aria-label={tr("Qué escribir")} className="mb-2 flex gap-1">
       {(
         [
-          ["responder", "Responder"],
-          ["nota", "Nota interna"],
+          ["responder", tr("Responder")],
+          ["nota", tr("Nota interna")],
         ] as const
       ).map(([valor, etiqueta]) => (
         <button
@@ -508,8 +513,8 @@ export function Composer({
             value={nota}
             rows={2}
             autoFocus
-            placeholder="Nota interna: solo la ve tu equipo…"
-            aria-label="Nota interna"
+            placeholder={tr("Nota interna: solo la ve tu equipo…")}
+            aria-label={tr("Nota interna")}
             onChange={(e) => setNota(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -529,7 +534,7 @@ export function Composer({
               (guardandoNota || !nota.trim()) && "opacity-40"
             )}
           >
-            {guardandoNota ? "Guardando…" : "Guardar nota"}
+            {guardandoNota ? tr("Guardando…") : tr("Guardar nota")}
           </button>
         </div>
         <div className="mt-1.5 flex items-center justify-between">
@@ -541,8 +546,7 @@ export function Composer({
             <span />
           )}
           <p className="font-mono text-[10.5px] tracking-[0.04em] text-text-3">
-            No se envía al cliente
-          </p>
+            {tr("No se envía al cliente")} </p>
         </div>
       </div>
     );
@@ -555,12 +559,9 @@ export function Composer({
         <div className="flex items-start gap-2 rounded-md border border-warning-soft bg-warning-tint p-3 text-sm text-warning-text">
           <Clock3 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.7} />
           <div>
-            <p className="font-medium">La ventana de 48 horas de TikTok está cerrada.</p>
+            <p className="font-medium">{tr("La ventana de 48 horas de TikTok está cerrada.")}</p>
             <p className="opacity-80">
-              TikTok solo deja contestar dentro de las 48 horas siguientes al
-              último mensaje del cliente, y no permite reabrir la conversación.
-              Podrás escribirle cuando vuelva a mandar un mensaje.
-            </p>
+              {tr("TikTok solo deja contestar dentro de las 48 horas siguientes al último mensaje del cliente, y no permite reabrir la conversación. Podrás escribirle cuando vuelva a mandar un mensaje.")}</p>
           </div>
         </div>
       </div>,
@@ -583,12 +584,9 @@ export function Composer({
         >
           <Clock3 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.7} />
           <div>
-            <p className="font-medium">La ventana de atención de {canal} está cerrada.</p>
+            <p className="font-medium">{tr("La ventana de atención de ")}{canal} {tr(" está cerrada.")}</p>
             <p className="opacity-80">
-              {canal} deja contestar hasta 7 días después del último mensaje
-              del cliente, y no tiene plantillas para reabrir la conversación.
-              Podrás escribirle cuando vuelva a mandar un mensaje.
-            </p>
+              {canal} {tr(" deja contestar hasta 7 días después del último mensaje del cliente, y no tiene plantillas para reabrir la conversación. Podrás escribirle cuando vuelva a mandar un mensaje.")}</p>
           </div>
         </div>
       </div>,
@@ -603,12 +601,9 @@ export function Composer({
         <div className="mb-3 flex items-start gap-2 rounded-md border border-warning-soft bg-warning-tint p-3 text-sm text-warning-text">
           <Clock3 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.7} />
           <div>
-            <p className="font-medium">La ventana de 24 horas está cerrada.</p>
+            <p className="font-medium">{tr("La ventana de 24 horas está cerrada.")}</p>
             <p className="opacity-80">
-              WhatsApp solo permite texto libre dentro de las 24 horas
-              siguientes al último mensaje del cliente. Para retomar la
-              conversación, envía una plantilla aprobada.
-            </p>
+              {tr("WhatsApp solo permite texto libre dentro de las 24 horas siguientes al último mensaje del cliente. Para retomar la conversación, envía una plantilla aprobada.")}</p>
           </div>
         </div>
         <TemplateSender conversationId={conversation.id} onSent={onSent} />
@@ -638,10 +633,9 @@ export function Composer({
         >
           <Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.7} />
           <p>
-            <span className="font-semibold">Solo puede contestar una persona.</span>{" "}
-            Pasaron más de 24 horas desde el último mensaje del cliente: {canal}{" "}
-            te deja responder a ti hasta 7 días, al agente ya no.
-          </p>
+            <span className="font-semibold">{tr("Solo puede contestar una persona.")}</span>{" "}
+            {tr("Pasaron más de 24 horas desde el último mensaje del cliente: ")}{canal}{" "}
+            {tr("te deja responder a ti hasta 7 días, al agente ya no.")}</p>
         </div>
       )}
       {templates.length > 0 && !file && (
@@ -676,8 +670,8 @@ export function Composer({
           />
           <button
             onClick={() => onReplyChange?.(null)}
-            aria-label="Cancelar respuesta"
-            title="Cancelar respuesta"
+            aria-label={tr("Cancelar respuesta")}
+            title={tr("Cancelar respuesta")}
             className="shrink-0 rounded p-1 text-text-3 hover:bg-secondary hover:text-foreground"
           >
             <X className="h-4 w-4" strokeWidth={1.7} />
@@ -700,13 +694,12 @@ export function Composer({
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{file.name}</p>
             <p className="text-xs text-text-3">
-              {formatBytes(file.size)} · el texto de abajo va como pie del adjunto
-            </p>
+              {formatBytes(file.size)} {tr(" · el texto de abajo va como pie del adjunto")}</p>
           </div>
           <button
             onClick={() => pickFile(null)}
             disabled={sending}
-            aria-label="Quitar adjunto"
+            aria-label={tr("Quitar adjunto")}
             className="rounded p-1 text-text-3 hover:bg-secondary hover:text-foreground"
           >
             <X className="h-4 w-4" strokeWidth={1.7} />
@@ -757,8 +750,8 @@ export function Composer({
           <button
             onClick={() => fileRef.current?.click()}
             disabled={sending}
-            aria-label="Adjuntar archivo"
-            title="Adjuntar imagen, video, audio o documento"
+            aria-label={tr("Adjuntar archivo")}
+            title={tr("Adjuntar imagen, video, audio o documento")}
             className="shrink-0 rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground"
           >
             <Paperclip className="h-[18px] w-[18px]" strokeWidth={1.7} />
@@ -766,7 +759,7 @@ export function Composer({
         )}
         <textarea
           ref={taRef}
-          placeholder={file ? "Pie del adjunto (opcional)…" : "Escribe una respuesta…"}
+          placeholder={file ? tr("Pie del adjunto (opcional)…") : tr("Escribe una respuesta…")}
           value={text}
           rows={1}
           onPaste={(e) => {
@@ -777,7 +770,7 @@ export function Composer({
             e.preventDefault();
             const files = images.map((item) => item.getAsFile());
             if (files.some((f) => !f)) {
-              setError("No se pudo leer la imagen del portapapeles. Cópiala de nuevo.");
+              setError(tr("No se pudo leer la imagen del portapapeles. Cópiala de nuevo."));
               return;
             }
             attachImage(files as File[], "paste");
@@ -828,8 +821,8 @@ export function Composer({
               setGrabando(true);
             }}
             disabled={sending}
-            aria-label="Grabar nota de voz"
-            title="Grabar nota de voz"
+            aria-label={tr("Grabar nota de voz")}
+            title={tr("Grabar nota de voz")}
             className={cn(
               "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-enviar text-enviar-texto shadow-sm transition-[opacity,transform] hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               sending && "opacity-40"
@@ -841,7 +834,7 @@ export function Composer({
           <button
             onClick={() => void submit()}
             disabled={sending || !canSubmit}
-            aria-label="Enviar"
+            aria-label={tr("Enviar")}
             className={cn(
               "flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-enviar text-enviar-texto shadow-sm transition-[opacity,transform] hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               (sending || !canSubmit) && "opacity-40"
@@ -853,17 +846,11 @@ export function Composer({
       </div>
       )}
       <div className="mt-1.5 flex items-center justify-between">
-        {error ? (
-          <p role="alert" className="text-xs text-destructive">
-            {error}
-          </p>
-        ) : (
-          <span />
-        )}
+        {error ? <p role="alert" className="text-xs text-destructive">{systemText(tr.locale, error)}</p> : <span />}
         <p className="font-mono text-[10.5px] tracking-[0.04em] text-text-3">
           {soloPersona
-            ? `Ventana humana · quedan ${formatRemainingLong(human!.remainingMs)}`
-            : `Ventana abierta · quedan ${formatRemaining(conversation.windowRemainingMs)}`}
+            ? tr("Ventana humana · quedan {v0}", {v0: formatRemainingLong(human!.remainingMs, tr.locale)})
+            : tr("Ventana abierta · quedan {v0}", {v0: formatRemaining(conversation.windowRemainingMs)})}
         </p>
       </div>
     </div>

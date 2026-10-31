@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,6 +29,8 @@ export function OnboardingClient({
   guide: Guide;
   agentName: string | null;
 }) {
+  const { t: tr } = useI18n();
+
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -40,7 +46,7 @@ export function OnboardingClient({
   // Antes del paso 1 el nombre es el de fábrica («Asistente») y se lee como
   // una palabra suelta, no como el nombre de alguien: se dice «tu agente».
   const agentReady = guide.steps.find((s) => s.key === "agent")?.done ?? false;
-  const agente = (agentReady && agentName) || "tu agente";
+  const agente = (agentReady && agentName) || tr("tu agente");
 
   async function encender() {
     setBusy(true);
@@ -55,7 +61,7 @@ export function OnboardingClient({
         error?: { message?: string };
       } | null;
       setError(
-        data?.error?.message ?? "No pudimos encender el agente. Inténtalo de nuevo."
+        data?.error?.message ?? tr("No pudimos encender el agente. Inténtalo de nuevo.")
       );
       setBusy(false);
       return;
@@ -69,23 +75,18 @@ export function OnboardingClient({
       <div className="mx-auto max-w-3xl space-y-6 p-4 sm:p-8">
         <header>
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Guía de inicio
-          </p>
+            {tr("Guía de inicio")}</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            Deja listo tu CRM en {total} pasos
-          </h1>
+            {tr("Deja listo tu CRM en ")}{total} {tr(" pasos")}</h1>
           <p className="mt-2 text-muted-foreground">
-            Hazlos en orden: cada botón te lleva a la pantalla que toca. Al
-            volver aquí verás tu avance.
-          </p>
+            {tr("Hazlos en orden: cada botón te lleva a la pantalla que toca. Al volver aquí verás tu avance.")}</p>
         </header>
 
-        <div aria-label="Avance">
+        <div aria-label={tr("Avance")}>
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
-              {done} de {total} listos
-            </span>
-            {guide.complete && <span className="text-success-text">¡Completo!</span>}
+              {done} {tr(" de ")}{total} {tr(" listos")}</span>
+            {guide.complete && <span className="text-success-text">{tr("¡Completo!")}</span>}
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
             <div
@@ -123,11 +124,11 @@ export function OnboardingClient({
                 </span>
                 <div className="min-w-0 flex-1">
                   <h2 className="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold">
-                    {step.title}
-                    {step.optional && <Badge variant="secondary">Opcional</Badge>}
-                    <span className="sr-only">{step.done ? " (listo)" : " (pendiente)"}</span>
+                    {systemText(tr.locale, step.title)}
+                    {step.optional && <Badge variant="secondary">{tr("Opcional")}</Badge>}
+                    <span className="sr-only">{step.done ? tr(" (listo)") : tr(" (pendiente)")}</span>
                   </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">{step.description}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{systemText(tr.locale, step.description)}</p>
                   {!step.done && step.hint && (
                     // Un paso opcional no es una falta: su pista va en gris.
                     <p
@@ -136,7 +137,7 @@ export function OnboardingClient({
                         step.optional ? "text-text-2" : "text-warning-text"
                       )}
                     >
-                      {step.hint}
+                      {systemText(tr.locale, step.hint)}
                     </p>
                   )}
                   <div className="mt-3">
@@ -160,31 +161,27 @@ export function OnboardingClient({
             <>
               <h2 className="font-semibold">
                 {agentReady && agentName
-                  ? `${agentName} ya está contestando`
-                  : "Tu agente ya está contestando"}
+                  ? tr("{v0} ya está contestando", {v0: agentName})
+                  : tr("Tu agente ya está contestando")}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                El agente está encendido y atiende a tus clientes. Puedes
-                apagarlo cuando quieras desde Agente.
-              </p>
+                {tr("El agente está encendido y atiende a tus clientes. Puedes apagarlo cuando quieras desde Agente.")}</p>
               <Link href="/inbox" className={cn(buttonVariants({ size: "sm" }), "mt-3")}>
-                Ir a la Bandeja <ArrowRight className="h-4 w-4" />
+                {tr("Ir a la Bandeja ")}<ArrowRight className="h-4 w-4" />
               </Link>
             </>
           ) : guide.complete && guide.brainConnected ? (
             <>
-              <h2 className="font-semibold">¡Todo listo! Enciende a {agente}</h2>
+              <h2 className="font-semibold">{tr("¡Todo listo! Enciende a ")}{agente}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Desde ese momento contestará a tus clientes. Puedes apagarlo
-                cuando quieras desde Agente.
-              </p>
+                {tr("Desde ese momento contestará a tus clientes. Puedes apagarlo cuando quieras desde Agente.")}</p>
               <Button className="mt-3" disabled={busy} onClick={() => void encender()}>
                 <Power className="h-4 w-4" />
-                {busy ? "Encendiendo…" : `Encender a ${agente}`}
+                {busy ? tr("Encendiendo…") : tr("Encender a {v0}", {v0: agente})}
               </Button>
               {error && (
                 <p role="alert" className="mt-2 text-sm text-destructive">
-                  {error}
+                  {systemText(tr.locale, error)}
                 </p>
               )}
             </>
@@ -192,15 +189,12 @@ export function OnboardingClient({
             <>
               <h2 className="flex items-center gap-2 font-semibold">
                 <Inbox className="h-4 w-4 text-muted-foreground" />
-                Listo: Vocero funciona como bandeja manual
-              </h2>
+                {tr("Listo: Vocero funciona como bandeja manual")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Los mensajes llegan a la Bandeja y contestas tú. Para que un
-                agente conteste, conéctalo: después lo enciendes aquí.
-              </p>
+                {tr("Los mensajes llegan a la Bandeja y contestas tú. Para que un agente conteste, conéctalo: después lo enciendes aquí.")}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link href="/inbox" className={buttonVariants({ size: "sm" })}>
-                  Ir a la Bandeja <ArrowRight className="h-4 w-4" />
+                  {tr("Ir a la Bandeja ")}<ArrowRight className="h-4 w-4" />
                 </Link>
                 {guiaDelPar && (
                   <a
@@ -209,7 +203,7 @@ export function OnboardingClient({
                     rel="noreferrer"
                     className={buttonVariants({ size: "sm", variant: "outline" })}
                   >
-                    Cómo conectar tu agente <ArrowUpRight className="h-4 w-4" />
+                    {tr("Cómo conectar tu agente ")}<ArrowUpRight className="h-4 w-4" />
                   </a>
                 )}
               </div>
@@ -218,14 +212,10 @@ export function OnboardingClient({
             <>
               <h2 className="flex items-center gap-2 font-semibold">
                 <Power className="h-4 w-4 text-muted-foreground" />
-                Al final: encender a {agente}
+                {tr("Al final: encender a ")}{agente}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Tu agente empieza apagado: mientras no lo enciendas no le
-                contesta a nadie y los mensajes que lleguen los atiendes tú desde
-                la Bandeja. Con los pasos listos y tu agente conectado, aquí
-                aparece el botón para encenderlo.
-              </p>
+                {tr("Tu agente empieza apagado: mientras no lo enciendas no le contesta a nadie y los mensajes que lleguen los atiendes tú desde la Bandeja. Con los pasos listos y tu agente conectado, aquí aparece el botón para encenderlo.")}</p>
             </>
           )}
         </section>
@@ -237,15 +227,17 @@ export function OnboardingClient({
 /** El botón de cada paso. «Conecta tu agente» lleva a una guía externa: se
  *  abre en otra pestaña para no sacar a nadie de su CRM. */
 function StepLink({ step, isCurrent }: { step: GuideStep; isCurrent: boolean }) {
+  const { t: tr } = useI18n();
+
   const external = /^https?:\/\//.test(step.href);
   const className = step.done
     ? "text-sm text-muted-foreground underline underline-offset-2"
     : buttonVariants({ size: "sm", variant: isCurrent ? "default" : "outline" });
   const children = step.done ? (
-    "Listo · revisar"
+    tr("Listo · revisar")
   ) : (
     <>
-      {step.cta}
+      {systemText(tr.locale, step.cta)}
       {external ? <ArrowUpRight className="h-4 w-4" /> : <ArrowRight className="h-4 w-4" />}
     </>
   );

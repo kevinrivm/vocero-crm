@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { ArrowDownRight, ArrowRight, ArrowUpRight } from "lucide-react";
 import { delta, type Comparable, type RateDto } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -34,6 +36,8 @@ export function StatCard({
   hint?: string;
   inverted?: boolean;
 }) {
+  const { t: tr } = useI18n();
+
   const d = compare ? delta(compare) : null;
   const mejor = d === null || d === 0 ? null : inverted ? d < 0 : d > 0;
   const Icon = d === null || d === 0 ? ArrowRight : d > 0 ? ArrowUpRight : ArrowDownRight;
@@ -50,12 +54,11 @@ export function StatCard({
         >
           <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
           {d === null ? (
-            <span>sin base previa ({compare.previous})</span>
+            <span>{tr("sin base previa (")}{compare.previous})</span>
           ) : (
             <span>
               {d > 0 ? "+" : ""}
-              {d}% vs. {compare.previous} antes
-            </span>
+              {d}{tr("% vs. ")}{compare.previous} {tr(" antes")}</span>
           )}
         </p>
       )}
@@ -74,6 +77,8 @@ export function RateCard({
   rate: RateDto;
   unit: string;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <Tile label={label}>
       <p className="mt-0.5 text-xl font-semibold">
@@ -81,11 +86,11 @@ export function RateCard({
       </p>
       <p className="mt-1 text-xs">
         {rate.value === null ? (
-          <span className="text-text-3">sin casos en el periodo</span>
+          <span className="text-text-3">{tr("sin casos en el periodo")}</span>
         ) : (
           <span className="text-text-3">
-            de {rate.sample} {unit}
-            {!rate.reliable && " · muestra chica"}
+            {tr("de ")}{rate.sample} {unit}
+            {!rate.reliable && tr(" · muestra chica")}
           </span>
         )}
       </p>

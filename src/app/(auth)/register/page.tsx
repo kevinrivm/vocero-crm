@@ -1,4 +1,7 @@
 "use client";
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -10,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function RegisterPage() {
+  const { t: tr } = useI18n();
+
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -26,12 +31,12 @@ export default function RegisterPage() {
     if (err) {
       if (err.status === 403) {
         setError(
-          "El registro está cerrado: esta instancia ya tiene su organización. Pide acceso al propietario."
+          tr("El registro está cerrado: esta instancia ya tiene su organización. Pide acceso al propietario.")
         );
       } else if (err.status === 429) {
-        setError("Demasiados intentos. Espera unos minutos.");
+        setError(tr("Demasiados intentos. Espera unos minutos."));
       } else {
-        setError(err.message ?? "No se pudo crear la cuenta.");
+        setError(err.message ?? tr("No se pudo crear la cuenta."));
       }
       return;
     }
@@ -44,16 +49,14 @@ export default function RegisterPage() {
   return (
     <Card className="shadow-md">
       <CardHeader>
-        <CardTitle>Crear cuenta</CardTitle>
+        <CardTitle>{tr("Crear cuenta")}</CardTitle>
         <CardDescription>
-          El primer registro crea la organización de esta instancia y queda
-          como propietario.
-        </CardDescription>
+          {tr("El primer registro crea la organización de esta instancia y queda como propietario.")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="name">Tu nombre</Label>
+            <Label htmlFor="name">{tr("Tu nombre")}</Label>
             <Input
               id="name"
               required
@@ -62,7 +65,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="email">Correo</Label>
+            <Label htmlFor="email">{tr("Correo")}</Label>
             <Input
               id="email"
               type="email"
@@ -73,7 +76,7 @@ export default function RegisterPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">{tr("Contraseña")}</Label>
             <Input
               id="password"
               type="password"
@@ -84,15 +87,14 @@ export default function RegisterPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive">{systemText(tr.locale, error)}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creando…" : "Crear cuenta"}
+            {loading ? tr("Creando…") : tr("Crear cuenta")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            ¿Ya tienes cuenta?{" "}
+            {tr("¿Ya tienes cuenta?")}{" "}
             <Link href="/login" className="text-primary hover:underline">
-              Inicia sesión
-            </Link>
+              {tr("Inicia sesión")}</Link>
           </p>
         </form>
       </CardContent>

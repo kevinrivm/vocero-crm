@@ -1,4 +1,9 @@
-﻿"use client";
+"use client";
+
+import { systemText } from "@/lib/i18n";
+
+﻿
+import { useI18n } from "@/components/i18n-provider";
 
 import { useState } from "react";
 import { LOSS_REASON_LABEL, type LossReason } from "@/lib/types";
@@ -22,6 +27,8 @@ export function LossReasonDialog({
   onCancel: () => void;
   onConfirm: (reason: LossReason, note: string) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [reason, setReason] = useState<LossReason | null>(null);
   const [note, setNote] = useState("");
 
@@ -32,15 +39,13 @@ export function LossReasonDialog({
     >
       <div
         role="dialog"
-        aria-label="Motivo de pérdida"
+        aria-label={tr("Motivo de pérdida")}
         className="w-full max-w-md rounded-lg border bg-popover p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-1 font-semibold">¿Por qué se perdió?</h3>
+        <h3 className="mb-1 font-semibold">{tr("¿Por qué se perdió?")}</h3>
         <p className="mb-4 text-xs text-text-3">
-          {leadName} pasa a Perdido. El motivo es lo único que después explica
-          qué cambiar: sin él, la gráfica de pérdidas no dice nada.
-        </p>
+          {leadName} {tr(" pasa a Perdido. El motivo es lo único que después explica qué cambiar: sin él, la gráfica de pérdidas no dice nada.")}</p>
 
         <div className="space-y-2">
           {REASONS.map((r) => (
@@ -55,35 +60,32 @@ export function LossReasonDialog({
                   : "w-full rounded-md border px-3 py-2 text-left text-sm hover:bg-subtle"
               }
             >
-              {LOSS_REASON_LABEL[r]}
+              {systemText(tr.locale, LOSS_REASON_LABEL[r])}
             </button>
           ))}
         </div>
 
         <div className="mt-3 space-y-1.5">
           <label className="text-sm font-medium" htmlFor="loss-note">
-            Nota (opcional)
-          </label>
+            {tr("Nota (opcional)")}</label>
           <Textarea
             id="loss-note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
             rows={2}
             maxLength={500}
-            placeholder="Se fue con una agencia local por la mitad del precio"
+            placeholder={tr("Se fue con una agencia local por la mitad del precio")}
           />
         </div>
 
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="ghost" onClick={onCancel}>
-            Cancelar
-          </Button>
+            {tr("Cancelar")}</Button>
           <Button
             disabled={!reason}
             onClick={() => reason && onConfirm(reason, note.trim())}
           >
-            Marcar como perdido
-          </Button>
+            {tr("Marcar como perdido")}</Button>
         </div>
       </div>
     </div>

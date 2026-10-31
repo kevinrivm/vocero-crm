@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useState } from "react";
 import { Moon, Sun } from "lucide-react";
 import { THEME_COOKIE, THEME_COOKIE_MAX_AGE } from "@/lib/theme";
@@ -35,6 +37,7 @@ export function pintarApariencia(a: Apariencia) {
  * Papel ⇄ Carbón…) y lo guardan como elección de esta persona.
  */
 export function ThemeToggle({ initial, className }: { initial: Apariencia; className?: string }) {
+  const { t: tr, text: tx } = useI18n();
   const [a, setA] = useState<Apariencia>(initial);
 
   function cycle() {
@@ -46,14 +49,14 @@ export function ThemeToggle({ initial, className }: { initial: Apariencia; class
 
   const Icon = ICONS[modoDe(a)];
   const nombre = a.tema === "propio" ? "Propio" : TEMAS[a.tema].nombre;
-  const label = `Tema: ${nombre}`;
+  const label = tr("Tema: {v0}", { v0: tx(nombre) });
 
   return (
     <button
       type="button"
       onClick={cycle}
       aria-label={label}
-      title={`${label} (clic para cambiar)`}
+      title={tr("{v0} (clic para cambiar)", { v0: label })}
       className={cn("rounded p-1 text-text-3 transition-colors hover:text-foreground", className)}
     >
       <Icon className="h-4 w-4" strokeWidth={1.7} />
