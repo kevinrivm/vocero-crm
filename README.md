@@ -27,6 +27,10 @@ de bandeja manual y contestas tú. El token de WhatsApp nunca sale del CRM.
 > 🎬 **Video-instalador oficial**: próximamente en
 > [el canal de Kevin Belier](https://www.youtube.com/@KevinBelier)
 
+> 💼 **¿Quieres venderlo a otros negocios?** Vocero es gratis para tu negocio.
+> Cómo venderlo, adaptarlo a cada cliente y entregarlo sin que truene se aprende en
+> la [VIBE Community](https://kevinbelier.cloud/comunidad).
+
 ## ¿Para quién es?
 
 - **Agencias de IA/automatización** que implementan CRM + agente para sus
@@ -923,8 +927,8 @@ repo ayuda a que más gente lo encuentre.
 ## Créditos
 
 Creado por [Kevin Belier](https://www.youtube.com/@KevinBelier). ¿Quieres
-aprender a convertirte en Meta Tech Provider y monetizar con tu agencia de IA?
-Únete a la [VIBE Community](https://www.skool.com/vibe-community-vip). Los patrones
+venderlo a otros negocios, adaptarlo y entregarlo sin que truene? Únete a la
+[VIBE Community](https://kevinbelier.cloud/comunidad). Los patrones
 de producción (webhook firmado, ingesta idempotente, cifrado de tokens) vienen
 de un proyecto de referencia privado en producción, portados y simplificados
 para este repo.

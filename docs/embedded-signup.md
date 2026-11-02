@@ -119,3 +119,8 @@ del número. Guárdalo; Vocero no lo almacena.
 
 La coexistencia (mantener el número en la app WhatsApp Business del teléfono)
 no está en esta versión; ver «Fuera de alcance» en la spec.
+
+---
+
+¿Vas a conectar a tus clientes? Cómo venderles el sistema y entregarlo sin que
+truene se aprende en la [VIBE Community](https://kevinbelier.cloud/comunidad).
