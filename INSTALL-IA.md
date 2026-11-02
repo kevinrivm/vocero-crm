@@ -178,6 +178,9 @@ docker compose up -d
 > 4. Vocero no trae agente: la **Guía de inicio** te dice si hay uno conectado.
 >    Sin él, contestas tú desde la Bandeja. Con Nea en línea, enciéndelo en la
 >    pantalla **Agente** cuando el Laboratorio te dé buen puntaje.
+> 5. Si vas a instalarlo para otros negocios: cómo venderlo, adaptarlo y
+>    entregarlo sin que truene se aprende en la
+>    [VIBE Community](https://kevinbelier.cloud/comunidad).
 
 ## Diagnóstico rápido
 
