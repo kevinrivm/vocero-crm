@@ -1,15 +1,11 @@
 import { count, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
-
-/** Etapas sembradas del pipeline (US2). */
-const SEED_STAGES: { name: string; kind: "open" | "won" | "lost" }[] = [
-  { name: "Nuevo", kind: "open" },
-  { name: "En conversación", kind: "open" },
-  { name: "Interesado", kind: "open" },
-  { name: "Cliente", kind: "won" },
-  { name: "Perdido", kind: "lost" },
-];
+import { cookies } from "next/headers";
+import { isLocale, LOCALE_COOKIE, type Locale } from "@/lib/i18n/locale";
+import { initialPipelineStages } from "@/lib/pipeline-seed";
+import { brandingMetadata } from "@/lib/branding-metadata";
+import { DEFAULT_BRANDING } from "@/lib/branding";
 
 /**
  * Primer registro de la instancia: crea la organización, deja al usuario como
@@ -31,10 +27,13 @@ export async function onUserCreated(userId: string, userName: string) {
     if ((orgs?.n ?? 0) > 0) return;
 
     const orgId = newId("organization");
+    const rawLocale = (await cookies()).get(LOCALE_COOKIE)?.value;
+    const locale: Locale = isLocale(rawLocale) ? rawLocale : "es";
     await tx.insert(schema.organization).values({
       id: orgId,
       name: userName ? `Negocio de ${userName}` : "Mi negocio",
       slug: "principal",
+      metadata: brandingMetadata(null, { ...DEFAULT_BRANDING, locale }),
     });
     await tx.insert(schema.member).values({
       id: newId("member"),
@@ -43,7 +42,7 @@ export async function onUserCreated(userId: string, userName: string) {
       role: "owner",
     });
     await tx.insert(schema.pipelineStage).values(
-      SEED_STAGES.map((s, i) => ({
+      initialPipelineStages(locale).map((s, i) => ({
         id: newId("stage"),
         organizationId: orgId,
         name: s.name,

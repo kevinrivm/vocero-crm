@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Trash2 } from "lucide-react";
 import type { StageDto } from "@/lib/types";
@@ -17,6 +21,8 @@ export function StageManager({
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [newName, setNewName] = useState("");
   const [deleting, setDeleting] = useState<StageDto | null>(null);
   const [moveTo, setMoveTo] = useState("");
@@ -78,7 +84,7 @@ export function StageManager({
         setDeleting(stage);
         return;
       }
-      setError(data?.error?.message ?? "No se pudo eliminar");
+      setError(data?.error?.message ?? tr("No se pudo eliminar"));
       return;
     }
     setDeleting(null);
@@ -97,7 +103,7 @@ export function StageManager({
         className="max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-lg border bg-popover p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-4 font-semibold">Etapas del pipeline</h3>
+        <h3 className="mb-4 font-semibold">{tr("Etapas del pipeline")}</h3>
         <ul className="space-y-2">
           {sorted.map((s, i) => (
             <li key={s.id} className="flex items-center gap-2">
@@ -114,7 +120,7 @@ export function StageManager({
                 <Button
                   variant="ghost"
                   size="icon"
-                  aria-label="Eliminar etapa"
+                  aria-label={tr("Eliminar etapa")}
                   onClick={() => void remove(s, null)}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -124,7 +130,7 @@ export function StageManager({
                 variant="ghost"
                 size="icon"
                 disabled={i === 0}
-                aria-label="Subir"
+                aria-label={tr("Subir")}
                 onClick={() => void move(s, -1)}
               >
                 <ArrowUp className="h-4 w-4" />
@@ -133,7 +139,7 @@ export function StageManager({
                 variant="ghost"
                 size="icon"
                 disabled={i === sorted.length - 1}
-                aria-label="Bajar"
+                aria-label={tr("Bajar")}
                 onClick={() => void move(s, 1)}
               >
                 <ArrowDown className="h-4 w-4" />
@@ -145,15 +151,14 @@ export function StageManager({
         {deleting && (
           <div className="mt-4 rounded-md border border-warning-soft bg-warning-tint p-3">
             <p className="text-sm text-warning-text">
-              &quot;{deleting.name}&quot; tiene tarjetas. Elige a dónde moverlas:
-            </p>
+              {tr("\"")}{deleting.name}{tr("\" tiene tarjetas. Elige a dónde moverlas:")}</p>
             <div className="mt-2 flex gap-2">
               <select
                 value={moveTo}
                 onChange={(e) => setMoveTo(e.target.value)}
                 className="h-9 flex-1 rounded-md border border-input bg-card px-3 text-sm"
               >
-                <option value="">Etapa destino…</option>
+                <option value="">{tr("Etapa destino…")}</option>
                 {sorted
                   .filter((s) => s.id !== deleting.id)
                   .map((s) => (
@@ -168,17 +173,16 @@ export function StageManager({
                 disabled={!moveTo}
                 onClick={() => void remove(deleting, moveTo)}
               >
-                Mover y eliminar
-              </Button>
+                {tr("Mover y eliminar")}</Button>
             </div>
           </div>
         )}
 
-        {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+        {error && <p className="mt-3 text-sm text-destructive">{systemText(tr.locale, error)}</p>}
 
         <div className="mt-4 flex gap-2 border-t pt-4">
           <Input
-            placeholder="Nueva etapa…"
+            placeholder={tr("Nueva etapa…")}
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => {
@@ -186,14 +190,12 @@ export function StageManager({
             }}
           />
           <Button onClick={() => void add()} disabled={!newName.trim()}>
-            Agregar
-          </Button>
+            {tr("Agregar")}</Button>
         </div>
 
         <div className="mt-4 flex justify-end">
           <Button variant="ghost" onClick={onClose}>
-            Cerrar
-          </Button>
+            {tr("Cerrar")}</Button>
         </div>
       </div>
     </div>

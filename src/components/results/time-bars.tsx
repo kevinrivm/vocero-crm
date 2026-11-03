@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -35,6 +37,8 @@ export function TimeBars({
   unit: string;
   emptyText?: string;
 }) {
+  const { t: tr } = useI18n();
+
   const [activo, setActivo] = useState<number | null>(null);
   const max = Math.max(0, ...points.map((p) => p.value));
   const tope = escalaLimpia(max);
@@ -47,8 +51,7 @@ export function TimeBars({
       <figcaption className="mb-2 flex items-baseline justify-between gap-2">
         <span className="text-[13px] font-semibold text-text-2">{title}</span>
         <span className="text-xs text-text-3">
-          {format(total)} en el periodo
-        </span>
+          {format(total)} {tr(" en el periodo")}</span>
       </figcaption>
 
       {max === 0 ? (
@@ -109,7 +112,7 @@ export function TimeBars({
                   className="absolute top-0 whitespace-nowrap"
                   style={anclaje(i, n)}
                 >
-                  {etiqueta(p.bucket)}
+                  {etiqueta(p.bucket, tr.intl)}
                 </span>
               ) : null
             )}
@@ -119,14 +122,14 @@ export function TimeBars({
             <caption>{title}</caption>
             <thead>
               <tr>
-                <th scope="col">Fecha</th>
+                <th scope="col">{tr("Fecha")}</th>
                 <th scope="col">{unit}</th>
               </tr>
             </thead>
             <tbody>
               {points.map((p) => (
                 <tr key={p.bucket}>
-                  <td>{etiqueta(p.bucket)}</td>
+                  <td>{etiqueta(p.bucket, tr.intl)}</td>
                   <td>
                     {format(p.value)}
                     {p.detail ? ` · ${p.detail}` : ""}
@@ -154,6 +157,8 @@ function Tooltip({
   bottomPct: number;
   format: (v: number) => string;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <div
       className="pointer-events-none absolute z-10 whitespace-nowrap rounded-md border border-border-strong bg-popover px-2 py-1 text-xs shadow-md"
@@ -161,7 +166,7 @@ function Tooltip({
     >
       <strong className="font-semibold text-foreground">{format(point.value)}</strong>
       {point.detail && <span className="text-text-2"> · {point.detail}</span>}
-      <span className="text-text-3"> · {etiqueta(point.bucket)}</span>
+      <span className="text-text-3"> · {etiqueta(point.bucket, tr.intl)}</span>
     </div>
   );
 }
@@ -194,7 +199,8 @@ export function escalaLimpia(max: number): number {
 const MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 /** `2026-08-13` → `13 ago` · `2026-08` → `ago 26`. */
-export function etiqueta(bucket: string): string {
+export function etiqueta(bucket: string, locale = "es-MX"): string {
+  if (locale === "pt-BR") return new Intl.DateTimeFormat(locale,{timeZone:"UTC",month:"short",...(bucket.length === 7 ? {year:"2-digit"} as const : {day:"numeric"} as const)}).format(new Date(bucket + (bucket.length === 7 ? "-01" : "") + "T12:00:00Z"));
   const partes = bucket.split("-");
   const mes = MESES[Number(partes[1]) - 1] ?? "";
   if (partes.length === 2) return `${mes} ${partes[0]!.slice(2)}`;

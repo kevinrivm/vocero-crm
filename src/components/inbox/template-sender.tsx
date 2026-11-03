@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import { templateLanguageName } from "@/lib/template-languages";
 import type { TemplateDto } from "@/lib/types";
@@ -19,6 +23,8 @@ export function TemplateSender({
   conversationId: string;
   onSent: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [templates, setTemplates] = useState<TemplateDto[] | null>(null);
   const [selectedId, setSelectedId] = useState<string>("");
   const [variables, setVariables] = useState<string[]>([]);
@@ -45,18 +51,16 @@ export function TemplateSender({
   }, []);
 
   if (templates === null) {
-    return <p className="text-xs text-muted-foreground">Cargando plantillas…</p>;
+    return <p className="text-xs text-muted-foreground">{tr("Cargando plantillas…")}</p>;
   }
 
   if (templates.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Aún no hay plantillas aprobadas. Créalas en{" "}
+        {tr("Aún no hay plantillas aprobadas. Créalas en")}{" "}
         <a href="/settings/templates" className="text-primary hover:underline">
-          Configuración → Plantillas
-        </a>{" "}
-        y espera la aprobación de Meta.
-      </p>
+          {tr("Configuración → Plantillas")}</a>{" "}
+        {tr("y espera la aprobación de Meta.")}</p>
     );
   }
 
@@ -87,7 +91,7 @@ export function TemplateSender({
       const data = (await res.json().catch(() => null)) as {
         error?: { message?: string };
       } | null;
-      setError(data?.error?.message ?? "No se pudo enviar la plantilla");
+      setError(data?.error?.message ?? tr("No se pudo enviar la plantilla"));
       return;
     }
     setSelectedId("");
@@ -98,7 +102,7 @@ export function TemplateSender({
   return (
     <div className="space-y-3">
       <div className="space-y-1.5">
-        <Label htmlFor="template-select">Plantilla aprobada</Label>
+        <Label htmlFor="template-select">{tr("Plantilla aprobada")}</Label>
         <select
           id="template-select"
           value={selectedId}
@@ -108,10 +112,10 @@ export function TemplateSender({
           }}
           className="flex h-9 w-full rounded-md border border-input bg-card px-3 py-1 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <option value="">Elige una plantilla…</option>
+          <option value="">{tr("Elige una plantilla…")}</option>
           {templates.map((t) => (
             <option key={t.id} value={t.id}>
-              {t.name} ({templateLanguageName(t.language)})
+              {t.name} ({systemText(tr.locale, templateLanguageName(t.language))})
             </option>
           ))}
         </select>
@@ -124,7 +128,7 @@ export function TemplateSender({
       {values.map((value, i) => (
         <div key={i} className="space-y-1.5">
           <Label htmlFor={`template-variable-${i + 1}`}>
-            Valor de {`{{${i + 1}}}`}
+            {tr("Valor de ")}{`{{${i + 1}}}`}
           </Label>
           <Input
             id={`template-variable-${i + 1}`}
@@ -138,17 +142,17 @@ export function TemplateSender({
               })
             }
             placeholder={
-              i === 0 ? "p. ej. el nombre del cliente" : "p. ej. 12 de agosto"
+              i === 0 ? tr("p. ej. el nombre del cliente") : tr("p. ej. 12 de agosto")
             }
           />
         </div>
       ))}
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {error && <p className="text-xs text-destructive">{systemText(tr.locale, error)}</p>}
       <Button
         onClick={() => void send()}
         disabled={!selected || sending || missingValue}
       >
-        {sending ? "Enviando…" : "Enviar plantilla"}
+        {sending ? tr("Enviando…") : tr("Enviar plantilla")}
       </Button>
     </div>
   );

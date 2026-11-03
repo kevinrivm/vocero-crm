@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -39,6 +41,8 @@ export type BoardLead = {
 };
 
 export function PipelineClient() {
+  const { t: tr } = useI18n();
+
   const [stages, setStages] = useState<StageDto[]>([]);
   const [currency, setCurrency] = useState("MXN");
   const [leads, setLeads] = useState<BoardLead[]>([]);
@@ -173,10 +177,9 @@ export function PipelineClient() {
   return (
     <div className="flex h-full flex-col">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 sm:py-4">
-        <h2 className="text-[17px] font-bold tracking-tight">Pipeline</h2>
+        <h2 className="text-[17px] font-bold tracking-tight">{tr("Pipeline")}</h2>
         <Button variant="outline" size="sm" onClick={() => setManaging(true)}>
-          <Settings2 className="h-4 w-4" /> Gestionar etapas
-        </Button>
+          <Settings2 className="h-4 w-4" /> {tr(" Gestionar etapas")}</Button>
       </header>
 
       {/* El tablero se arrastra en horizontal; en el teléfono cada columna
@@ -341,6 +344,8 @@ function StageColumn({
 
 /** Cuánto dinero hay en esta etapa, y qué quedó fuera de la cuenta. */
 function StageFooter({ leads, currency }: { leads: BoardLead[]; currency: string }) {
+  const { t: tr } = useI18n();
+
   const { totalCents, sinMonto, otraMoneda } = totalesDeEtapa(leads, currency);
   const conMonto = leads.length - sinMonto - otraMoneda;
 
@@ -348,14 +353,14 @@ function StageFooter({ leads, currency }: { leads: BoardLead[]; currency: string
     <div className="border-t px-3 py-2 text-[11px]">
       {conMonto === 0 ? (
         // Un "$0.00" aquí se lee como un error del sistema, no como un dato.
-        <p className="text-muted-foreground">Sin montos capturados</p>
+        <p className="text-muted-foreground">{tr("Sin montos capturados")}</p>
       ) : (
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-muted-foreground">
-            Total{sinMonto > 0 ? ` · ${sinMonto} sin monto` : ""}
+            {tr("Total")}{sinMonto > 0 ? tr(" · {v0} sin monto", {v0: sinMonto}) : ""}
           </span>
           <span className="font-semibold tabular-nums">
-            {formatMoneyCents(totalCents, currency)}
+            {formatMoneyCents(totalCents, currency, tr.intl)}
           </span>
         </div>
       )}
@@ -363,8 +368,7 @@ function StageFooter({ leads, currency }: { leads: BoardLead[]; currency: string
         // Descartarlos en silencio haría que el total mintiera sin que nadie
         // pudiera notarlo.
         <p className="mt-0.5 text-warning-text">
-          {otraMoneda} en otra moneda, fuera del total
-        </p>
+          {otraMoneda} {tr(" en otra moneda, fuera del total")}</p>
       )}
     </div>
   );
@@ -381,6 +385,8 @@ function DraggableLead({
   onEditAmount: (lead: BoardLead) => void;
   onOpen: (lead: BoardLead) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: lead.id,
   });
@@ -403,7 +409,7 @@ function DraggableLead({
           onOpen(lead);
         }
       }}
-      aria-label={`Abrir el trato de ${lead.contact.name}`}
+      aria-label={tr("Abrir el trato de {v0}", {v0: lead.contact.name})}
       className={cn(isDragging && "opacity-40")}
     >
       <LeadCard lead={lead} currency={currency} onEditAmount={onEditAmount} />
@@ -422,6 +428,8 @@ function LeadCard({
   overlay?: boolean;
   onEditAmount?: (lead: BoardLead) => void;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <div
       className={cn(
@@ -438,8 +446,8 @@ function LeadCard({
           </div>
           <p className="text-[11px] text-muted-foreground">
             {lead.lastActivityAt
-              ? `Actividad: ${formatTime(lead.lastActivityAt)}`
-              : "Sin actividad"}
+              ? tr("Actividad: {v0}", {v0: formatTime(lead.lastActivityAt, tr.locale)})
+              : tr("Sin actividad")}
           </p>
         </div>
         {lead.conversationId && (
@@ -447,7 +455,7 @@ function LeadCard({
             href={`/inbox?contact=${lead.contact.id}`}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            aria-label="Abrir conversación"
+            aria-label={tr("Abrir conversación")}
             className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <MessageSquareText className="h-4 w-4" />
@@ -473,13 +481,13 @@ function LeadCard({
           )}
         >
           {lead.amountCents === null
-            ? "+ monto"
-            : formatMoneyCents(lead.amountCents, lead.currency ?? currency)}
+            ? tr("+ monto")
+            : formatMoneyCents(lead.amountCents, lead.currency ?? currency, tr.intl)}
         </button>
       )}
       {overlay && lead.amountCents !== null && (
         <p className="mt-1.5 text-right text-xs font-semibold tabular-nums">
-          {formatMoneyCents(lead.amountCents, lead.currency ?? currency)}
+          {formatMoneyCents(lead.amountCents, lead.currency ?? currency, tr.intl)}
         </p>
       )}
     </div>

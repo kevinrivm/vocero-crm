@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImageUp, Trash2 } from "lucide-react";
@@ -20,6 +24,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
  * que subir algo es reemplazarlo, no estrenarlo.
  */
 export function FaviconCard({ branding }: { branding: Branding }) {
+  const { t: tr } = useI18n();
+
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [subiendo, setSubiendo] = useState(false);
@@ -34,7 +40,7 @@ export function FaviconCard({ branding }: { branding: Branding }) {
     setError(null);
     if (file.size > MAX_FAVICON_BYTES) {
       setError(
-        `El icono no puede pasar de ${Math.round(MAX_FAVICON_BYTES / 1024)} KB.`
+        tr("El icono no puede pasar de {v0} KB.", {v0: Math.round(MAX_FAVICON_BYTES / 1024)})
       );
       return;
     }
@@ -49,7 +55,7 @@ export function FaviconCard({ branding }: { branding: Branding }) {
       const data = (await res?.json().catch(() => null)) as {
         error?: { message?: string };
       } | null;
-      setError(data?.error?.message ?? "No se pudo subir el icono");
+      setError(data?.error?.message ?? tr("No se pudo subir el icono"));
       return;
     }
     const data = (await res.json()) as { favicon: Branding["favicon"] };
@@ -66,7 +72,7 @@ export function FaviconCard({ branding }: { branding: Branding }) {
     }).catch(() => null);
     setSubiendo(false);
     if (!res?.ok) {
-      setError("No se pudo quitar el icono");
+      setError(tr("No se pudo quitar el icono"));
       return;
     }
     setActual(null);
@@ -77,10 +83,9 @@ export function FaviconCard({ branding }: { branding: Branding }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Logo del negocio</CardTitle>
+        <CardTitle>{tr("Logo del negocio")}</CardTitle>
         <p className="text-sm text-text-3">
-          Se ve en la pestaña del navegador y en la barra lateral del CRM.
-        </p>
+          {tr("Se ve en la pestaña del navegador y en la barra lateral del CRM.")}</p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-4">
@@ -90,19 +95,19 @@ export function FaviconCard({ branding }: { branding: Branding }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={src}
-            alt="Vista previa del icono de la pestaña"
+            alt={tr("Vista previa del icono de la pestaña")}
             width={48}
             height={48}
             className="h-12 w-12 rounded-lg border bg-card object-contain"
           />
           <div className="min-w-0 flex-1">
             <p className="text-sm">
-              {actual ? "Logo propio" : "Generado con tu marca"}
+              {actual ? tr("Logo propio") : tr("Generado con tu marca")}
             </p>
             <p className="mt-0.5 text-xs text-text-3">
               {actual
-                ? "Reemplaza al generado en la pestaña y en la barra lateral. Puedes quitarlo para volver a él."
-                : "La inicial sobre tu color de acento. Sube tu logo para reemplazarla."}
+                ? tr("Reemplaza al generado en la pestaña y en la barra lateral. Puedes quitarlo para volver a él.")
+                : tr("La inicial sobre tu color de acento. Sube tu logo para reemplazarla.")}
             </p>
           </div>
         </div>
@@ -128,22 +133,19 @@ export function FaviconCard({ branding }: { branding: Branding }) {
             onClick={() => input.current?.click()}
           >
             <ImageUp className="h-4 w-4" />
-            {subiendo ? "Subiendo…" : actual ? "Cambiar logo" : "Subir logo"}
+            {subiendo ? tr("Subiendo…") : actual ? tr("Cambiar logo") : tr("Subir logo")}
           </Button>
           {actual && (
             <Button variant="ghost" disabled={subiendo} onClick={() => void quitar()}>
-              <Trash2 className="h-4 w-4" /> Quitar
-            </Button>
+              <Trash2 className="h-4 w-4" /> {tr(" Quitar")}</Button>
           )}
         </div>
 
         <p className="text-xs text-text-3">
-          PNG, SVG, ICO, JPEG o WebP, hasta{" "}
-          {Math.round(MAX_FAVICON_BYTES / 1024)} KB. Cuadrado y con fondo
-          transparente se ve mejor: se dibuja sobre tu color de acento.
-        </p>
+          {tr("PNG, SVG, ICO, JPEG o WebP, hasta")}{" "}
+          {Math.round(MAX_FAVICON_BYTES / 1024)} {tr(" KB. Cuadrado y con fondo transparente se ve mejor: se dibuja sobre tu color de acento.")}</p>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-destructive">{systemText(tr.locale, error)}</p>}
       </CardContent>
     </Card>
   );

@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useState } from "react";
 import { UserPlus } from "lucide-react";
 import { ContactAvatar } from "@/components/avatar";
@@ -18,6 +22,8 @@ type Member = {
 };
 
 export function TeamClient() {
+  const { t: tr } = useI18n();
+
   const [members, setMembers] = useState<Member[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -61,7 +67,7 @@ export function TeamClient() {
       const data = (await res?.json().catch(() => null)) as {
         error?: { message?: string };
       } | null;
-      setError(data?.error?.message ?? "No se pudo crear la cuenta");
+      setError(data?.error?.message ?? tr("No se pudo crear la cuenta"));
       return;
     }
     setCreated({ email, password: tempPassword });
@@ -75,16 +81,14 @@ export function TeamClient() {
     <div className="max-w-2xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Crear cuenta de equipo</CardTitle>
+          <CardTitle>{tr("Crear cuenta de equipo")}</CardTitle>
           <CardDescription>
-            Sin correos ni invitaciones: comparte tú mismo la contraseña
-            temporal con tu compañero (se muestra UNA sola vez).
-          </CardDescription>
+            {tr("Sin correos ni invitaciones: comparte tú mismo la contraseña temporal con tu compañero (se muestra UNA sola vez).")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="team-name">Nombre</Label>
+              <Label htmlFor="team-name">{tr("Nombre")}</Label>
               <Input
                 id="team-name"
                 value={name}
@@ -92,7 +96,7 @@ export function TeamClient() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="team-email">Correo</Label>
+              <Label htmlFor="team-email">{tr("Correo")}</Label>
               <Input
                 id="team-email"
                 type="email"
@@ -102,27 +106,25 @@ export function TeamClient() {
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="team-password">Contraseña temporal</Label>
+            <Label htmlFor="team-password">{tr("Contraseña temporal")}</Label>
             <div className="flex gap-2">
               <Input
                 id="team-password"
                 value={tempPassword}
                 onChange={(e) => setTempPassword(e.target.value)}
-                placeholder="mínimo 8 caracteres"
+                placeholder={tr("mínimo 8 caracteres")}
               />
               <Button variant="outline" onClick={generatePassword}>
-                Generar
-              </Button>
+                {tr("Generar")}</Button>
             </div>
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive">{systemText(tr.locale, error)}</p>}
           {created && (
             <div className="rounded-md border border-success-soft bg-success-tint p-3 text-sm">
-              <p className="font-medium text-success-text">Cuenta creada ✓</p>
+              <p className="font-medium text-success-text">{tr("Cuenta creada ✓")}</p>
               <p className="mt-1 text-success-text opacity-90">
-                Comparte estos datos ahora (no se volverán a mostrar):
-                <br />
-                <code>{created.email}</code> · contraseña{" "}
+                {tr("Comparte estos datos ahora (no se volverán a mostrar):")}<br />
+                <code>{created.email}</code> {tr(" · contraseña")}{" "}
                 <code>{created.password}</code>
               </p>
             </div>
@@ -134,15 +136,14 @@ export function TeamClient() {
             onClick={() => void create()}
           >
             <UserPlus className="h-4 w-4" />
-            {saving ? "Creando…" : "Crear cuenta"}
+            {saving ? tr("Creando…") : tr("Crear cuenta")}
           </Button>
         </CardContent>
       </Card>
 
       <div className="space-y-2">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Miembros
-        </p>
+          {tr("Miembros")}</p>
         {members.map((m) => (
           <div
             key={m.id}
@@ -154,7 +155,7 @@ export function TeamClient() {
               <p className="text-xs text-muted-foreground">{m.email}</p>
             </div>
             <Badge variant={m.role === "owner" ? "default" : "secondary"}>
-              {m.role === "owner" ? "Propietario" : "Miembro"}
+              {m.role === "owner" ? tr("Propietario") : tr("Miembro")}
             </Badge>
           </div>
         ))}

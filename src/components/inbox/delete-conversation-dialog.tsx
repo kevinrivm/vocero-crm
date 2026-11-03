@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +23,8 @@ export function DeleteConversationDialog({
   /** Devuelve el mensaje de error, o null si se eliminó. */
   onConfirm: (alsoContact: boolean) => Promise<string | null>;
 }) {
+  const { t: tr } = useI18n();
+
   const [alsoContact, setAlsoContact] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,16 +58,13 @@ export function DeleteConversationDialog({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Eliminar conversación"
+        aria-label={tr("Eliminar conversación")}
         className="w-full max-w-md rounded-lg border bg-card p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-1 font-semibold">¿Eliminar esta conversación?</h3>
+        <h3 className="mb-1 font-semibold">{tr("¿Eliminar esta conversación?")}</h3>
         <p className="mb-3 text-[13px] leading-relaxed text-text-2">
-          Se borran los mensajes con {contactName}, sus adjuntos, la ficha y lo
-          que el agente recuerda de esta conversación. Si vuelve a escribir, el
-          agente empieza de cero.
-        </p>
+          {tr("Se borran los mensajes con ")}{contactName}{tr(", sus adjuntos, la ficha y lo que el agente recuerda de esta conversación. Si vuelve a escribir, el agente empieza de cero.")}</p>
 
         <label className="flex cursor-pointer items-start gap-2.5 rounded-md border bg-subtle p-3">
           <input
@@ -72,36 +75,35 @@ export function DeleteConversationDialog({
             onChange={(e) => setAlsoContact(e.target.checked)}
           />
           <span className="text-[13px] leading-snug">
-            <span className="font-medium">Borrar también el contacto y su lead</span>
+            <span className="font-medium">{tr("Borrar también el contacto y su lead")}</span>
             <span className="mt-0.5 block text-xs text-text-3">
               {alsoContact
-                ? "Se van además sus notas, su etapa en el pipeline y sus citas pasadas. Deja de contar en Resultados."
-                : "Sin marcar, el contacto conserva sus notas, su etapa y sus citas."}
+                ? tr("Se van además sus notas, su etapa en el pipeline y sus citas pasadas. Deja de contar en Resultados.")
+                : tr("Sin marcar, el contacto conserva sus notas, su etapa y sus citas.")}
             </span>
           </span>
         </label>
 
-        <p className="mt-3 text-xs font-medium text-danger-text">No se puede deshacer.</p>
+        <p className="mt-3 text-xs font-medium text-danger-text">{tr("No se puede deshacer.")}</p>
 
         {error && (
           <p
             role="alert"
             className="mt-3 rounded-md border border-danger-soft bg-danger-tint p-2.5 text-xs text-danger-text"
           >
-            {error}
+            {systemText(tr.locale, error)}
           </p>
         )}
 
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="ghost" disabled={busy} onClick={onCancel}>
-            Cancelar
-          </Button>
+            {tr("Cancelar")}</Button>
           <Button variant="destructive" disabled={busy} onClick={() => void confirm()}>
             {busy
-              ? "Eliminando…"
+              ? tr("Eliminando…")
               : alsoContact
-                ? "Eliminar conversación y contacto"
-                : "Eliminar conversación"}
+                ? tr("Eliminar conversación y contacto")
+                : tr("Eliminar conversación")}
           </Button>
         </div>
       </div>

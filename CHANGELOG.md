@@ -7,6 +7,21 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+### Idiomas de interfaz (fork pt-BR)
+
+- Interfaz en español y portugués de Brasil, con idioma de la empresa y
+  preferencia del navegador. Se integran las funciones 061–066 de `main` 2.7.0,
+  incluyendo Apariencia, Cuenta de mensajes y conexión con Meta.
+- Los booleanos de la ficha conservan su tipo al editar «Sim/Não». Las empresas
+  nuevas reciben etapas en su idioma; las existentes conservan sus datos.
+- Traducciones de descripciones de canales y formato brasileño de teléfonos
+  solo en la presentación. Moneda, huso e idioma del agente son independientes.
+
+Construir desde esta rama para incluir los idiomas. Al actualizar desde 2.1,
+se aplican las migraciones oficiales 0023–0026; desde 2.5, solo la 0026. En
+local, ejecutar `pnpm db:migrate`. Nea mantiene su versión propia 2.0.2.
+La versión publicada la determina el mantenedor. Véase [Idiomas](docs/idiomas.md).
+
 ### Nuevo
 
 - **«Conectar con Meta» (Embedded Signup v4)** en Ajustes → WhatsApp (spec

@@ -1,4 +1,9 @@
-﻿"use client";
+"use client";
+
+import { systemText } from "@/lib/i18n";
+
+﻿
+import { useI18n } from "@/components/i18n-provider";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -29,6 +34,8 @@ export function StartConversation({
   contactId: string;
   onStarted: (conversationId: string) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [templates, setTemplates] = useState<TemplateDto[] | null>(null);
   const [templateId, setTemplateId] = useState("");
   const [vars, setVars] = useState<string[]>([]);
@@ -67,28 +74,24 @@ export function StartConversation({
     if (!res?.ok) {
       // El fallo de Meta se explica aquí mismo (plantilla en pausa, número
       // que no la recibe…) en vez de perderse.
-      setError(data?.error?.message ?? "No se pudo iniciar la conversación");
+      setError(data?.error?.message ?? tr("No se pudo iniciar la conversación"));
       return;
     }
     onStarted(data?.conversationId ?? "");
   }
 
   if (templates === null) {
-    return <p className="text-xs text-text-3">Cargando plantillas…</p>;
+    return <p className="text-xs text-text-3">{tr("Cargando plantillas…")}</p>;
   }
 
   if (templates.length === 0) {
     return (
       <div className="rounded-md border border-dashed bg-subtle px-3 py-2.5">
         <p className="text-[13px]">
-          Esta persona nunca te ha escrito, así que WhatsApp solo permite
-          contactarla con una <strong>plantilla aprobada</strong>, y todavía no
-          tienes ninguna.
-        </p>
+          {tr("Esta persona nunca te ha escrito, así que WhatsApp solo permite contactarla con una ")}<strong>{tr("plantilla aprobada")}</strong>{tr(", y todavía no tienes ninguna.")}</p>
         <Link href="/settings/templates">
           <Button size="sm" variant="secondary" className="mt-2">
-            Ir a plantillas
-          </Button>
+            {tr("Ir a plantillas")}</Button>
         </Link>
       </div>
     );
@@ -97,15 +100,14 @@ export function StartConversation({
   return (
     <div className="space-y-2">
       <p className="text-xs text-text-3">
-        Nunca te ha escrito: para iniciar hay que usar una plantilla aprobada.
-      </p>
+        {tr("Nunca te ha escrito: para iniciar hay que usar una plantilla aprobada.")}</p>
       <select
         value={templateId}
         onChange={(e) => {
           setTemplateId(e.target.value);
           setVars([]);
         }}
-        aria-label="Plantilla para iniciar"
+        aria-label={tr("Plantilla para iniciar")}
         className="h-9 w-full rounded-md border border-input bg-card px-2 text-sm"
       >
         {templates.map((t) => (
@@ -125,8 +127,8 @@ export function StartConversation({
         <Input
           key={i}
           value={vars[i] ?? ""}
-          aria-label={`Valor de la variable ${i + 1}`}
-          placeholder={`Valor de {{${i + 1}}}`}
+          aria-label={tr("Valor de la variable {v0}", {v0: i + 1})}
+          placeholder={tr("Valor de {{{v0}}}", {v0: i + 1})}
           onChange={(e) => {
             const next = [...vars];
             next[i] = e.target.value;
@@ -141,9 +143,9 @@ export function StartConversation({
         onClick={() => void enviar()}
       >
         <Send className="mr-1.5 h-3.5 w-3.5" strokeWidth={1.7} />
-        {enviando ? "Enviando…" : "Iniciar conversación"}
+        {enviando ? tr("Enviando…") : tr("Iniciar conversación")}
       </Button>
-      {error && <p className="text-xs text-danger-text">{error}</p>}
+      {error && <p className="text-xs text-danger-text">{systemText(tr.locale, error)}</p>}
     </div>
   );
 }

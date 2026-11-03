@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useMemo } from "react";
 import { AlertTriangle, CalendarDays, Sparkles, Video } from "lucide-react";
 import { bookingSegments, hhmm, longDayLabel, spanLabel, type DateRange } from "@/lib/time/calendar";
@@ -27,6 +29,8 @@ export function AgendaList({
   selectedId: string | null;
   onSelect: (b: Booking) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const groups = useMemo(() => {
     const map = new Map<string, { booking: Booking; startMin: number; endMin: number }[]>();
     for (const b of bookings) {
@@ -48,8 +52,8 @@ export function AgendaList({
       <EmptyState
         icon={CalendarDays}
         className="min-h-0 flex-1 rounded-lg border bg-card p-8"
-        title={`Nada agendado del ${spanLabel(range)}`}
-        description="Aquí aparecen las citas que agenda la IA o tu equipo. El horario que se ofrece se configura en Ajustes → Agenda."
+        title={tr("Nada agendado del {v0}", {v0: spanLabel(range, tr.locale)})}
+        description={tr("Aquí aparecen las citas que agenda la IA o tu equipo. El horario que se ofrece se configura en Ajustes → Agenda.")}
       />
     );
   }
@@ -59,11 +63,10 @@ export function AgendaList({
       {groups.map(({ day, items }) => (
         <section key={day}>
           <h3 className="sticky top-0 z-10 flex items-center gap-2 border-b bg-subtle px-4 py-2 text-[13px] font-semibold first-letter:uppercase">
-            {longDayLabel(day)}
+            {longDayLabel(day, tr.locale)}
             {day === today && (
               <span className="rounded-full bg-brand px-2 py-px text-[10.5px] font-semibold text-brand-fg">
-                Hoy
-              </span>
+                {tr("Hoy")}</span>
             )}
           </h3>
           <ul className="divide-y">
@@ -88,25 +91,25 @@ export function AgendaList({
                         b.status === "cancelada" && "text-text-3 line-through"
                       )}
                     >
-                      <span className="truncate">{bookingTitle(b)}</span>
+                      <span className="truncate">{bookingTitle(b, tr.locale)}</span>
                       {b.source === "ai" && b.kind === "session" && (
-                        <Sparkles aria-label="Agendó la IA" className="h-3.5 w-3.5 shrink-0 text-brand-text" />
+                        <Sparkles aria-label={tr("Agendó la IA")} className="h-3.5 w-3.5 shrink-0 text-brand-text" />
                       )}
                     </span>
                     <span className="block truncate text-xs text-text-3">
                       {b.kind === "block"
-                        ? `Bloqueo · ${b.durationMinutes} min`
-                        : `${b.durationMinutes} min · ${b.source === "ai" ? "Agendó la IA" : "Manual"}${b.isTest ? " · Prueba" : ""}`}
+                        ? tr("Bloqueo · {v0} min", {v0: b.durationMinutes})
+                        : tr("{v0} min · {v1}{v2}", {v0: b.durationMinutes, v1: b.source === "ai" ? tr("Agendó la IA") : tr("Manual"), v2: b.isTest ? tr(" · Prueba") : ""})}
                     </span>
                   </span>
                   {hasDeliveryIssue(b) && (
-                    <AlertTriangle aria-label="Sin enlace de la reunión" className="h-4 w-4 shrink-0 text-warning-text" />
+                    <AlertTriangle aria-label={tr("Sin enlace de la reunión")} className="h-4 w-4 shrink-0 text-warning-text" />
                   )}
                   {b.meetingLink && b.status === "agendada" && (
-                    <Video aria-label="Tiene enlace de reunión" className="hidden h-4 w-4 shrink-0 text-text-3 sm:block" />
+                    <Video aria-label={tr("Tiene enlace de reunión")} className="hidden h-4 w-4 shrink-0 text-text-3 sm:block" />
                   )}
                   <span className="hidden shrink-0 text-xs font-medium text-text-2 sm:block">
-                    {b.kind === "block" ? (b.status === "cancelada" ? "Bloqueo quitado" : "Bloqueo") : STATUS_LABEL[b.status]}
+                    {b.kind === "block" ? (b.status === "cancelada" ? tr("Bloqueo quitado") : tr("Bloqueo")) : STATUS_LABEL[b.status]}
                   </span>
                 </button>
               </li>

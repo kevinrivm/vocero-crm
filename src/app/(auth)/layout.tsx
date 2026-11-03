@@ -1,8 +1,11 @@
+
+import { getI18n } from "@/server/i18n";
 import { isVoceroName } from "@/lib/brand";
 import { DEFAULT_BRANDING } from "@/lib/branding";
 import { getBranding } from "@/server/branding";
 import { enabledChannels } from "@/server/channels/enabled";
 import { productName } from "@/lib/channels";
+import { LanguageSelect } from "@/components/language-select";
 import { BrandLogo } from "@/components/brand-mark";
 
 /**
@@ -14,6 +17,8 @@ import { BrandLogo } from "@/components/brand-mark";
 export default async function AuthLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { t: tr } = await getI18n();
+
   const branding = await getBranding().catch(() => DEFAULT_BRANDING);
   const vocero = isVoceroName(branding.name);
   return (
@@ -27,7 +32,7 @@ export default async function AuthLayout({
           <BrandLogo branding={branding} size="lg" />
           {vocero ? (
             <h1 className="text-[24px] font-bold leading-tight tracking-[-0.03em]">
-              El CRM{" "}
+              {tr("El CRM")}{" "}
               <span
                 className="bg-clip-text font-serif text-[1.18em] font-normal italic tracking-[-0.01em] text-transparent"
                 style={{
@@ -35,18 +40,17 @@ export default async function AuthLayout({
                     "linear-gradient(92deg, var(--accent) 12%, #00b4f0 88%)",
                 }}
               >
-                que es tuyo.
-              </span>
+                {tr("que es tuyo.")}</span>
             </h1>
           ) : (
             <div>
               <h1 className="sr-only">{branding.name}</h1>
               <p className="text-sm text-text-3">
-                {productName([...enabledChannels()])} con agente de IA
-              </p>
+                {productName([...enabledChannels()])} {tr(" con agente de IA")}</p>
             </div>
           )}
         </div>
+        <LanguageSelect className="mb-4 justify-center" />
         {children}
       </div>
     </main>
