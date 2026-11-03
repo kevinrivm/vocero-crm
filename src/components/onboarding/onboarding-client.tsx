@@ -192,7 +192,7 @@ export function OnboardingClient({
             <>
               <h2 className="flex items-center gap-2 font-semibold">
                 <Inbox className="h-4 w-4 text-muted-foreground" />
-                Listo: Vocero funciona como bandeja manual
+                Listo: Nexia funciona como bandeja manual
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Los mensajes llegan a la Bandeja y contestas tú. Para que un

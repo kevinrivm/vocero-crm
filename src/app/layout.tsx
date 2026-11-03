@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono, IBM_Plex_Sans, Instrument_Serif, Inter, Urbanist } from "next/font/google";
 import { accentCssVariables, DEFAULT_BRANDING } from "@/lib/branding";
-import { faviconHref } from "@/lib/favicon";
 import { appIconHref, NAV_INK, shortAppName } from "@/lib/pwa";
 import { RegistrarServiceWorker } from "@/components/pwa";
 import { atributosHtml, cssDePropio, cssDeTemas } from "@/lib/temas";
@@ -54,24 +53,10 @@ const plexMono = IBM_Plex_Mono({
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const branding = await getBranding().catch(() => DEFAULT_BRANDING);
-  const producto = productName([...enabledChannels()]);
-  return {
-    title: `${branding.name} — ${producto}`,
-    description: `${producto} con agente de IA y Laboratorio de auto-evaluación`,
-    // El `?v=` cambia con la marca: los navegadores guardan el favicon con una
-    // insistencia notable y, sin eso, el logo nuevo tarda días en aparecer.
-    icons: {
-      icon: faviconHref(branding),
-      // 048 — El icono de «Agregar a inicio» del iPhone: PNG de 180, a sangre.
-      apple: appIconHref(branding, 180),
-    },
-    // 048 — Instalada desde Safari, abre sin la barra del navegador. Barra de
-    // estado negra y no translúcida: la página no tiene margen para el notch.
-    appleWebApp: { capable: true, title: shortAppName(branding.name), statusBarStyle: "black" },
-  };
-}
+export const metadata: Metadata = {
+  title: "Nexia",
+  description: "El CRM inteligente con Agente IA",
+};
 
 /** 048 — La barra de estado de la app instalada, del color de la barra lateral. */
 export const viewport: Viewport = { themeColor: NAV_INK };

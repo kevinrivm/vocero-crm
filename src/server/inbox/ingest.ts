@@ -24,7 +24,7 @@ import {
 } from "@/server/attribution/referral";
 import { registrarAnuncioDeOrigen } from "@/server/attribution/store";
 import { onLeadActivity } from "@/server/inbox/lead-activity";
-import { despachoActivo } from "@/server/brains/config";
+import { despachoActivo, despachoActivoOrg } from "@/server/brains/config";
 import { despacharAlCerebro } from "@/server/dispatch/encolar";
 import {
   aCitaDto,
@@ -318,6 +318,7 @@ export async function processMessagesValue(value: WebhookValue): Promise<void> {
       // 018: normalizado aquí, en el adaptador del canal; la ingesta no sabe
       // de qué forma lo mandó Meta.
       anuncio: anuncioDeWhatsapp(msg.referral),
+      providerId: phoneNumberId,
     });
   }
 }
@@ -461,6 +462,10 @@ export async function ingestInboundMessage(input: {
   threadRef?: string | null;
   /** 016/018: el anuncio que abrió la conversación, ya normalizado por el canal. */
   anuncio?: AnuncioDeOrigen | null;
+  /** Identificador del canal multilínea (ej. phoneNumberId de Meta o instancia de Evolution). */
+  providerId?: string | null;
+  /** Cortafuegos explícito para activar/desactivar despacho al Agente IA en este canal. */
+  enableAi?: boolean | null;
 }): Promise<void> {
   const db = getDb();
   const { organizationId } = input;
@@ -553,9 +558,41 @@ export async function ingestInboundMessage(input: {
     data: { conversation: { id: conversation.id } },
   });
 
+  // Cortafuegos de IA por Canal Multilínea:
+  // Si la línea tiene enableAi === false, el mensaje se guarda en la bandeja y
+  // se emite por SSE (arriba), pero detenemos la ejecución aquí sin despachar a la IA.
+  let canalPermiteIa = true;
+  if (input.enableAi === false) {
+    canalPermiteIa = false;
+  } else if (input.providerId) {
+    try {
+      const [tc] = await db
+        .select({ enableAi: schema.tenantChannels.enableAi })
+        .from(schema.tenantChannels)
+        .where(
+          and(
+            scoped(schema.tenantChannels.organizationId, organizationId),
+            eq(schema.tenantChannels.providerId, input.providerId)
+          )
+        )
+        .limit(1);
+
+      if (tc && tc.enableAi === false) {
+        canalPermiteIa = false;
+      }
+    } catch {
+      // Si la tabla no está disponible o falla la consulta, no romper la ingesta
+    }
+  }
+
+  if (!canalPermiteIa) {
+    // Cortafuegos activo: atención manual exclusiva en esta línea
+    return;
+  }
+
   // 036 — Quien contesta es el cerebro conectado; sin él, una persona. El
   // 025: `message.id` es lo que el despacho le debe al cerebro.
-  if (despachoActivo()) await despacharAlCerebro(conversation.id, organizationId, message.id);
+  if (await despachoActivoOrg(organizationId)) await despacharAlCerebro(conversation.id, organizationId, message.id);
 }
 
 function toDate(timestamp: string): Date {

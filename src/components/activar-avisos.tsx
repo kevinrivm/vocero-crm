@@ -25,7 +25,7 @@ export function BotonActivarAvisos({ className }: { className?: string }) {
           setPermiso(permisoAvisos());
         }
       }}
-      title="Avisos del sistema cuando llegue un mensaje y no estés mirando Vocero"
+      title="Avisos del sistema cuando llegue un mensaje y no estés mirando Nexia"
     >
       <BellRing className="h-5 w-5 shrink-0 text-text-3" strokeWidth={1.8} aria-hidden />
       <span className="flex-1">Activar avisos</span>

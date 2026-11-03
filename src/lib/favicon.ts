@@ -123,15 +123,19 @@ export function generatedFaviconSvg(branding: Branding): string {
  */
 function voceroFaviconSvg(from: string, to: string): string {
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">`,
-    `<defs><linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">`,
-    `<stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/>`,
-    `</linearGradient></defs>`,
-    `<rect width="64" height="64" rx="14" fill="url(#g)"/>`,
-    `<g transform="translate(5.6 5.6) scale(2.2)" fill="none" stroke-linecap="round">`,
-    `<path d="${BRAND_MARK_BODY}" stroke="#ffffff" stroke-width="${BRAND_MARK_STROKE}"/>`,
-    `<path d="${BRAND_MARK_TAIL}" stroke="${BRAND_CYAN_ON_TILE}" stroke-width="${BRAND_MARK_STROKE}"/>`,
-    `</g></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">`,
+    `<rect width="64" height="64" rx="16" fill="#0b1319"/>`,
+    `<defs>`,
+    `<linearGradient id="np" x1="12" y1="10" x2="40" y2="52" gradientUnits="userSpaceOnUse">`,
+    `<stop offset="0%" stop-color="${from}"/><stop offset="100%" stop-color="${to || "#0F4C5C"}"/>`,
+    `</linearGradient>`,
+    `<linearGradient id="ne" x1="22" y1="12" x2="52" y2="54" gradientUnits="userSpaceOnUse">`,
+    `<stop offset="0%" stop-color="#5A3A34"/><stop offset="100%" stop-color="#3E2723"/>`,
+    `</linearGradient>`,
+    `</defs>`,
+    `<path d="${BRAND_MARK_BODY}" stroke="url(#np)" stroke-width="${BRAND_MARK_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>`,
+    `<path d="${BRAND_MARK_TAIL}" stroke="url(#ne)" stroke-width="${BRAND_MARK_STROKE}" stroke-linecap="round" stroke-linejoin="round"/>`,
+    `</svg>`,
   ].join("");
 }
 

@@ -1,12 +1,6 @@
+import Image from "next/image";
 import type { Branding } from "@/lib/branding";
-import {
-  BRAND_CYAN,
-  BRAND_CYAN_ON_TILE,
-  BRAND_MARK_BODY,
-  BRAND_MARK_STROKE,
-  BRAND_MARK_TAIL,
-  isVoceroName,
-} from "@/lib/brand";
+import { isVoceroName, BRAND_MARK_BODY, BRAND_MARK_TAIL } from "@/lib/brand";
 import { faviconHref, faviconInitial } from "@/lib/favicon";
 import { cn } from "@/lib/utils";
 
@@ -17,42 +11,60 @@ import { cn } from "@/lib/utils";
 export type BrandingMark = Pick<Branding, "name" | "accent" | "favicon">;
 
 /**
- * El trazo de la marca: la "v" caligráfica con remate cian de vocerocrm.com.
- * El cuerpo hereda `currentColor`; píntalo con `text-brand` (o blanco sobre el
- * mosaico) y el remate sigue siendo cian.
+ * Componente oficial de Logo de Nexia con proporciones fijas (width: 120, height: 40)
+ * y atributo alt="Nexia" estático.
+ */
+export function LogoNexia({
+  width = 120,
+  height = 40,
+  className,
+  priority = true,
+}: {
+  width?: number;
+  height?: number;
+  className?: string;
+  priority?: boolean;
+}) {
+  return (
+    <div
+      style={{ width, height }}
+      className={cn("flex items-center gap-2.5 select-none shrink-0", className)}
+    >
+      <Image
+        src="/logo.svg"
+        alt="Nexia"
+        width={width}
+        height={height}
+        priority={priority}
+        className="h-full w-auto object-contain drop-shadow-sm"
+      />
+    </div>
+  );
+}
+
+/**
+ * El logo oficial estático de Nexia (/logo.svg con fallback a /logo.png).
  */
 export function BrandMark({
   className,
-  cyan = BRAND_CYAN,
 }: {
   className?: string;
   cyan?: string;
 }) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={className}>
-      <path
-        d={BRAND_MARK_BODY}
-        stroke="currentColor"
-        strokeWidth={BRAND_MARK_STROKE}
-        strokeLinecap="round"
-        fill="none"
-      />
-      <path
-        d={BRAND_MARK_TAIL}
-        stroke={cyan}
-        strokeWidth={BRAND_MARK_STROKE}
-        strokeLinecap="round"
-        fill="none"
-      />
-    </svg>
+    <Image
+      src="/logo.svg"
+      alt="Nexia"
+      width={120}
+      height={40}
+      priority
+      className={cn("h-10 w-auto object-contain drop-shadow-md", className)}
+    />
   );
 }
 
 /**
- * Mosaico cuadrado con degradado del acento: es el favicon en grande. Con un
- * logo subido lleva el logo (el MISMO archivo y la MISMA URL versionada que
- * la pestaña, así lo que se sube en Ajustes → Marca se ve en los dos sitios);
- * sin él, la "v" de Vocero o la inicial del nombre white-label.
+ * Mosaico cuadrado: lleva el isotipo de Nexia o el logo subido.
  */
 export function BrandTile({
   branding,
@@ -61,25 +73,27 @@ export function BrandTile({
   branding: BrandingMark;
   className?: string;
 }) {
+  const isNexia = isVoceroName(branding.name);
   return (
     <span
       className={cn(
-        "brand-tile flex shrink-0 items-center justify-center overflow-hidden text-brand-fg",
+        "flex shrink-0 items-center justify-center overflow-hidden",
+        isNexia
+          ? "bg-transparent shadow-none border-0"
+          : "brand-tile bg-white/20 dark:bg-white/10 shadow-sm border border-white/20 text-foreground",
         className
       )}
       aria-hidden
     >
       {branding.favicon ? (
-        // Sin next/image a propósito: es un archivo de una ruta propia, ya
-        // pequeño; pasarlo por el optimizador sería trabajo para no ahorrar.
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={faviconHref(branding)}
           alt=""
           className="h-full w-full object-contain"
         />
-      ) : isVoceroName(branding.name) ? (
-        <BrandMark className="h-[64%] w-[64%]" cyan={BRAND_CYAN_ON_TILE} />
+      ) : isNexia ? (
+        <BrandMark className="h-full w-full" />
       ) : (
         <span className="font-bold leading-none">{faviconInitial(branding.name)}</span>
       )}
@@ -119,15 +133,15 @@ export function BrandLogo({
 }) {
   if (isVoceroName(branding.name) && !branding.favicon) {
     return (
-      <span className={cn("flex items-center gap-2 text-foreground", className)}>
-        <BrandMark className={cn("shrink-0 text-brand", MARK_SIZE[size])} />
+      <span className={cn("flex items-center gap-2.5 text-foreground", className)}>
+        <BrandMark className={cn("shrink-0", MARK_SIZE[size])} />
         <span
           className={cn(
-            "font-[800] leading-none tracking-[-0.045em]",
+            "font-[850] leading-none tracking-[-0.04em] bg-gradient-to-r from-[#0F4C5C] to-[#3E2723] bg-clip-text text-transparent",
             WORDMARK_SIZE[size]
           )}
         >
-          vocero
+          Nexia
         </span>
       </span>
     );

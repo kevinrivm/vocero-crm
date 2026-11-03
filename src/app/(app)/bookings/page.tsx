@@ -5,6 +5,7 @@ import { clampListTo, isCalendarView, isIsoDate } from "@/lib/time/calendar";
 import { todayInTz } from "@/lib/time/slots";
 import { agendaEnabled } from "@/server/agenda/flag";
 import { getSettings } from "@/server/agenda/settings";
+import { getEffectiveRolePermissions } from "@/server/tenant/permissions-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,12 @@ export default async function BookingsPage({
   if (!agendaEnabled()) notFound();
   const session = await getSessionOrNull();
   if (!session) redirect("/login");
+
+  // Validación de permisos por perfil del tenant
+  const perms = await getEffectiveRolePermissions(session.organizationId, session.role);
+  if (!perms.agenda && !session.isSuperAdmin && session.role !== "owner") {
+    redirect("/inbox");
+  }
 
   const settings = await getSettings(session.organizationId);
   const params = await searchParams;

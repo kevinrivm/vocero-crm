@@ -33,22 +33,44 @@ export async function getBrandingContext(
   const db = getDb();
   const rows = organizationId
     ? await db
-        .select({ id: schema.organization.id, metadata: schema.organization.metadata })
+        .select({
+          id: schema.organization.id,
+          name: schema.organization.name,
+          metadata: schema.organization.metadata,
+          logoUrl: schema.organization.logoUrl,
+          primaryColor: schema.organization.primaryColor,
+          sidebarColor: schema.organization.sidebarColor,
+        })
         .from(schema.organization)
         .where(eq(schema.organization.id, organizationId))
         .limit(1)
     : // Sin sesión (login, layout raíz): la única organización de la instancia.
       await db
-        .select({ id: schema.organization.id, metadata: schema.organization.metadata })
+        .select({
+          id: schema.organization.id,
+          name: schema.organization.name,
+          metadata: schema.organization.metadata,
+          logoUrl: schema.organization.logoUrl,
+          primaryColor: schema.organization.primaryColor,
+          sidebarColor: schema.organization.sidebarColor,
+        })
         .from(schema.organization)
         .limit(1);
   if (!rows[0]) return { organizationId: null, branding: DEFAULT_BRANDING };
   const meta = parseMetadata(rows[0].metadata);
+  const baseBranding = normalizeBranding(
+    (meta.branding as Partial<Branding> | undefined) ?? null
+  );
+
   return {
     organizationId: rows[0].id,
-    branding: normalizeBranding(
-      (meta.branding as Partial<Branding> | undefined) ?? null
-    ),
+    branding: {
+      ...baseBranding,
+      name: rows[0].name || baseBranding.name,
+      logoUrl: rows[0].logoUrl ?? null,
+      primaryColor: rows[0].primaryColor ?? null,
+      sidebarColor: rows[0].sidebarColor ?? null,
+    },
   };
 }
 
@@ -56,6 +78,28 @@ export async function getBranding(
   organizationId?: string | null
 ): Promise<Branding> {
   return (await getBrandingContext(organizationId)).branding;
+}
+
+export async function updateTenantAppearance(
+  organizationId: string,
+  data: {
+    logoUrl?: string | null;
+    primaryColor?: string | null;
+    sidebarColor?: string | null;
+    name?: string | null;
+  }
+): Promise<void> {
+  const db = getDb();
+  await db
+    .update(schema.organization)
+    .set({
+      ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),
+      ...(data.primaryColor !== undefined ? { primaryColor: data.primaryColor } : {}),
+      ...(data.sidebarColor !== undefined ? { sidebarColor: data.sidebarColor } : {}),
+      ...(data.name ? { name: data.name } : {}),
+      updatedAt: new Date(),
+    })
+    .where(eq(schema.organization.id, organizationId));
 }
 
 export async function saveBranding(

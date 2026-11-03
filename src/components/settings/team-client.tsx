@@ -21,6 +21,7 @@ export function TeamClient() {
   const [members, setMembers] = useState<Member[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [role, setRole] = useState<"admin" | "agente">("agente");
   const [tempPassword, setTempPassword] = useState("");
   const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +55,7 @@ export function TeamClient() {
     const res = await fetch("/api/settings/team", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name, email, password: tempPassword }),
+      body: JSON.stringify({ name, email, password: tempPassword, role }),
     }).catch(() => null);
     setSaving(false);
     if (!res?.ok) {
@@ -67,8 +68,15 @@ export function TeamClient() {
     setCreated({ email, password: tempPassword });
     setName("");
     setEmail("");
+    setRole("agente");
     setTempPassword("");
     void refetch();
+  }
+
+  function formatRole(r: string) {
+    if (r === "superadmin") return "Súper Admin";
+    if (r === "owner" || r === "admin") return "Administrador";
+    return "Agente";
   }
 
   return (
@@ -101,18 +109,36 @@ export function TeamClient() {
               />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="team-password">Contraseña temporal</Label>
-            <div className="flex gap-2">
-              <Input
-                id="team-password"
-                value={tempPassword}
-                onChange={(e) => setTempPassword(e.target.value)}
-                placeholder="mínimo 8 caracteres"
-              />
-              <Button variant="outline" onClick={generatePassword}>
-                Generar
-              </Button>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="team-role">Rol en la empresa</Label>
+              <select
+                id="team-role"
+                value={role}
+                onChange={(e) => setRole(e.target.value as "admin" | "agente")}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <option value="agente" className="bg-popover text-popover-foreground">
+                  Agente (solo atiende chats)
+                </option>
+                <option value="admin" className="bg-popover text-popover-foreground">
+                  Administrador (configuración y equipo)
+                </option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="team-password">Contraseña temporal</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="team-password"
+                  value={tempPassword}
+                  onChange={(e) => setTempPassword(e.target.value)}
+                  placeholder="mínimo 8 caracteres"
+                />
+                <Button variant="outline" type="button" onClick={generatePassword}>
+                  Generar
+                </Button>
+              </div>
             </div>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
@@ -153,8 +179,14 @@ export function TeamClient() {
               <p className="truncate text-sm font-medium">{m.name}</p>
               <p className="text-xs text-muted-foreground">{m.email}</p>
             </div>
-            <Badge variant={m.role === "owner" ? "default" : "secondary"}>
-              {m.role === "owner" ? "Propietario" : "Miembro"}
+            <Badge
+              variant={
+                m.role === "owner" || m.role === "admin" || m.role === "superadmin"
+                  ? "default"
+                  : "secondary"
+              }
+            >
+              {formatRole(m.role)}
             </Badge>
           </div>
         ))}

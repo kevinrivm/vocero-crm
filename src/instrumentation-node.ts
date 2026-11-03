@@ -1,10 +1,106 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { mediaDirStatus } from "@/server/media-dir";
 import { leerConfigDespacho } from "@/server/brains/config";
 import { iniciarWorker, tanda } from "@/server/dispatch/worker";
 import { cifrarSecretosEnClaro } from "@/server/zernio/secreto-guardado";
 import { barrido, iniciarBarrido } from "@/server/webhooks/worker";
+
+/**
+ * Asegura de forma no bloqueante que la tabla internal_message tenga la columna "read".
+ */
+export async function ensureInternalMessageColumns(): Promise<void> {
+  try {
+    const db = getDb();
+    await db.execute(sql`
+      ALTER TABLE "internal_message" ADD COLUMN IF NOT EXISTS "read" boolean DEFAULT false NOT NULL;
+    `);
+  } catch (err) {
+    // Si la BD aún no está disponible en este ciclo de arranque, se ignora limpiamente
+  }
+}
+
+/**
+ * Asegura de forma no bloqueante que la tabla sticky_note exista.
+ */
+export async function ensureStickyNoteTable(): Promise<void> {
+  try {
+    const db = getDb();
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "sticky_note" (
+        "id" text PRIMARY KEY NOT NULL,
+        "organization_id" text NOT NULL REFERENCES "organization"("id") ON DELETE cascade,
+        "user_id" text NOT NULL REFERENCES "user"("id") ON DELETE cascade,
+        "title" text,
+        "content" text DEFAULT '' NOT NULL,
+        "color" text DEFAULT 'yellow' NOT NULL,
+        "is_pinned" boolean DEFAULT false NOT NULL,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS "sticky_note_org_user_idx" ON "sticky_note" ("organization_id", "user_id", "created_at");
+    `);
+  } catch (err) {
+    // Si la BD aún no está disponible en este ciclo de arranque, se ignora limpiamente
+  }
+}
+
+/**
+ * Asegura de forma no bloqueante que la tabla calendar_integration exista.
+ */
+export async function ensureCalendarIntegrationTable(): Promise<void> {
+  try {
+    const db = getDb();
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "calendar_integration" (
+        "id" text PRIMARY KEY NOT NULL,
+        "organization_id" text NOT NULL REFERENCES "organization"("id") ON DELETE cascade,
+        "provider" text NOT NULL,
+        "access_token_cipher" text NOT NULL,
+        "access_token_iv" text NOT NULL,
+        "access_token_tag" text NOT NULL,
+        "refresh_token_cipher" text,
+        "refresh_token_iv" text,
+        "refresh_token_tag" text,
+        "expires_at" timestamp,
+        "account_email" text,
+        "account_name" text,
+        "scope" text,
+        "status" text DEFAULT 'connected' NOT NULL,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS "calendar_int_org_provider_uq" ON "calendar_integration" ("organization_id", "provider");
+      CREATE INDEX IF NOT EXISTS "calendar_int_org_idx" ON "calendar_integration" ("organization_id");
+    `);
+  } catch (err) {
+    // Ignorar si la BD aún no está disponible
+  }
+}
+
+/**
+ * Asegura de forma no bloqueante que la tabla tenant_role_permission exista.
+ */
+export async function ensureTenantRolePermissionTable(): Promise<void> {
+  try {
+    const db = getDb();
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "tenant_role_permission" (
+        "id" text PRIMARY KEY NOT NULL,
+        "organization_id" text NOT NULL REFERENCES "organization"("id") ON DELETE cascade,
+        "role" text NOT NULL,
+        "permission" text NOT NULL,
+        "enabled" boolean DEFAULT true NOT NULL,
+        "created_at" timestamp DEFAULT now() NOT NULL,
+        "updated_at" timestamp DEFAULT now() NOT NULL
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS "tenant_role_perm_org_role_perm_uq" ON "tenant_role_permission" ("organization_id", "role", "permission");
+      CREATE INDEX IF NOT EXISTS "tenant_role_perm_org_idx" ON "tenant_role_permission" ("organization_id");
+    `);
+  } catch (err) {
+    // Ignorar si la BD aún no está disponible
+  }
+}
 
 /**
  * 008 — Aviso al arranque si MEDIA_DIR no es escribible. Sin esto, el primer

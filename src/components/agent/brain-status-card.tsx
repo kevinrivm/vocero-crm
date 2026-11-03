@@ -48,7 +48,7 @@ export function BrainStatusCard({
       <CardHeader className="pb-4">
         <CardTitle>Quién responde a tus clientes</CardTitle>
         <CardDescription>
-          Vocero no trae agente: contesta el que conectas al lado (Nea, o el
+          Nexia no trae agente: contesta el que conectas al lado (Nea, o el
           tuyo), y solo con el interruptor de arriba encendido. Sin agente,
           contestas tú desde la bandeja.
         </CardDescription>
@@ -56,7 +56,7 @@ export function BrainStatusCard({
       <CardContent className="space-y-3">
         {status.warning === "sin_cerebro" && (
           <Callout tone="info" icon={Info} title="Sin agente conectado">
-            Vocero funciona como bandeja manual: tus clientes reciben lo que
+            Nexia funciona como bandeja manual: tus clientes reciben lo que
             contestes tú. Para que un agente conteste, levántalo al lado del CRM
             y pon <Env>BRAIN_DISPATCH_URL</Env> y <Env>BOT_API_KEY</Env> en el
             entorno.{" "}

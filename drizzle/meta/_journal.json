@@ -190,6 +190,111 @@
       "when": 1793229244787,
       "tag": "0026_spooky_agent_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1793281787085,
+      "tag": "0027_nasty_warpath",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1793287340307,
+      "tag": "0028_silent_mantis",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1793290299989,
+      "tag": "0029_groovy_blockbuster",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1793291200185,
+      "tag": "0030_noisy_inhumans",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793293170174,
+      "tag": "0031_worried_ted_forrester",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793336374069,
+      "tag": "0032_lucky_sasquatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793338129101,
+      "tag": "0033_dusty_cobalt_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793343148375,
+      "tag": "0034_misty_loki",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1793397318939,
+      "tag": "0035_moaning_alex_wilder",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793407252458,
+      "tag": "0036_public_raza",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1793408564376,
+      "tag": "0037_wealthy_vulture",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1793415045401,
+      "tag": "0038_brainy_toxin",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793482844323,
+      "tag": "0039_deep_phantom_reporter",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1793496122990,
+      "tag": "0040_slippery_nebula",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1793586849349,
+      "tag": "0041_sad_fixer",
+      "breakpoints": true
     }
   ]
 }

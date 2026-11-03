@@ -13,6 +13,9 @@
  * contenedor del cerebro (`http://nea:8000/vocero/dispatch`).
  */
 
+import { eq } from "drizzle-orm";
+import { getDb, schema } from "@/lib/db";
+
 const MIN_KEY_LENGTH = 16;
 
 export type ProblemaDespacho =
@@ -57,6 +60,51 @@ export function leerConfigDespacho(env: Entorno = process.env): ConfigDespacho {
 /** El CRM está empujando turnos a un cerebro. */
 export function despachoActivo(): boolean {
   return leerConfigDespacho().active;
+}
+
+/**
+ * Lee la configuración de despacho para un tenant específico desde la base de datos,
+ * con fallback a las variables de entorno globales si no tiene configuración propia.
+ */
+export async function leerConfigDespachoOrg(
+  organizationId?: string | null
+): Promise<ConfigDespacho> {
+  if (organizationId) {
+    try {
+      const db = getDb();
+      const [org] = await db
+        .select({
+          dispatchWebhookUrl: schema.organization.dispatchWebhookUrl,
+          botApiKey: schema.organization.botApiKey,
+        })
+        .from(schema.organization)
+        .where(eq(schema.organization.id, organizationId))
+        .limit(1);
+
+      if (org?.dispatchWebhookUrl) {
+        return leerConfigDespacho({
+          BRAIN_DISPATCH_URL: org.dispatchWebhookUrl,
+          BOT_API_KEY:
+            org.botApiKey && org.botApiKey.length >= MIN_KEY_LENGTH
+              ? org.botApiKey
+              : process.env.BOT_API_KEY && process.env.BOT_API_KEY.length >= MIN_KEY_LENGTH
+                ? process.env.BOT_API_KEY
+                : "nexia-default-dispatch-secret-key-32chars",
+        });
+      }
+    } catch {
+      // Fallback a entorno en caso de error o tests sin conexión a BD
+    }
+  }
+  return leerConfigDespacho();
+}
+
+/**
+ * Determina si el despacho al cerebro está activo para una organización específica.
+ */
+export async function despachoActivoOrg(organizationId?: string | null): Promise<boolean> {
+  const conf = await leerConfigDespachoOrg(organizationId);
+  return conf.active;
 }
 
 /**

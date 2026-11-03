@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -13,10 +13,21 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { MessageSquareText, Settings2, Trophy, XCircle } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Kanban,
+  MessageSquareText,
+  Phone,
+  Plus,
+  Settings2,
+  Trophy,
+  Users,
+  XCircle,
+} from "lucide-react";
 import type { LossReason, PriorityValue, StageDto } from "@/lib/types";
 import { formatMoneyCents, sumable } from "@/lib/money";
-import { cn } from "@/lib/utils";
+import { cn, formatPhone } from "@/lib/utils";
 import { ContactAvatar } from "@/components/avatar";
 import { Button } from "@/components/ui/button";
 import { formatTime } from "@/components/inbox/helpers";
@@ -44,21 +55,26 @@ export function PipelineClient() {
   const [leads, setLeads] = useState<BoardLead[]>([]);
   const [activeLead, setActiveLead] = useState<BoardLead | null>(null);
   const [managing, setManaging] = useState(false);
+  const [cargando, setCargando] = useState(true);
+
   /** Arrastre hacia una etapa perdida, esperando el motivo. */
   const [pendingLoss, setPendingLoss] = useState<{
     leadId: string;
     stageId: string;
     name: string;
   } | null>(null);
+
   /** Tarjeta cuyo monto se está capturando. */
   const [editandoMonto, setEditandoMonto] = useState<BoardLead | null>(null);
-  /**
-   * Trato abierto en el cajón. Se guarda el ID y no el objeto: así el cajón
-   * lee siempre del tablero y refleja al instante lo que se cambie desde
-   * dentro, en vez de enseñar una copia que envejece.
-   */
+
+  /** Trato abierto en el cajón lateral. */
   const [abiertoId, setAbiertoId] = useState<string | null>(null);
   const abierto = leads.find((l) => l.id === abiertoId) ?? null;
+
+  const sortedStages = useMemo(
+    () => [...stages].sort((a, b) => a.position - b.position),
+    [stages]
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -66,7 +82,10 @@ export function PipelineClient() {
 
   const refetch = useCallback(async () => {
     const res = await fetch("/api/pipeline/board").catch(() => null);
-    if (!res?.ok) return;
+    if (!res?.ok) {
+      setCargando(false);
+      return;
+    }
     const data = (await res.json()) as {
       stages: StageDto[];
       leads: BoardLead[];
@@ -75,6 +94,7 @@ export function PipelineClient() {
     if (data.currency) setCurrency(data.currency);
     setStages(data.stages);
     setLeads(data.leads);
+    setCargando(false);
   }, []);
 
   useEffect(() => {
@@ -110,6 +130,24 @@ export function PipelineClient() {
     void refetch();
   }
 
+  function deslizarLead(lead: BoardLead, direction: "prev" | "next") {
+    const currentIndex = sortedStages.findIndex((s) => s.id === lead.stageId);
+    if (currentIndex === -1) return;
+
+    const targetIndex = direction === "next" ? currentIndex + 1 : currentIndex - 1;
+    if (targetIndex < 0 || targetIndex >= sortedStages.length) return;
+
+    const targetStage = sortedStages[targetIndex];
+    if (!targetStage) return;
+
+    if (targetStage.kind === "lost") {
+      setPendingLoss({ leadId: lead.id, stageId: targetStage.id, name: lead.contact.name });
+      return;
+    }
+
+    void moverLead(lead.id, targetStage.id);
+  }
+
   async function guardarMonto(leadId: string, cents: number | null) {
     setLeads((prev) =>
       prev.map((l) => (l.id === leadId ? { ...l, amountCents: cents } : l))
@@ -117,7 +155,6 @@ export function PipelineClient() {
     await fetch(`/api/pipeline/leads/${leadId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      // Sin `stageId`: esto NO mueve la tarjeta, solo escribe el importe.
       body: JSON.stringify({ amountCents: cents }),
     }).catch(() => null);
     void refetch();
@@ -143,8 +180,6 @@ export function PipelineClient() {
     const lead = leads.find((l) => l.id === leadId);
     if (!lead || lead.stageId === overStage) return;
 
-    // Perder un trato exige motivo. Se pregunta ANTES de mover: si el dueño
-    // cancela, la tarjeta ni siquiera parpadea fuera de su columna.
     const destino = stages.find((s) => s.id === overStage);
     if (destino?.kind === "lost") {
       setPendingLoss({ leadId, stageId: overStage, name: lead.contact.name });
@@ -154,11 +189,6 @@ export function PipelineClient() {
     await moverLead(leadId, overStage);
   }
 
-  /**
-   * Cambiar de etapa desde el cajón. Entra por la MISMA puerta que el
-   * arrastre: perder un trato exige motivo venga de donde venga, y duplicar
-   * esa regla aquí sería tener dos sitios donde olvidarla.
-   */
   function moverDesdeCajon(leadId: string, stageId: string) {
     const lead = leads.find((l) => l.id === leadId);
     if (!lead || lead.stageId === stageId) return;
@@ -172,41 +202,83 @@ export function PipelineClient() {
 
   return (
     <div className="flex h-full flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 sm:py-4">
-        <h2 className="text-[17px] font-bold tracking-tight">Pipeline</h2>
-        <Button variant="outline" size="sm" onClick={() => setManaging(true)}>
-          <Settings2 className="h-4 w-4" /> Gestionar etapas
-        </Button>
+      {/* Cabecera con estética Glassmorphism */}
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/40 dark:border-white/10 bg-white/40 dark:bg-slate-900/40 backdrop-blur-md px-4 py-3.5 sm:px-6 sm:py-4 shadow-sm shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-sm">
+            <Kanban className="h-5 w-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-[17px] font-bold tracking-tight text-foreground">
+                Pipeline de Contactos
+              </h2>
+              <span className="rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                {leads.length} {leads.length === 1 ? "contacto" : "contactos"}
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Arrastra o desliza manualmente las tarjetas para mover tus prospectos entre etapas comerciales.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setManaging(true)}
+            className="rounded-xl border-white/50 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm shadow-sm hover:bg-white/80 dark:hover:bg-slate-700/80 font-medium text-xs"
+          >
+            <Settings2 className="h-3.5 w-3.5 mr-1.5" /> Gestionar etapas
+          </Button>
+        </div>
       </header>
 
-      {/* El tablero se arrastra en horizontal; en el teléfono cada columna
-          se detiene en su sitio (snap) para no quedar a medio camino. */}
-      <div className="flex-1 snap-x snap-mandatory overflow-x-auto p-3 sm:snap-none sm:p-4">
-        <DndContext
-          sensors={sensors}
-          onDragStart={onDragStart}
-          onDragEnd={(e) => void onDragEnd(e)}
-        >
-          <div className="flex h-full gap-3">
-            {stages.map((stage) => (
-              <StageColumn
-                key={stage.id}
-                stage={stage}
-                currency={currency}
-                onEditAmount={setEditandoMonto}
-                onOpen={(l) => setAbiertoId(l.id)}
-                leads={leads
-                  .filter((l) => l.stageId === stage.id)
-                  .sort((a, b) => a.position - b.position)}
-              />
-            ))}
+      {/* Tablero Kanban con scroll horizontal suave */}
+      <div className="flex-1 snap-x snap-mandatory overflow-x-auto p-3 sm:snap-none sm:p-5">
+        {cargando ? (
+          <div className="flex h-64 w-full items-center justify-center text-sm text-muted-foreground">
+            Cargando tablero...
           </div>
-          <DragOverlay>
-            {activeLead ? (
-              <LeadCard lead={activeLead} currency={currency} overlay />
-            ) : null}
-          </DragOverlay>
-        </DndContext>
+        ) : sortedStages.length === 0 ? (
+          <div className="flex h-64 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-6 text-center text-muted-foreground">
+            <Kanban className="h-8 w-8 text-muted-foreground/60" />
+            <p className="text-sm font-medium">No hay etapas configuradas en el pipeline.</p>
+            <Button size="sm" variant="outline" onClick={() => setManaging(true)}>
+              Crear primera etapa
+            </Button>
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            onDragStart={onDragStart}
+            onDragEnd={(e) => void onDragEnd(e)}
+          >
+            <div className="flex h-full gap-4 items-start pb-2">
+              {sortedStages.map((stage, stageIndex) => (
+                <StageColumn
+                  key={stage.id}
+                  stage={stage}
+                  stageIndex={stageIndex}
+                  totalStages={sortedStages.length}
+                  currency={currency}
+                  onEditAmount={setEditandoMonto}
+                  onOpen={(l) => setAbiertoId(l.id)}
+                  onSlide={deslizarLead}
+                  leads={leads
+                    .filter((l) => l.stageId === stage.id)
+                    .sort((a, b) => a.position - b.position)}
+                />
+              ))}
+            </div>
+            <DragOverlay>
+              {activeLead ? (
+                <LeadCard lead={activeLead} currency={currency} overlay />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        )}
       </div>
 
       {managing && (
@@ -217,8 +289,6 @@ export function PipelineClient() {
         />
       )}
 
-      {/* Va ANTES que los diálogos: con el mismo z-index, el que se pinta
-          después queda encima, y el motivo de pérdida debe tapar al cajón. */}
       {abierto && (
         <LeadDrawer
           lead={abierto}
@@ -265,11 +335,7 @@ export function PipelineClient() {
   );
 }
 
-/**
- * Totales de una columna. Se calculan al pintar: un total guardado se
- * desincroniza en cuanto alguien mueve una tarjeta, y sumar unas decenas es
- * gratis. Todo en CENTAVOS enteros — el dinero jamás pasa por coma flotante.
- */
+/** Totales y sumatoria financiera de una columna. */
 function totalesDeEtapa(leads: BoardLead[], businessCurrency: string) {
   let totalCents = 0;
   let sinMonto = 0;
@@ -291,78 +357,107 @@ function totalesDeEtapa(leads: BoardLead[], businessCurrency: string) {
 
 function StageColumn({
   stage,
+  stageIndex,
+  totalStages,
   leads,
   currency,
   onEditAmount,
   onOpen,
+  onSlide,
 }: {
   stage: StageDto;
+  stageIndex: number;
+  totalStages: number;
   leads: BoardLead[];
   currency: string;
   onEditAmount: (lead: BoardLead) => void;
   onOpen: (lead: BoardLead) => void;
+  onSlide: (lead: BoardLead, direction: "prev" | "next") => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        "flex h-full w-64 shrink-0 snap-start flex-col rounded-lg border border-border-strong bg-subtle transition-[box-shadow,border-color]",
-        isOver && "border-brand ring-[3px] ring-brand-soft"
+        "flex h-full w-72 md:w-80 shrink-0 snap-start flex-col rounded-2xl border border-white/50 dark:border-white/10 bg-white/45 dark:bg-slate-900/45 backdrop-blur-md shadow-sm transition-all duration-200",
+        isOver && "border-primary/60 ring-2 ring-primary/20 bg-primary/[0.04]"
       )}
     >
-      <div className="flex items-center justify-between px-3 py-2.5">
-        <span className="flex items-center gap-1.5 text-[13.5px] font-bold tracking-tight">
-          {stage.kind === "won" && <Trophy className="h-3.5 w-3.5 text-primary" />}
-          {stage.kind === "lost" && (
-            <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
+      {/* Cabecera de la columna */}
+      <div className="flex items-center justify-between px-3.5 py-3 border-b border-white/40 dark:border-white/10">
+        <div className="flex items-center gap-2 min-w-0">
+          {stage.kind === "won" && (
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <Trophy className="h-3.5 w-3.5" />
+            </span>
           )}
-          {stage.name}
-        </span>
-        <span className="rounded-full border border-border-strong bg-background px-2 py-0.5 font-mono text-[11px] text-text-3">
+          {stage.kind === "lost" && (
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-rose-500/10 text-rose-500">
+              <XCircle className="h-3.5 w-3.5" />
+            </span>
+          )}
+          {stage.kind === "open" && (
+            <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
+          )}
+          <span className="truncate text-[13.5px] font-bold text-foreground">
+            {stage.name}
+          </span>
+        </div>
+        <span className="rounded-full bg-white/60 dark:bg-slate-800/60 border border-white/50 dark:border-white/10 px-2 py-0.5 font-mono text-[11px] font-semibold text-muted-foreground shadow-xs">
           {leads.length}
         </span>
       </div>
-      <div className="flex-1 space-y-2 overflow-y-auto p-2">
-        {leads.map((lead) => (
-          <DraggableLead
-            key={lead.id}
-            lead={lead}
-            currency={currency}
-            onEditAmount={onEditAmount}
-            onOpen={onOpen}
-          />
-        ))}
+
+      {/* Lista de tarjetas draggables */}
+      <div className="flex-1 space-y-2.5 overflow-y-auto p-3 min-h-[140px]">
+        {leads.length === 0 ? (
+          <div className="flex h-28 flex-col items-center justify-center rounded-xl border border-dashed border-white/40 dark:border-white/10 p-3 text-center text-xs text-muted-foreground/70">
+            <p>Sin contactos</p>
+            <p className="text-[10px] mt-0.5">Desliza o suelta tarjetas aquí</p>
+          </div>
+        ) : (
+          leads.map((lead) => (
+            <DraggableLead
+              key={lead.id}
+              lead={lead}
+              stageIndex={stageIndex}
+              totalStages={totalStages}
+              currency={currency}
+              onEditAmount={onEditAmount}
+              onOpen={onOpen}
+              onSlide={onSlide}
+            />
+          ))
+        )}
       </div>
+
+      {/* Resumen financiero de la columna */}
       <StageFooter leads={leads} currency={currency} />
     </div>
   );
 }
 
-/** Cuánto dinero hay en esta etapa, y qué quedó fuera de la cuenta. */
 function StageFooter({ leads, currency }: { leads: BoardLead[]; currency: string }) {
   const { totalCents, sinMonto, otraMoneda } = totalesDeEtapa(leads, currency);
   const conMonto = leads.length - sinMonto - otraMoneda;
 
   return (
-    <div className="border-t px-3 py-2 text-[11px]">
+    <div className="border-t border-white/40 dark:border-white/10 px-3.5 py-2.5 text-[11.5px] bg-white/20 dark:bg-slate-900/20 rounded-b-2xl">
       {conMonto === 0 ? (
-        // Un "$0.00" aquí se lee como un error del sistema, no como un dato.
-        <p className="text-muted-foreground">Sin montos capturados</p>
+        <p className="text-muted-foreground/80 italic text-center">Sin montos capturados</p>
       ) : (
         <div className="flex items-baseline justify-between gap-2">
           <span className="text-muted-foreground">
-            Total{sinMonto > 0 ? ` · ${sinMonto} sin monto` : ""}
+            Total{sinMonto > 0 ? ` (${sinMonto} sin monto)` : ""}
           </span>
-          <span className="font-semibold tabular-nums">
+          <span className="font-bold text-foreground tabular-nums">
             {formatMoneyCents(totalCents, currency)}
           </span>
         </div>
       )}
       {otraMoneda > 0 && (
-        // Descartarlos en silencio haría que el total mintiera sin que nadie
-        // pudiera notarlo.
-        <p className="mt-0.5 text-warning-text">
+        <p className="mt-0.5 text-amber-600 dark:text-amber-400 text-[10.5px]">
           {otraMoneda} en otra moneda, fuera del total
         </p>
       )}
@@ -372,116 +467,188 @@ function StageFooter({ leads, currency }: { leads: BoardLead[]; currency: string
 
 function DraggableLead({
   lead,
+  stageIndex,
+  totalStages,
   currency,
   onEditAmount,
   onOpen,
+  onSlide,
 }: {
   lead: BoardLead;
+  stageIndex: number;
+  totalStages: number;
   currency: string;
   onEditAmount: (lead: BoardLead) => void;
   onOpen: (lead: BoardLead) => void;
+  onSlide: (lead: BoardLead, direction: "prev" | "next") => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: lead.id,
   });
+
   return (
     <div
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      // Abrir y arrastrar conviven porque el sensor solo activa el arrastre a
-      // los 6 px de movimiento: un clic quieto nunca llega a ser un arrastre.
-      // Los controles de dentro de la tarjeta cortan la propagación, para que
-      // tocar "+ monto" no abra además el cajón.
       onClick={() => onOpen(lead)}
-      // dnd-kit ya deja el nodo con `role="button"` y `tabIndex`, pero un div
-      // no dispara `click` con el teclado: sin esto, el cajón sería alcanzable
-      // solo con el ratón.
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onOpen(lead);
         }
       }}
-      aria-label={`Abrir el trato de ${lead.contact.name}`}
-      className={cn(isDragging && "opacity-40")}
+      aria-label={`Abrir trato de ${lead.contact.name}`}
+      className={cn("transition-opacity outline-none", isDragging && "opacity-30")}
     >
-      <LeadCard lead={lead} currency={currency} onEditAmount={onEditAmount} />
+      <LeadCard
+        lead={lead}
+        stageIndex={stageIndex}
+        totalStages={totalStages}
+        currency={currency}
+        onEditAmount={onEditAmount}
+        onSlide={onSlide}
+      />
     </div>
   );
 }
 
 function LeadCard({
   lead,
+  stageIndex = 0,
+  totalStages = 1,
   currency,
   overlay = false,
   onEditAmount,
+  onSlide,
 }: {
   lead: BoardLead;
+  stageIndex?: number;
+  totalStages?: number;
   currency: string;
   overlay?: boolean;
   onEditAmount?: (lead: BoardLead) => void;
+  onSlide?: (lead: BoardLead, direction: "prev" | "next") => void;
 }) {
+  const canSlidePrev = stageIndex > 0;
+  const canSlideNext = stageIndex < totalStages - 1;
+
   return (
     <div
       className={cn(
-        "cursor-grab rounded-md border border-border-strong bg-card p-3 shadow-sm transition-shadow hover:shadow-md",
-        overlay && "rotate-2 shadow-pop"
+        "group/card relative cursor-grab rounded-xl border border-white/60 dark:border-white/10 bg-white/85 dark:bg-slate-800/85 backdrop-blur-sm p-3.5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/40 active:cursor-grabbing",
+        overlay && "rotate-2 shadow-xl ring-2 ring-primary/40 bg-white dark:bg-slate-800"
       )}
     >
-      <div className="flex items-center gap-2.5">
+      {/* Información del Contacto */}
+      <div className="flex items-start gap-2.5">
         <ContactAvatar name={lead.contact.name} seed={lead.contact.id} size="sm" />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <p className="truncate text-sm font-semibold">{lead.contact.name}</p>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <p className="truncate text-sm font-bold text-foreground">
+              {lead.contact.name}
+            </p>
             {lead.priority && <PriorityBadge value={lead.priority} />}
           </div>
-          <p className="text-[11px] text-muted-foreground">
-            {lead.lastActivityAt
-              ? `Actividad: ${formatTime(lead.lastActivityAt)}`
-              : "Sin actividad"}
-          </p>
+
+          <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+            {lead.contact.phone && (
+              <span className="truncate">{formatPhone(lead.contact.phone)}</span>
+            )}
+            {lead.lastActivityAt && (
+              <span className="truncate">· {formatTime(lead.lastActivityAt)}</span>
+            )}
+          </div>
         </div>
+
+        {/* Acceso directo a conversación de chat */}
         {lead.conversationId && (
           <Link
             href={`/inbox?contact=${lead.contact.id}`}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
-            aria-label="Abrir conversación"
-            className="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+            title="Abrir conversación en bandeja"
+            className="rounded-lg p-1 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors shrink-0"
           >
             <MessageSquareText className="h-4 w-4" />
           </Link>
         )}
       </div>
-      {!overlay && onEditAmount && (
-        <button
-          // `stopPropagation` en pointerdown: sin esto, tocar el monto empieza
-          // un arrastre y el diálogo nunca abre.
-          onPointerDown={(e) => e.stopPropagation()}
-          // También en `click`: sin esto, tocar el monto abriría además el
-          // cajón, porque el evento sigue subiendo hasta la tarjeta.
-          onClick={(e) => {
-            e.stopPropagation();
-            onEditAmount(lead);
-          }}
-          className={cn(
-            "mt-1.5 w-full rounded px-1 py-0.5 text-right text-xs tabular-nums hover:bg-accent",
-            lead.amountCents === null
-              ? "text-text-3"
-              : "font-semibold text-foreground"
-          )}
-        >
-          {lead.amountCents === null
-            ? "+ monto"
-            : formatMoneyCents(lead.amountCents, lead.currency ?? currency)}
-        </button>
-      )}
-      {overlay && lead.amountCents !== null && (
-        <p className="mt-1.5 text-right text-xs font-semibold tabular-nums">
-          {formatMoneyCents(lead.amountCents, lead.currency ?? currency)}
-        </p>
-      )}
+
+      {/* Controles de Estado y Monto */}
+      <div className="mt-3 flex items-center justify-between gap-2 border-t border-black/5 dark:border-white/5 pt-2">
+        {/* Deslizador manual de estados (flechas izquierda/derecha) */}
+        {!overlay && onSlide && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={!canSlidePrev}
+              title={canSlidePrev ? "Deslizar a etapa anterior" : "Primera etapa"}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (canSlidePrev) onSlide(lead, "prev");
+              }}
+              className={cn(
+                "flex h-6 w-6 items-center justify-center rounded-md border text-slate-600 dark:text-slate-300 transition-all",
+                canSlidePrev
+                  ? "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 hover:text-foreground active:scale-95"
+                  : "border-transparent opacity-20 cursor-not-allowed"
+              )}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+
+            <button
+              type="button"
+              disabled={!canSlideNext}
+              title={canSlideNext ? "Deslizar a siguiente etapa" : "Última etapa"}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (canSlideNext) onSlide(lead, "next");
+              }}
+              className={cn(
+                "flex h-6 w-6 items-center justify-center rounded-md border text-slate-600 dark:text-slate-300 transition-all",
+                canSlideNext
+                  ? "border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 hover:text-foreground active:scale-95"
+                  : "border-transparent opacity-20 cursor-not-allowed"
+              )}
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+
+        {/* Captura de Monto */}
+        {!overlay && onEditAmount && (
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditAmount(lead);
+            }}
+            title="Editar importe negociado"
+            className={cn(
+              "rounded-md px-2 py-0.5 text-xs font-semibold tabular-nums transition-colors ml-auto",
+              lead.amountCents === null
+                ? "text-muted-foreground/70 hover:bg-primary/10 hover:text-primary font-normal"
+                : "bg-primary/10 text-primary hover:bg-primary/20"
+            )}
+          >
+            {lead.amountCents === null
+              ? "+ monto"
+              : formatMoneyCents(lead.amountCents, lead.currency ?? currency)}
+          </button>
+        )}
+
+        {overlay && lead.amountCents !== null && (
+          <p className="ml-auto text-xs font-bold tabular-nums text-primary">
+            {formatMoneyCents(lead.amountCents, lead.currency ?? currency)}
+          </p>
+        )}
+      </div>
     </div>
   );
 }

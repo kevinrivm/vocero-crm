@@ -43,6 +43,20 @@ const prefixes = {
   conversationNote: "nota",
   // Comunicación interna entre agentes
   internalMessage: "imsg",
+  // Anuncios globales del Súper Admin
+  announcement: "ann",
+  // Historial de pagos y facturación del Súper Admin
+  payment: "pay",
+  // Etiquetas del CRM
+  tag: "tag",
+  // Multilínea 1:N por Tenant
+  tenantChannel: "tc",
+  // Notas adhesivas / Sticky Notes para agentes
+  stickyNote: "snote",
+  // Integraciones de Calendario / Videollamadas OAuth (Google Workspace & Microsoft 365)
+  calendarIntegration: "calint",
+  // Permisos por perfil/rol del Tenant
+  tenantRolePermission: "trp",
 } as const;
 
 export type IdKind = keyof typeof prefixes;

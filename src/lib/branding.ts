@@ -42,25 +42,44 @@ export type Branding = {
   currency: Currency;
   /** `null` = se dibuja con la inicial sobre el acento (ver `lib/favicon`). */
   favicon: BrandingFavicon | null;
+  /** Marca Blanca (White Label) por Tenant */
+  logoUrl?: string | null;
+  primaryColor?: string | null;
+  sidebarColor?: string | null;
 };
 
 export const DEFAULT_BRANDING: Branding = {
-  name: "Vocero",
-  // El azul eléctrico de vocerocrm.com: la instancia recién instalada se ve
-  // igual que la landing. Una agencia lo cambia en Configuración → Marca.
-  accent: "#0d5bff",
+  name: "Nexia",
+  accent: "#0F4C5C",
   currency: DEFAULT_CURRENCY,
   favicon: null,
+  logoUrl: null,
+  primaryColor: null,
+  sidebarColor: null,
 };
 
 /**
- * Presets. El primero es la marca Vocero (valores exactos de la landing); los
- * demás son los tonos sobrios del handoff Atlas, que siguen disponibles para
- * quien quiera un CRM más discreto.
+ * Presets de marca Nexia y Atlas.
  */
 export const ACCENT_PRESETS: Record<string, { label: string; set: AccentSet }> = {
+  "#0f4c5c": {
+    label: "Azul Petróleo Nexia",
+    set: { accent: "#0F4C5C", hover: "#0b3945", soft: "#d0e3e7", tint: "#e8f2f4", text: "#0F4C5C", fg: "#ffffff" },
+  },
+  "#0F4C5C": {
+    label: "Azul Petróleo Nexia",
+    set: { accent: "#0F4C5C", hover: "#0b3945", soft: "#d0e3e7", tint: "#e8f2f4", text: "#0F4C5C", fg: "#ffffff" },
+  },
+  "#3e2723": {
+    label: "Espresso Nexia",
+    set: { accent: "#3E2723", hover: "#2b1a17", soft: "#e8dedb", tint: "#f5f0ee", text: "#3E2723", fg: "#ffffff" },
+  },
+  "#3E2723": {
+    label: "Espresso Nexia",
+    set: { accent: "#3E2723", hover: "#2b1a17", soft: "#e8dedb", tint: "#f5f0ee", text: "#3E2723", fg: "#ffffff" },
+  },
   "#0d5bff": {
-    label: "Azul Vocero",
+    label: "Azul Eléctrico",
     set: { accent: "#0d5bff", hover: "#0a4de6", soft: "#d3e2ff", tint: "#ebf1ff", text: "#0038d8", fg: "#ffffff" },
   },
   "#3f5972": {
@@ -218,7 +237,7 @@ export function resolveAccentSet(
 
   const preset = ACCENT_PRESETS[accentHex.toLowerCase()];
   if (preset) return preset.set;
-  if (!isValidHex(accentHex)) return ACCENT_PRESETS[DEFAULT_BRANDING.accent]!.set;
+  if (!isValidHex(accentHex)) return ACCENT_PRESETS[DEFAULT_BRANDING.accent.toLowerCase()]!.set;
 
   let base = hexToRgb(accentHex.toLowerCase());
   // contraste con blanco = (1.05) / (L + 0.05); exigir ≥ 3

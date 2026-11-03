@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 40" width="140" height="40" fill="none">
+  <defs>
+    <linearGradient id="nexiaGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0F4C5C" />
+      <stop offset="100%" stop-color="#3E2723" />
+    </linearGradient>
+  </defs>
+  <!-- Isotipo 'N' de Nexia -->
+  <g transform="translate(0, 2) scale(0.5625)">
+    <path
+      d="M14 50V14C14 11.79 15.79 10 18 10H19C20.7 10 22.28 10.93 23.11 12.43L41 44.75"
+      stroke="#0F4C5C"
+      stroke-width="7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+    />
+    <path
+      d="M23 19.25L40.88 51.56C41.71 53.06 43.29 54 45 54H46C48.21 54 50 52.21 50 50V14"
+      stroke="#3E2723"
+      stroke-width="7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      fill="none"
+    />
+  </g>
+  <!-- Wordmark 'Nexia' -->
+  <text
+    x="42"
+    y="27"
+    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+    font-size="24"
+    font-weight="850"
+    letter-spacing="-0.04em"
+    fill="url(#nexiaGrad)"
+  >Nexia</text>
+</svg>

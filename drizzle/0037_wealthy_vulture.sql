@@ -1,0 +1,1 @@
+ALTER TABLE "member" ALTER COLUMN "role" SET DEFAULT 'sales';

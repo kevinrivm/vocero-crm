@@ -4,6 +4,7 @@ import {
   isNavActive,
   SETTINGS_ITEM,
   settingsSections,
+  tenantNavGroups,
 } from "@/lib/nav";
 
 /**
@@ -24,6 +25,36 @@ describe("barra lateral agrupada", () => {
       ["Agente", "Laboratorio"],
       ["Resultados"],
     ]);
+  });
+
+  it("un agente solo ve la Bandeja en Trabajo y no ve Agente ni Resultados", () => {
+    const groups = appNavGroups({ role: "agente" });
+    expect(groups.map((g) => g.title)).toEqual(["Trabajo"]);
+    expect(labels(groups)).toEqual([["Bandeja"]]);
+  });
+
+  it("un superadmin tiene acceso a la sección Plataforma (/superadmin) con opciones globales", () => {
+    const groups = appNavGroups({ isSuperAdmin: true, role: "owner" });
+    expect(groups.map((g) => g.title)).toEqual([
+      "Visión General",
+      "Comunicaciones",
+      "Gestión de Clientes",
+      "Sistema",
+    ]);
+    const todosHrefs = groups.flatMap((g) => g.items.map((i) => i.href));
+    expect(todosHrefs).toEqual([
+      "/superadmin",
+      "/superadmin/analytics",
+      "/superadmin/whatsapp",
+      "/superadmin/broadcast",
+      "/superadmin/users",
+      "/superadmin/modules",
+      "/superadmin/billing",
+      "/superadmin/settings",
+    ]);
+    const todosLabels = groups.flatMap((g) => g.items.map((i) => i.label));
+    expect(todosLabels).not.toContain("Bandeja");
+    expect(todosLabels).not.toContain("Contactos");
   });
 
   it("AGENDA añade Citas al final de Trabajo", () => {
@@ -63,6 +94,121 @@ describe("barra lateral agrupada", () => {
     expect(isNavActive("/inboxes", "/inbox")).toBe(false);
     expect(isNavActive("/settings/ai", "/settings")).toBe(true);
     expect(isNavActive("/settings/ai", "/agent")).toBe(false);
+    // Alias de navegación para el Tenant
+    expect(isNavActive("/pipeline", "/pipeline")).toBe(true);
+    expect(isNavActive("/settings/whatsapp", "/whatsapp-setup")).toBe(true);
+    expect(isNavActive("/settings/team", "/team")).toBe(true);
+  });
+});
+
+describe("menú lateral del tenant (tenantNavGroups)", () => {
+  it("un agente únicamente ve la categoría Operaciones con Bandeja, Contactos y Pipeline", () => {
+    for (const role of ["agente", "agent"]) {
+      const groups = tenantNavGroups({ role });
+      expect(groups.map((g) => g.title)).toEqual(["Operaciones"]);
+      expect(groups[0]?.items.map((i) => i.href)).toEqual(["/inbox", "/contacts", "/pipeline"]);
+      expect(groups[0]?.items.map((i) => i.label)).toEqual([
+        "Bandeja de Entrada",
+        "Base de Contactos",
+        "Pipeline",
+      ]);
+    }
+  });
+
+  it("un admin u owner ve Operaciones, Configuración CRM y Administración", () => {
+    for (const role of ["admin", "owner"]) {
+      const groups = tenantNavGroups({ role });
+      expect(groups.map((g) => g.title)).toEqual([
+        "Operaciones",
+        "Configuración CRM",
+        "Administración",
+      ]);
+      expect(groups[0]?.items.map((i) => i.href)).toEqual(["/inbox", "/contacts", "/pipeline"]);
+      expect(groups[1]?.items.map((i) => i.href)).toEqual(["/crm-settings"]);
+      expect(groups[2]?.items.map((i) => i.href)).toEqual([
+        "/ai-agent",
+        "/integrations",
+        "/team",
+        "/appearance",
+        "/subscription",
+      ]);
+      expect(groups[2]?.items.map((i) => i.label)).toEqual([
+        "Agente IA",
+        "Canales & API",
+        "Equipo de Trabajo",
+        "Marca y Apariencia",
+        "Mi Suscripción",
+      ]);
+    }
+  });
+
+  it("un perfil de soporte ve cada una de las bandejas por canal vinculado", () => {
+    // Por rol 'support'
+    const groupsSupport = tenantNavGroups({
+      role: "support",
+      linkedChannels: ["whatsapp", "messenger"],
+    });
+    expect(groupsSupport.map((g) => g.title)).toEqual(["Operaciones"]);
+    expect(groupsSupport[0]?.items.map((i) => i.href)).toEqual([
+      "/inbox",
+      "/inbox?channel=whatsapp",
+      "/inbox?channel=messenger",
+      "/contacts",
+      "/pipeline",
+    ]);
+    expect(groupsSupport[0]?.items.map((i) => i.label)).toEqual([
+      "Bandeja General",
+      "WhatsApp",
+      "Messenger",
+      "Base de Contactos",
+      "Pipeline",
+    ]);
+
+    // Por usuario con nombre 'Soporte'
+    const groupsUser = tenantNavGroups({
+      role: "owner",
+      userName: "Soporte",
+      linkedChannels: ["whatsapp", "messenger", "instagram"],
+    });
+    expect(groupsUser[0]?.items.map((i) => i.href)).toEqual([
+      "/inbox",
+      "/inbox?channel=whatsapp",
+      "/inbox?channel=messenger",
+      "/inbox?channel=instagram",
+      "/contacts",
+      "/pipeline",
+    ]);
+  });
+
+  it("con agenda: true añade Citas a Operaciones y Agenda a Administración", () => {
+    const groupsAgent = tenantNavGroups({ role: "agent", agenda: true });
+    expect(groupsAgent[0]?.items.map((i) => i.href)).toEqual([
+      "/inbox",
+      "/contacts",
+      "/pipeline",
+      "/bookings",
+    ]);
+
+    const groupsAdmin = tenantNavGroups({ role: "admin", agenda: true });
+    expect(groupsAdmin[0]?.items.map((i) => i.href)).toEqual([
+      "/inbox",
+      "/contacts",
+      "/pipeline",
+      "/bookings",
+    ]);
+    expect(groupsAdmin[2]?.items.map((i) => i.href)).toContain("/settings/calendar");
+  });
+
+  it("isNavActive distingue correctamente los canales de la bandeja", () => {
+    expect(isNavActive("/inbox", "/inbox", null)).toBe(true);
+    expect(isNavActive("/inbox", "/inbox?channel=whatsapp", null)).toBe(false);
+
+    expect(isNavActive("/inbox", "/inbox", "whatsapp")).toBe(false);
+    expect(isNavActive("/inbox", "/inbox?channel=whatsapp", "whatsapp")).toBe(true);
+    expect(isNavActive("/inbox", "/inbox?channel=messenger", "whatsapp")).toBe(false);
+
+    expect(isNavActive("/inbox", "/inbox?channel=messenger", "messenger")).toBe(true);
+    expect(isNavActive("/inbox", "/inbox", "messenger")).toBe(false);
   });
 });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "organization" ADD COLUMN "whatsapp_status" varchar(20) DEFAULT 'unlinked' NOT NULL;

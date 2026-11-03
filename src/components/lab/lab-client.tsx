@@ -185,7 +185,7 @@ export function LabClient() {
             <p className="mt-0.5 leading-relaxed text-text-2">
               El Laboratorio prueba al agente que contesta a tus clientes:
               clientes simulados conversan con él y un juez califica cada
-              conversación. Vocero no trae agente propio, y esta instancia aún
+              conversación. Nexia no trae agente propio, y esta instancia aún
               no tiene uno conectado.{" "}
               <a
                 href={GUIA_DEL_PAR_URL}

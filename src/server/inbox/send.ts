@@ -32,6 +32,7 @@ import {
   type TiktokCredentials,
 } from "@/server/tiktok/credentials";
 import { sendTiktokText } from "@/server/tiktok/send";
+import { sendEvolutionText } from "@/server/evolution/client";
 import { prepararAudioSaliente } from "@/server/whatsapp/nota-de-voz";
 import {
   cabeOtroMensaje,
@@ -97,6 +98,12 @@ type SendTarget = {
   messenger?: MessengerCredentials;
   /** 022: presente solo en conversaciones de TikTok. */
   tiktok?: TiktokCredentials;
+  /** Presente cuando WhatsApp se gestiona mediante Evolution API en lugar de Meta Cloud API. */
+  evolution?: {
+    url: string;
+    instance: string;
+    apiKey: string;
+  };
   /**
    * 024: el envío sale con la etiqueta de agente humano. Lo decide el
    * pre-vuelo (`assertReplyWindow`), no cada canal por su cuenta.
@@ -310,10 +317,30 @@ async function prepareSend(
   }
 
   const credentials = await getCredentialsByOrg(organizationId);
+  let evolutionConfig: { url: string; instance: string; apiKey: string } | null = null;
+
   if (!credentials) {
-    throw new SendError("not_connected", "No hay número de WhatsApp conectado");
-  }
-  if (credentials.status === "reconnect_required") {
+    // Si no hay Meta Cloud API, verificar si el tenant tiene Evolution API configurada
+    const [org] = await getDb()
+      .select({
+        evoUrl: schema.organization.evoUrl,
+        evoInstance: schema.organization.evoInstance,
+        evoApiKey: schema.organization.evoApiKey,
+      })
+      .from(schema.organization)
+      .where(eq(schema.organization.id, organizationId))
+      .limit(1);
+
+    if (org?.evoUrl && org?.evoInstance) {
+      evolutionConfig = {
+        url: org.evoUrl,
+        instance: org.evoInstance,
+        apiKey: org.evoApiKey || "",
+      };
+    } else {
+      throw new SendError("not_connected", "No hay número de WhatsApp conectado");
+    }
+  } else if (credentials.status === "reconnect_required") {
     throw new SendError(
       "reconnect_required",
       "El token de WhatsApp expiró: reconecta el número en Configuración"
@@ -344,7 +371,13 @@ async function prepareSend(
     );
   }
 
-  return { conversation: row.conversation, credentials, destinatario, recipient };
+  return {
+    conversation: row.conversation,
+    credentials,
+    destinatario,
+    recipient,
+    evolution: evolutionConfig ?? undefined,
+  };
 }
 
 /**
@@ -496,18 +529,28 @@ export async function sendText(input: {
       ? await callMessengerSend(target, text)
       : target.tiktok
         ? await callTiktokSend(target, text)
-        : await callGraphSend(
-          credentials!,
-          conCita(
-            {
-              messaging_product: "whatsapp",
-              ...target.destinatario,
-              type: "text",
-              text: { body: text },
-            },
-            cita?.message.waMessageId
-          )
-        );
+        : target.evolution
+          ? (
+              await sendEvolutionText({
+                evoUrl: target.evolution.url,
+                evoInstance: target.evolution.instance,
+                evoApiKey: target.evolution.apiKey,
+                to: target.recipient,
+                text,
+              })
+            ).id
+          : await callGraphSend(
+              credentials!,
+              conCita(
+                {
+                  messaging_product: "whatsapp",
+                  ...target.destinatario,
+                  type: "text",
+                  text: { body: text },
+                },
+                cita?.message.waMessageId
+              )
+            );
 
   const messageId = await persistOutbound({
     organizationId: input.organizationId,
@@ -518,9 +561,11 @@ export async function sendText(input: {
     // Un canal sin acuses de entrega confirma al aceptar; uno con acuses
     // avanza despues por webhook. Sin esta distincion el mensaje se queda
     // con el reloj puesto para siempre.
-    status: capabilitiesFor(target.conversation.channel).deliveryReceipts
-      ? "pending"
-      : "sent",
+    status: target.evolution
+      ? "sent"
+      : capabilitiesFor(target.conversation.channel).deliveryReceipts
+        ? "pending"
+        : "sent",
     aiGenerated: input.aiGenerated,
     origin: input.aiGenerated ? "ai" : "operator",
     cita,

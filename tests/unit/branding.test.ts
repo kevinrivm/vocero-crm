@@ -63,18 +63,18 @@ describe("white-label: acento", () => {
     expect(lum).toBeLessThan(0xd0);
   });
 
-  it("hex inválido cae al default (el azul Vocero)", () => {
-    expect(resolveAccentSet("rojo")).toEqual(ACCENT_PRESETS["#0d5bff"]!.set);
+  it("hex inválido cae al default (el azul petróleo Nexia)", () => {
+    expect(resolveAccentSet("rojo")).toEqual(ACCENT_PRESETS["#0F4C5C"]!.set);
   });
 
-  it("el azul Vocero es el default y trae los valores exactos de la landing", () => {
-    expect(DEFAULT_BRANDING.accent).toBe("#0d5bff");
+  it("el azul petróleo Nexia es el default y trae los valores exactos", () => {
+    expect(DEFAULT_BRANDING.accent).toBe("#0F4C5C");
     expect(resolveAccentSet(DEFAULT_BRANDING.accent)).toEqual({
-      accent: "#0d5bff",
-      hover: "#0a4de6",
-      soft: "#d3e2ff",
-      tint: "#ebf1ff",
-      text: "#0038d8",
+      accent: "#0F4C5C",
+      hover: "#0b3945",
+      soft: "#d0e3e7",
+      tint: "#e8f2f4",
+      text: "#0F4C5C",
       fg: "#ffffff",
     });
   });
@@ -109,7 +109,7 @@ describe("white-label: acento en tema oscuro", () => {
 
   it("hex inválido en oscuro también cae al acento por defecto", () => {
     expect(resolveAccentSet("rojo", "dark")).toEqual(
-      resolveAccentSet("#0d5bff", "dark")
+      resolveAccentSet(DEFAULT_BRANDING.accent, "dark")
     );
   });
 
@@ -146,10 +146,10 @@ describe("white-label: barra lateral bicolor (.nav-dark)", () => {
     expect(nav).not.toContain(resolveAccentSet("#3f5972", "light").accent);
   });
 
-  it("con el azul Vocero, la barra se ve como siempre", () => {
+  it("con el azul eléctrico, la barra se ve como siempre", () => {
     // La receta de la barra es la de antes: el ítem activo del tema claro no
     // cambia aunque el tema oscuro de la página sí.
-    expect(resolveNavAccentSet(DEFAULT_BRANDING.accent)).toEqual({
+    expect(resolveNavAccentSet("#0d5bff")).toEqual({
       accent: "#256bff",
       hover: "#4883ff",
       soft: "#122c63",
@@ -209,14 +209,14 @@ describe("tema oscuro: las superficies se distinguen", () => {
 });
 
 describe("white-label: normalización", () => {
-  it("nombre vacío o nulo → default 'Vocero'; se recorta a 30", () => {
-    expect(normalizeBranding(null).name).toBe("Vocero");
-    expect(normalizeBranding({ name: "   " }).name).toBe("Vocero");
+  it("nombre vacío o nulo → default 'Nexia'; se recorta a 30", () => {
+    expect(normalizeBranding(null).name).toBe("Nexia");
+    expect(normalizeBranding({ name: "   " }).name).toBe("Nexia");
     expect(normalizeBranding({ name: "x".repeat(50) }).name).toHaveLength(30);
   });
 
   it("acento inválido → default", () => {
-    expect(normalizeBranding({ accent: "azul" }).accent).toBe("#0d5bff");
+    expect(normalizeBranding({ accent: "azul" }).accent).toBe("#0F4C5C");
     expect(normalizeBranding({ accent: "#3F6B66" }).accent).toBe("#3f6b66");
   });
 });

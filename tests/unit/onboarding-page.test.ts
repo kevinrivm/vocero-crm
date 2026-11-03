@@ -74,22 +74,19 @@ describe("/onboarding", () => {
 });
 
 describe("la raíz", () => {
-  it("sin sesión sigue yendo a la Bandeja (que manda al login)", async () => {
+  it("sin sesión manda al login", async () => {
     getSessionOrNull.mockResolvedValue(null);
-    await expect(Home()).rejects.toThrow("redirect:/inbox");
+    await expect(Home()).rejects.toThrow("redirect:/login");
     expect(guideFirst).not.toHaveBeenCalled();
   });
 
-  it("al dueño con pasos pendientes lo manda a la guía", async () => {
-    getSessionOrNull.mockResolvedValue(owner);
-    guideFirst.mockResolvedValue(true);
-    await expect(Home()).rejects.toThrow("redirect:/onboarding");
-    expect(guideFirst).toHaveBeenCalledWith(owner);
+  it("al superadmin lo manda a /superadmin", async () => {
+    getSessionOrNull.mockResolvedValue({ ...owner, isSuperAdmin: true });
+    await expect(Home()).rejects.toThrow("redirect:/superadmin");
   });
 
-  it("con todo listo y el agente encendido, a la Bandeja como siempre", async () => {
+  it("al dueño o admin lo manda directo a la Bandeja /inbox sin bloqueo de onboarding", async () => {
     getSessionOrNull.mockResolvedValue(owner);
-    guideFirst.mockResolvedValue(false);
     await expect(Home()).rejects.toThrow("redirect:/inbox");
   });
 });

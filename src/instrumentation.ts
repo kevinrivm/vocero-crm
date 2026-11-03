@@ -9,12 +9,20 @@ export async function register(): Promise<void> {
       checkMediaDir,
       cleanupOrphanRuns,
       encryptLegacySecrets,
+      ensureInternalMessageColumns,
+      ensureStickyNoteTable,
+      ensureCalendarIntegrationTable,
+      ensureTenantRolePermissionTable,
       resumeDispatch,
       resumeWebhooks,
     } = await import("./instrumentation-node");
     await checkMediaDir();
     await cleanupOrphanRuns();
     await encryptLegacySecrets();
+    await ensureInternalMessageColumns();
+    await ensureStickyNoteTable();
+    await ensureCalendarIntegrationTable();
+    await ensureTenantRolePermissionTable();
     resumeDispatch();
     resumeWebhooks();
   }

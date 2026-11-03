@@ -1,0 +1,2 @@
+ALTER TABLE "internal_message" ADD COLUMN "read" boolean DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE INDEX "internal_msg_receiver_read_idx" ON "internal_message" USING btree ("organization_id","receiver_id","read");

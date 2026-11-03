@@ -1,4 +1,5 @@
 import { and, count, eq, sql } from "drizzle-orm";
+import { isSuperAdmin } from "@/lib/auth/roles";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
 
@@ -43,11 +44,26 @@ export async function seedOrganizationStagesAndProfile(
  * dos registros simultáneos en instancia vacía creen dos organizaciones.
  */
 export async function onUserCreated(userId: string, userName?: string) {
+  // Si es un alta interna (creación desde el panel de Súper Admin o invitación), no auto-crear org
+  const isInternal =
+    (globalThis as unknown as { __voceroInternalSignup?: { getStore: () => boolean } })
+      .__voceroInternalSignup?.getStore() ?? false;
+  if (isInternal) return;
+
   const db = getDb();
   await db.transaction(async (tx) => {
     // Lock transaccional de "primer arranque" (clave arbitraria fija):
     // dos registros simultáneos en instancia vacía → solo uno crea la org.
     await tx.execute(sql`select pg_advisory_xact_lock(874201)`);
+
+    // Solo se ejecuta en el PRIMER arranque de la plataforma (si no existe ningún súper admin registrado).
+    // Si ya existe un súper admin (ej. en despliegues con Súper Admin creado), este hook no debe actuar.
+    const [superAdmins] = await tx
+      .select({ n: count() })
+      .from(schema.user)
+      .where(eq(schema.user.role, "superadmin"));
+    if ((superAdmins?.n ?? 0) > 0) return;
+
     const [orgs] = await tx
       .select({ n: count() })
       .from(schema.organization);
@@ -130,7 +146,7 @@ export async function resolveMembership(
     }
 
     // Superadmin puede acceder a cualquier empresa aunque no tenga membresía directa
-    if (userRole === "superadmin") {
+    if (isSuperAdmin(userRole)) {
       const orgRows = await db
         .select({
           id: schema.organization.id,
@@ -169,8 +185,8 @@ export async function resolveMembership(
     return { ...rows[0], userRole };
   }
 
-  // Si es superadmin sin membresías, fallback a la primera organización del sistema
-  if (userRole === "superadmin") {
+  // Si es superadmin sin membresías, fallback a la primera organización del sistema o contexto global
+  if (isSuperAdmin(userRole)) {
     const orgRows = await db
       .select({
         id: schema.organization.id,
@@ -186,6 +202,14 @@ export async function resolveMembership(
         userRole,
       };
     }
+    // Si no existe ninguna organización en la plataforma todavía,
+    // el superadmin mantiene su contexto global independiente
+    return {
+      organizationId: "global",
+      role: "superadmin",
+      organizationStatus: "active",
+      userRole,
+    };
   }
 
   return null;

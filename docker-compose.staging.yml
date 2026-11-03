@@ -1,0 +1,62 @@
+# ============================================================
+# Nexia CRM — Docker Compose para Staging / Producción
+# Dominio: nexia.globalschoolcrm.com
+# Proxy Inverso: Traefik v3.1 (websecure + letsencryptresolver)
+# Red Externa: GlobalSchool
+# ============================================================
+
+services:
+  nexia_app:
+    image: nexia-crm:staging
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.staging
+    environment:
+      NODE_ENV: production
+      APP_BASE_URL: ${APP_BASE_URL:-https://nexia.globalschoolcrm.com}
+      DATABASE_URL: ${DATABASE_URL}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      META_WEBHOOK_VERIFY_TOKEN: ${META_WEBHOOK_VERIFY_TOKEN}
+      META_GRAPH_API_VERSION: ${META_GRAPH_API_VERSION:-v25.0}
+      AGENDA: ${AGENDA:-on}
+      EVOLUTION_API_URL: ${EVOLUTION_API_URL:-http://evolution_evolution:8080}
+      MEDIA_DIR: /data/media
+    volumes:
+      # Persistencia de adjuntos, fotos de perfil, logotipos e iconos de marca
+      - nexia_data:/data
+    networks:
+      - GlobalSchool
+    # Etiquetas de enrutamiento para Traefik v3 (Modo Docker Compose)
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.nexia-app.rule=Host(`nexia.globalschoolcrm.com`)"
+      - "traefik.http.routers.nexia-app.entrypoints=websecure"
+      - "traefik.http.routers.nexia-app.tls=true"
+      - "traefik.http.routers.nexia-app.tls.certresolver=letsencryptresolver"
+      - "traefik.http.services.nexia-app.loadbalancer.server.port=3000"
+    # Etiquetas de enrutamiento para Traefik v3 (Modo Docker Swarm / Stack Deploy)
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.nexia-app.rule=Host(`nexia.globalschoolcrm.com`)"
+        - "traefik.http.routers.nexia-app.entrypoints=websecure"
+        - "traefik.http.routers.nexia-app.tls=true"
+        - "traefik.http.routers.nexia-app.tls.certresolver=letsencryptresolver"
+        - "traefik.http.services.nexia-app.loadbalancer.server.port=3000"
+
+volumes:
+  nexia_data:
+    name: nexia_data
+
+networks:
+  GlobalSchool:
+    external: true
+

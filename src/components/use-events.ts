@@ -37,6 +37,20 @@ export type EventHandlers = {
   onNoteDeleted?: (data: { conversationId: string; noteId: string }) => void;
   /** 015 — Algo cambió en la agenda (también cuando agenda la IA). */
   onBookingUpdated?: (data: { bookingId: string }) => void;
+  /** Chat interno entre agentes en tiempo real */
+  onInternalMessageNew?: (data: {
+    message: {
+      id: string;
+      organizationId: string;
+      senderId: string;
+      senderName: string;
+      recipientId: string | null;
+      receiverId: string | null;
+      channel: string;
+      content: string;
+      createdAt: string;
+    };
+  }) => void;
   /** Se llama tras RECONECTAR (no en la conexión inicial): catch-up con refetch. */
   onReconnect?: () => void;
 };
@@ -96,6 +110,9 @@ export function useEvents(handlers: EventHandlers): void {
       listen(es, "lab.run", (d) => handlersRef.current.onLabRun?.(d as never));
       listen(es, "booking.updated", (d) =>
         handlersRef.current.onBookingUpdated?.(d as never)
+      );
+      listen(es, "internal_message.new", (d) =>
+        handlersRef.current.onInternalMessageNew?.(d as never)
       );
 
       es.onerror = () => {

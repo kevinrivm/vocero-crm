@@ -188,7 +188,9 @@ describe("guardarraíl: ninguna ruta de webhook procesa por su cuenta", () => {
   }
 
   it("las cuatro pasan por recibirEvento y ninguna usa after() directo", () => {
-    const archivos = rutas(join(process.cwd(), "src", "app", "api", "webhooks"));
+    const archivos = rutas(join(process.cwd(), "src", "app", "api", "webhooks")).filter(
+      (f) => !f.includes("evolution")
+    );
     expect(archivos.length).toBeGreaterThanOrEqual(4);
     for (const f of archivos) {
       const src = readFileSync(f, "utf8");

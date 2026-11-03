@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_DB: vocero
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - vocero_dev_pg:/var/lib/postgresql/data
     healthcheck:

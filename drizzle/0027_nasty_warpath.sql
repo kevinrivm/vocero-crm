@@ -1,0 +1,3 @@
+ALTER TABLE "internal_message" ADD COLUMN "receiver_id" text;--> statement-breakpoint
+ALTER TABLE "internal_message" ADD CONSTRAINT "internal_message_receiver_id_user_id_fk" FOREIGN KEY ("receiver_id") REFERENCES "public"."user"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "internal_msg_receiver_idx" ON "internal_message" USING btree ("organization_id","receiver_id","created_at");

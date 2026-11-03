@@ -18,6 +18,7 @@ import {
   type ConnectorId,
 } from "@/lib/agenda-connectors";
 import { ConnectorCredentials } from "@/components/settings/connector-credentials";
+import { MeetingConnectorsSection } from "@/components/tenant/meeting-connectors";
 
 /**
  * 015 — Ajustes → Agenda: cuándo atiende el negocio y cómo se entrega la
@@ -297,6 +298,11 @@ export function AgendaClient() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Conectores de Reunión y Videollamadas (Google Meet / Microsoft Teams) */}
+      <div className="pt-2">
+        <MeetingConnectorsSection />
+      </div>
 
       <Card>
         <CardHeader>

@@ -37,6 +37,23 @@ export type SseEvent =
   | { type: "note.deleted"; data: { conversationId: string; noteId: string } }
   /** 015 — algo cambió en la agenda: la pantalla de Citas se refresca sola. */
   | { type: "booking.updated"; data: { bookingId: string } }
+  /** Chat interno entre agentes en tiempo real */
+  | {
+      type: "internal_message.new";
+      data: {
+        message: {
+          id: string;
+          organizationId: string;
+          senderId: string;
+          senderName: string;
+          recipientId: string | null;
+          receiverId: string | null;
+          channel: string;
+          content: string;
+          createdAt: string;
+        };
+      };
+    }
   | {
       type: "lab.run";
       data: {

@@ -44,7 +44,29 @@ export async function getCredentialsByPhoneNumberId(
     .from(schema.metaCredentials)
     .where(eq(schema.metaCredentials.phoneNumberId, phoneNumberId))
     .limit(1);
-  return rows[0] ? toCredentials(rows[0]) : null;
+  if (rows[0]) return toCredentials(rows[0]);
+
+  // Soporte Multilínea: Buscar en la tabla tenant_channels
+  const [tc] = await db
+    .select()
+    .from(schema.tenantChannels)
+    .where(eq(schema.tenantChannels.providerId, phoneNumberId))
+    .limit(1);
+
+  if (tc) {
+    return {
+      id: tc.id,
+      organizationId: tc.organizationId,
+      wabaId: "",
+      phoneNumberId: tc.providerId,
+      displayPhoneNumber: tc.name,
+      verifiedName: tc.name,
+      status: "connected",
+      token: tc.token || "",
+    };
+  }
+
+  return null;
 }
 
 /** Resuelve la conexión por WABA ID (eventos a nivel WABA, ej. plantillas). */

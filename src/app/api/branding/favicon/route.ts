@@ -51,7 +51,15 @@ export async function GET(req: Request) {
     }
   }
 
-  return new Response(generatedFaviconSvg(branding), {
-    headers: cabeceras("image/svg+xml", cacheable),
-  });
+  try {
+    const fs = await import("node:fs/promises");
+    const iconBuf = await fs.readFile("src/app/icon.png");
+    return new Response(iconBuf, {
+      headers: cabeceras("image/png", cacheable),
+    });
+  } catch {
+    return new Response(generatedFaviconSvg(branding), {
+      headers: cabeceras("image/svg+xml", cacheable),
+    });
+  }
 }

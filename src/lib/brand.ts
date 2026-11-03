@@ -12,27 +12,34 @@
  * reconocible.
  */
 
-/** Cuerpo de la "v": se pinta con el color del contexto. */
-export const BRAND_MARK_BODY =
-  "M4 5c2 8 5 14.5 7.8 14.7 2.3.2 3.7-4.1 4.7-8.2";
+/**
+ * La marca Nexia: isotipo 'N' entrelazado con azul petróleo (#0F4C5C)
+ * y café espresso (#3E2723).
+ */
 
-/** Remate corto, siempre cian. */
-export const BRAND_MARK_TAIL = "M16.5 11.5c.8-3 2-5.5 4-6.1";
-
-export const BRAND_MARK_STROKE = 3.4;
-
-/** Cian sobre fondos claros (texto azul al lado). */
-export const BRAND_CYAN = "#00c6f5";
-
-/** Cian sobre el mosaico azul: un punto más claro para que no se hunda. */
-export const BRAND_CYAN_ON_TILE = "#3fdcff";
+export const NEXIA_PETROLEO = "#0F4C5C";
+export const NEXIA_ESPRESSO = "#3E2723";
 
 /**
- * ¿Esta instancia se llama Vocero? Solo entonces se dibuja el logo: una
- * agencia que rebautizó el CRM para su cliente no debe ver la "v" de otro
- * producto en su barra lateral ni en su pestaña. El nombre por defecto es
- * "Vocero", así que una instancia sin configurar la ve de inmediato.
+ * ¿Esta instancia se llama Nexia o Vocero?
  */
-export function isVoceroName(name: string): boolean {
-  return name.trim().toLowerCase() === "vocero";
+export function isNexiaName(name: string): boolean {
+  const n = name.trim().toLowerCase();
+  return n === "nexia" || n === "vocero";
 }
+
+export const isVoceroName = isNexiaName;
+
+/** Primer trazo del isotipo 'N' (azul petróleo) */
+export const BRAND_MARK_BODY =
+  "M14 50V14C14 11.79 15.79 10 18 10H19C20.7 10 22.28 10.93 23.11 12.43L41 44.75";
+
+/** Segundo trazo del isotipo 'N' (café espresso) */
+export const BRAND_MARK_TAIL =
+  "M23 19.25L40.88 51.56C41.71 53.06 43.29 54 45 54H46C48.21 54 50 52.21 50 50V14";
+
+export const BRAND_MARK_STROKE = 7;
+
+export const BRAND_CYAN = "#0F4C5C";
+
+export const BRAND_CYAN_ON_TILE = "#0F4C5C";

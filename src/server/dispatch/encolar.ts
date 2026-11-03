@@ -50,7 +50,17 @@ export async function despacharAlCerebro(
       .from(schema.agentProfile)
       .where(eq(schema.agentProfile.organizationId, organizationId))
       .limit(1);
-    if (!perfil?.enabled) return;
+
+    const [org] = await getDb()
+      .select({ dispatchWebhookUrl: schema.organization.dispatchWebhookUrl })
+      .from(schema.organization)
+      .where(eq(schema.organization.id, organizationId))
+      .limit(1);
+
+    const hasDispatchWebhook = Boolean(org?.dispatchWebhookUrl);
+
+    // Si tiene webhook de despacho configurado en el tenant o el perfil del agente está activo:
+    if (!hasDispatchWebhook && !perfil?.enabled) return;
 
     // 025 — El despacho anota qué entrante lo provoca: es lo que le debe al
     // cerebro, aunque después la conversación tenga una respuesta.

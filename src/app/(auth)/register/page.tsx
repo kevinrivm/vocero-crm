@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import nexiaLogo from "@/app/icon.png";
 import { signUp } from "@/lib/auth/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,15 +44,40 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="shadow-md">
-      <CardHeader>
-        <CardTitle>Crear cuenta</CardTitle>
-        <CardDescription>
-          El primer registro crea la organización de esta instancia y queda
-          como propietario.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-6">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="flex items-center justify-center">
+          <Image
+            src={nexiaLogo}
+            alt="Nexia"
+            priority
+            className="h-16 w-16 object-contain drop-shadow-md"
+          />
+        </div>
+
+        <h1 className="text-[22px] font-bold leading-tight tracking-[-0.03em] text-foreground">
+          El CRM inteligente{" "}
+          <span
+            className="bg-clip-text font-serif text-[1.15em] font-normal italic tracking-[-0.01em] text-transparent"
+            style={{
+              backgroundImage:
+                "linear-gradient(92deg, #0F4C5C 15%, #3E2723 85%)",
+            }}
+          >
+            con Agente IA.
+          </span>
+        </h1>
+      </div>
+
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle>Crear cuenta</CardTitle>
+          <CardDescription>
+            El primer registro crea la organización de esta instancia y queda
+            como propietario.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="name">Tu nombre</Label>
@@ -97,5 +124,6 @@ export default function RegisterPage() {
         </form>
       </CardContent>
     </Card>
+    </div>
   );
 }

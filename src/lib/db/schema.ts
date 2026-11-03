@@ -8,6 +8,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -24,13 +25,19 @@ import { sql } from "drizzle-orm";
  * Auth (Better Auth + plugin organization)
  * ============================================================ */
 
+export const tenantUserRoles = ["owner", "admin", "sales", "support"] as const;
+export type TenantUserRole = (typeof tenantUserRoles)[number];
+export const tenantMemberRoles = ["owner", "admin", "sales", "support", "superadmin"] as const;
+export type TenantMemberRole = (typeof tenantMemberRoles)[number];
+
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
-  role: text("role", { enum: ["superadmin", "user"] }).notNull().default("user"),
+  role: text("role", { enum: ["superadmin", "super admin", "owner", "admin", "sales", "support", "agente", "user"] }).notNull().default("user"),
+  isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -84,6 +91,28 @@ export const organization = pgTable("organization", {
   status: text("status", { enum: ["active", "suspended"] })
     .notNull()
     .default("active"),
+  isActive: boolean("is_active").default(true).notNull(),
+  plan: varchar("plan", { length: 20 }).default("trial").notNull(),
+  maxAgents: integer("max_agents").default(3).notNull(),
+  whatsappStatus: varchar("whatsapp_status", { length: 20 })
+    .default("unlinked")
+    .notNull(),
+  planExpiresAt: timestamp("plan_expires_at"),
+  moduleInternalChat: boolean("module_internal_chat").default(true).notNull(),
+  moduleAutomations: boolean("module_automations").default(false).notNull(),
+  moduleApi: boolean("module_api").default(false).notNull(),
+  moduleMassiveBroadcast: boolean("module_massive_broadcast").default(false).notNull(),
+  // Integraciones y Despacho API
+  dispatchWebhookUrl: text("dispatch_webhook_url"),
+  botApiKey: text("bot_api_key"),
+  // Evolution API
+  evoUrl: text("evo_url"),
+  evoInstance: text("evo_instance"),
+  evoApiKey: text("evo_api_key"),
+  // Marca Blanca (White Label)
+  logoUrl: text("logo_url"),
+  primaryColor: text("primary_color"),
+  sidebarColor: text("sidebar_color"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   metadata: text("metadata"),
@@ -97,7 +126,7 @@ export const member = pgTable("member", {
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  role: text("role").notNull().default("member"),
+  role: text("role", { enum: ["owner", "admin", "sales", "support"] }).notNull().default("sales"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -107,7 +136,7 @@ export const invitation = pgTable("invitation", {
     .notNull()
     .references(() => organization.id, { onDelete: "cascade" }),
   email: text("email").notNull(),
-  role: text("role"),
+  role: text("role", { enum: ["owner", "admin", "sales", "support"] }),
   status: text("status").notNull().default("pending"),
   expiresAt: timestamp("expires_at").notNull(),
   inviterId: text("inviter_id")
@@ -1421,8 +1450,12 @@ export const internalMessage = pgTable(
     recipientId: text("recipient_id").references(() => user.id, {
       onDelete: "set null",
     }),
+    receiverId: text("receiver_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     channel: text("channel").notNull().default("general"),
     content: text("content").notNull(),
+    read: boolean("read").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [
@@ -1432,5 +1465,181 @@ export const internalMessage = pgTable(
       t.channel,
       t.createdAt
     ),
+    index("internal_msg_receiver_idx").on(
+      t.organizationId,
+      t.receiverId,
+      t.createdAt
+    ),
+    index("internal_msg_receiver_read_idx").on(
+      t.organizationId,
+      t.receiverId,
+      t.read
+    ),
   ]
 );
+
+/**
+ * Anuncios globales del Súper Administrador transmitidos a toda la plataforma.
+ */
+export const globalAnnouncements = pgTable("global_announcements", {
+  id: text("id").primaryKey(),
+  message: text("message").notNull(),
+  type: varchar("type", { length: 20 }).default("info").notNull(),
+  isActive: boolean("is_active").default(false).notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/**
+ * Historial de pagos y facturación de las organizaciones para el Súper Admin.
+ */
+export const payments = pgTable(
+  "payments",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    currency: varchar("currency", { length: 10 }).default("COP").notNull(),
+    status: varchar("status", { length: 20 }).default("completed").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("payments_org_idx").on(t.organizationId),
+    index("payments_created_idx").on(t.createdAt),
+  ]
+);
+
+export const payment = payments;
+
+/**
+ * Multilínea (1:N) por Organización / Tenant:
+ * Permite conectar múltiples líneas telefónicas o instancias (Ventas, Soporte, etc.)
+ * con cortafuegos selectivo de IA (`enableAi`).
+ */
+export const tenantChannels = pgTable(
+  "tenant_channels",
+  {
+    id: text("id").primaryKey(),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    platform: text("platform", { enum: ["whatsapp", "evolution"] }).notNull(),
+    providerId: text("provider_id").notNull(),
+    token: text("token"),
+    name: text("name").notNull(),
+    enableAi: boolean("enable_ai").default(false).notNull(),
+    status: text("status").default("active").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("tc_org_idx").on(t.organizationId),
+    index("tc_tenant_idx").on(t.tenantId),
+    index("tc_provider_idx").on(t.providerId),
+    index("tc_org_platform_idx").on(t.organizationId, t.platform),
+  ]
+);
+
+export const tenantChannel = tenantChannels;
+
+/* ============================================================
+ * Notas Rápidas / Sticky Notes de Agentes
+ * ============================================================ */
+
+export const stickyNotes = pgTable(
+  "sticky_note",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    title: text("title"),
+    content: text("content").notNull().default(""),
+    color: text("color").notNull().default("yellow"),
+    isPinned: boolean("is_pinned").notNull().default(false),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    index("sticky_note_org_user_idx").on(t.organizationId, t.userId, t.createdAt),
+  ]
+);
+
+export const stickyNote = stickyNotes;
+
+/* ============================================================
+ * Conectores de Calendario y Videollamadas OAuth (Google / Microsoft)
+ * ============================================================ */
+
+export const calendarIntegrations = pgTable(
+  "calendar_integration",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    provider: text("provider", { enum: ["google", "microsoft"] }).notNull(),
+    accessTokenCipher: text("access_token_cipher").notNull(),
+    accessTokenIv: text("access_token_iv").notNull(),
+    accessTokenTag: text("access_token_tag").notNull(),
+    refreshTokenCipher: text("refresh_token_cipher"),
+    refreshTokenIv: text("refresh_token_iv"),
+    refreshTokenTag: text("refresh_token_tag"),
+    expiresAt: timestamp("expires_at"),
+    accountEmail: text("account_email"),
+    accountName: text("account_name"),
+    scope: text("scope"),
+    status: text("status", { enum: ["connected", "error", "disconnected"] })
+      .notNull()
+      .default("connected"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("calendar_int_org_provider_uq").on(t.organizationId, t.provider),
+    index("calendar_int_org_idx").on(t.organizationId),
+  ]
+);
+
+export const calendarIntegration = calendarIntegrations;
+
+/* ============================================================
+ * Permisos por Perfil / Rol del Tenant (RBAC personalizable)
+ * ============================================================ */
+
+export const tenantRolePermissions = pgTable(
+  "tenant_role_permission",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    role: text("role").notNull(), // "admin", "sales", "support"
+    permission: text("permission").notNull(), // "agenda", "contacts", "internal_chat", "sticky_notes", "export_contacts", "crm_settings"
+    enabled: boolean("enabled").notNull().default(true),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("tenant_role_perm_org_role_perm_uq").on(
+      t.organizationId,
+      t.role,
+      t.permission
+    ),
+    index("tenant_role_perm_org_idx").on(t.organizationId),
+  ]
+);
+
+export const tenantRolePermission = tenantRolePermissions;
+
+
+
+
+
