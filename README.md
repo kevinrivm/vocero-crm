@@ -409,6 +409,12 @@ healthcheck se fija en el panel. Railway declaró obsoleto este formato a
 favor de su Infrastructure as Code (`.railway/railway.ts`); lo sigue leyendo
 hasta el 2026-12-01.
 
+**RepoCloud** — despliegue en un clic desde la página del proyecto, sin
+manifest en el repo ni pasos previos: la plantilla queda lista con el botón
+de abajo.
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/Vocero%20CRM/)
+
 ### Adjuntos en un bucket (opcional)
 
 Por defecto, los adjuntos, el logo y el icono viven en el volumen de `/data`.
