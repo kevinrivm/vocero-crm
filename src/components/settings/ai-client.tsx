@@ -421,6 +421,13 @@ export function AiClient() {
   );
 }
 
+function renderTemplate(text: string, values: Record<string, React.ReactNode>) {
+  const keys = Object.keys(values);
+  const regex = new RegExp(`\\{(${keys.join("|")})\\}`, "g");
+  const parts = text.split(regex);
+  return parts.map((part) => (values[part] !== undefined ? values[part] : part));
+}
+
 function EstadoGuardado({ cred, vista }: { cred: Credencial; vista: Vista }) {
   const { t: tr } = useI18n();
 
@@ -428,7 +435,9 @@ function EstadoGuardado({ cred, vista }: { cred: Credencial; vista: Vista }) {
     <div className="rounded-md border p-3 text-sm" data-ai-estado={cred.estado}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span>
-          {tr("Llave conectada: ")}<code className="font-mono">••••{cred.tokenLast4}</code>
+          {renderTemplate(tr("Llave conectada: {v0}"), {
+            v0: <code key="token" className="font-mono">••••{cred.tokenLast4}</code>,
+          })}
           {" · "}
           {systemText(tr.locale, AI_PROVIDER_PRESETS[cred.proveedor].label)}
           {" · "}
@@ -446,7 +455,7 @@ function EstadoGuardado({ cred, vista }: { cred: Credencial; vista: Vista }) {
       )}
       {cred.motivo && (
         <p className="mt-1 text-xs text-muted-foreground">
-          {tr("El proveedor dijo: ")}{cred.motivo}
+          {tr("El proveedor dijo: {v0}", { v0: cred.motivo })}
         </p>
       )}
     </div>

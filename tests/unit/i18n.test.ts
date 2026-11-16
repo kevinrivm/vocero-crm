@@ -53,6 +53,18 @@ describe("idiomas de interfaz", () => {
     expect(b("Guardar")).toBe("Guardar");
     expect(a("Guardar")).toBe("Salvar");
   });
+  it("interpola correctamente las cabeceras unificadas del onboarding", () => {
+    const pt = translator("pt-BR");
+    const esTr = translator("es");
+    expect(esTr("Deja listo tu CRM en {v0} pasos", { v0: 5 })).toBe("Deja listo tu CRM en 5 pasos");
+    expect(pt("Deja listo tu CRM en {v0} pasos", { v0: 5 })).toBe("Prepare seu CRM em 5 passos");
+    expect(esTr("{v0} de {v1} listos", { v0: 2, v1: 5 })).toBe("2 de 5 listos");
+    expect(pt("{v0} de {v1} listos", { v0: 2, v1: 5 })).toBe("2 de 5 concluídos");
+    expect(esTr("¡Todo listo! Enciende a {v0}", { v0: "Nea" })).toBe("¡Todo listo! Enciende a Nea");
+    expect(pt("¡Todo listo! Enciende a {v0}", { v0: "Nea" })).toBe("Tudo pronto! Ative Nea");
+    expect(esTr("Al final: encender a {v0}", { v0: "Nea" })).toBe("Al final: encender a Nea");
+    expect(pt("Al final: encender a {v0}", { v0: "Nea" })).toBe("Ao final: ativar Nea");
+  });
   it("interpola una sola vez sin traducir datos ni variables de WhatsApp", () => {
     expect(interpolate("Hola {name}; {{1}}", {name:"{otro}"})).toBe("Hola {otro}; {{1}}");
     expect(interpolate("Valor de {{{v0}}}",{v0:1})).toBe("Valor de {{1}}");

@@ -259,12 +259,12 @@ function RolSection({
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
             <CardTitle>
-              {tr("Rol: ")}{systemText(tr.locale, rol.etiqueta)}
+              {tr("Rol: {v0}", { v0: systemText(tr.locale, rol.etiqueta) })}
             </CardTitle>
             <CardDescription>{systemText(tr.locale, rol.descripcion)}</CardDescription>
           </div>
           <Button variant="outline" size="sm" onClick={onPreset}>
-            {tr("Cargar el rol ")}{systemText(tr.locale, rol.etiqueta)}
+            {tr("Cargar el rol {v0}", { v0: systemText(tr.locale, rol.etiqueta) })}
           </Button>
         </div>
       </CardHeader>
@@ -427,7 +427,7 @@ function KbSection({
           </div>
           {kbSize && (
             <Badge variant={kbSize.warning ? "warning" : "secondary"}>
-              {kbSize.chars.toLocaleString(tr.intl)} {tr(" caracteres")}</Badge>
+              {tr("{v0} caracteres", { v0: kbSize.chars.toLocaleString(tr.intl) })}</Badge>
           )}
         </div>
         {kbSize?.warning && (

@@ -37,6 +37,14 @@ describe("detectColumns", () => {
     });
   });
 
+  it("reconoce encabezados comunes en portugués (Nome, Sobrenome, Telefone)", () => {
+    expect(detectColumns(["Nome", "Sobrenome", "E-mail", "Telefone"])).toEqual({
+      name: 0,
+      surname: 1,
+      phone: 3,
+    });
+  });
+
   it("sin columna de teléfono no adivina", () => {
     expect(detectColumns(["nombre", "monto"])).toBeNull();
   });

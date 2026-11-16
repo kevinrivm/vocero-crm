@@ -77,7 +77,7 @@ export function OnboardingClient({
           <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {tr("Guía de inicio")}</p>
           <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            {tr("Deja listo tu CRM en ")}{total} {tr(" pasos")}</h1>
+            {tr("Deja listo tu CRM en {v0} pasos", { v0: total })}</h1>
           <p className="mt-2 text-muted-foreground">
             {tr("Hazlos en orden: cada botón te lleva a la pantalla que toca. Al volver aquí verás tu avance.")}</p>
         </header>
@@ -85,7 +85,7 @@ export function OnboardingClient({
         <div aria-label={tr("Avance")}>
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
-              {done} {tr(" de ")}{total} {tr(" listos")}</span>
+              {tr("{v0} de {v1} listos", { v0: done, v1: total })}</span>
             {guide.complete && <span className="text-success-text">{tr("¡Completo!")}</span>}
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
@@ -172,7 +172,7 @@ export function OnboardingClient({
             </>
           ) : guide.complete && guide.brainConnected ? (
             <>
-              <h2 className="font-semibold">{tr("¡Todo listo! Enciende a ")}{agente}</h2>
+              <h2 className="font-semibold">{tr("¡Todo listo! Enciende a {v0}", {v0: agente})}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {tr("Desde ese momento contestará a tus clientes. Puedes apagarlo cuando quieras desde Agente.")}</p>
               <Button className="mt-3" disabled={busy} onClick={() => void encender()}>
@@ -212,7 +212,7 @@ export function OnboardingClient({
             <>
               <h2 className="flex items-center gap-2 font-semibold">
                 <Power className="h-4 w-4 text-muted-foreground" />
-                {tr("Al final: encender a ")}{agente}
+                {tr("Al final: encender a {v0}", {v0: agente})}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {tr("Tu agente empieza apagado: mientras no lo enciendas no le contesta a nadie y los mensajes que lleguen los atiendes tú desde la Bandeja. Con los pasos listos y tu agente conectado, aquí aparece el botón para encenderlo.")}</p>

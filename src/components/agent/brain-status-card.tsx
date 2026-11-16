@@ -38,6 +38,13 @@ const DOT: Record<Tone, string> = {
   off: "bg-border-strong",
 };
 
+function renderTemplate(text: string, values: Record<string, React.ReactNode>) {
+  const keys = Object.keys(values);
+  const regex = new RegExp(`\\{(${keys.join("|")})\\}`, "g");
+  const parts = text.split(regex);
+  return parts.map((part) => (values[part] !== undefined ? values[part] : part));
+}
+
 export function BrainStatusCard({
   status,
   now = Date.now(),
@@ -59,7 +66,13 @@ export function BrainStatusCard({
       <CardContent className="space-y-3">
         {status.warning === "sin_cerebro" && (
           <Callout tone="info" icon={Info} title={tr("Sin agente conectado")}>
-            {tr("Vocero funciona como bandeja manual: tus clientes reciben lo que contestes tú. Para que un agente conteste, levántalo al lado del CRM y pon ")}<Env>BRAIN_DISPATCH_URL</Env> {tr(" y ")}<Env>BOT_API_KEY</Env> {tr(" en el entorno.")}{" "}
+            {renderTemplate(
+              tr("Vocero funciona como bandeja manual: tus clientes reciben lo que contestes tú. Para que un agente conteste, levántalo al lado del CRM y pon {v0} y {v1} en el entorno."),
+              {
+                v0: <Env key="v0">BRAIN_DISPATCH_URL</Env>,
+                v1: <Env key="v1">BOT_API_KEY</Env>,
+              }
+            )}{" "}
             <a
               href={GUIA_DEL_PAR_URL}
               target="_blank"
