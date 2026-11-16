@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, PanelRight } from "lucide-react";
@@ -57,6 +59,8 @@ export function InboxClient({
   /** 026 — Eliminar es irreversible: solo quien administra ve la opción. */
   canDelete?: boolean;
 }) {
+  const { t: tr } = useI18n();
+
   const multiChannel = channels.length > 1;
   const [conversations, setConversations] = useState<ConversationDto[] | null>(
     null
@@ -328,7 +332,7 @@ export function InboxClient({
   const sendText = useCallback(
     async (text: string, cita: MessageDto | null = null): Promise<string | null> => {
       const conversationId = selectedIdRef.current;
-      if (!conversationId) return "Sin conversación seleccionada";
+      if (!conversationId) return tr("Sin conversación seleccionada");
 
       const tmpId = `tmp_${++tmpSeq.current}`;
       setPending((prev) => [
@@ -353,14 +357,14 @@ export function InboxClient({
         }).catch(() => null);
         if (!res) {
           drop();
-          return "Sin conexión con el servidor";
+          return tr("Sin conexión con el servidor");
         }
         if (!res.ok) {
           const data = (await res.json().catch(() => null)) as {
             error?: { message?: string };
           } | null;
           drop();
-          return data?.error?.message ?? "No se pudo enviar el mensaje";
+          return data?.error?.message ?? tr("No se pudo enviar el mensaje");
         }
         // Primero traer el mensaje real, después quitar el provisional: al
         // revés, la burbuja parpadearía.
@@ -374,7 +378,7 @@ export function InboxClient({
       sendQueue.current = queued.catch(() => null);
       return queued;
     },
-    [refetchMessages, refetchConversations]
+    [refetchMessages, refetchConversations, tr]
   );
 
   const patchConversation = useCallback(
@@ -394,24 +398,24 @@ export function InboxClient({
   const deleteConversation = useCallback(
     async (alsoContact: boolean): Promise<string | null> => {
       const id = selectedIdRef.current;
-      if (!id) return "Sin conversación seleccionada";
+      if (!id) return tr("Sin conversación seleccionada");
       const res = await fetch(
         `/api/conversations/${id}${alsoContact ? "?contacto=1" : ""}`,
         { method: "DELETE" }
       ).catch(() => null);
-      if (!res) return "Sin conexión con el servidor";
+      if (!res) return tr("Sin conexión con el servidor");
       // 404 = otra persona la eliminó primero: para quien lo pidió, ya está.
       if (!res.ok && res.status !== 404) {
         const data = (await res.json().catch(() => null)) as {
           error?: { message?: string };
         } | null;
-        return data?.error?.message ?? "No se pudo eliminar la conversación";
+        return data?.error?.message ?? tr("No se pudo eliminar la conversación");
       }
       quitarConversacion(id);
       void refetchConversations();
       return null;
     },
-    [quitarConversacion, refetchConversations]
+    [quitarConversacion, refetchConversations, tr]
   );
 
   return (
@@ -447,7 +451,7 @@ export function InboxClient({
               {/* Volver a la lista: en móvil el hilo ocupa toda la pantalla. */}
               <button
                 onClick={() => setSelectedId(null)}
-                aria-label="Volver a las conversaciones"
+                aria-label={tr("Volver a las conversaciones")}
                 className="shrink-0 rounded-md p-1.5 text-text-2 hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:hidden"
               >
                 <ChevronLeft className="h-5 w-5" strokeWidth={1.8} />
@@ -474,12 +478,12 @@ export function InboxClient({
                     )}
                   >
                     {selected.windowOpen
-                      ? "ventana abierta"
+                      ? tr("ventana abierta")
                       : selected.humanWindow?.open
                         ? // 024: pasadas 24 h en Instagram o Messenger solo
                           // contesta una persona. No se llama «atención
                           // humana»: eso ya es el traspaso, con la IA en pausa.
-                          "ventana humana"
+                          tr("ventana humana")
                         : selected.contact.phone
                         ? formatPhone(selected.contact.phone)
                         : // Instagram no tiene teléfono: decir "Sin teléfono"
@@ -491,7 +495,7 @@ export function InboxClient({
               {!panelOpen && (
                 <button
                   onClick={() => togglePanel(true)}
-                  aria-label="Mostrar detalles"
+                  aria-label={tr("Mostrar detalles")}
                   className="shrink-0 rounded-full border border-border-strong p-1.5 text-text-3 transition-colors hover:border-text-3 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <PanelRight className="h-4 w-4" strokeWidth={1.7} />
@@ -523,7 +527,7 @@ export function InboxClient({
                 }).catch(() => null);
                 if (!res?.ok) {
                   const d = (await res?.json().catch(() => null)) as { error?: { message?: string } } | null;
-                  return d?.error?.message ?? "No se pudo guardar la nota. Revisa la conexión.";
+                  return d?.error?.message ?? tr("No se pudo guardar la nota. Revisa la conexión.");
                 }
                 const { nota } = (await res.json()) as { nota: NotaDto };
                 if (selectedIdRef.current === id) {
@@ -537,7 +541,7 @@ export function InboxClient({
                 notas={notas}
                 eventos={eventos}
                 onBorrarNota={async (n) => {
-                  if (!window.confirm("¿Borrar esta nota interna?")) return;
+                  if (!window.confirm(tr("¿Borrar esta nota interna?"))) return;
                   const res = await fetch(`/api/conversations/${n.conversationId}/notes/${n.id}`, {
                     method: "DELETE",
                   }).catch(() => null);
@@ -562,9 +566,8 @@ export function InboxClient({
         ) : (
           <div className="thread-bg flex flex-1 flex-col items-center justify-center gap-2 bg-chat px-6 text-center lg:tarjeta">
             <p className="font-serif text-[24px] italic leading-tight text-text-2">
-              Elige una conversación para ver el hilo
-            </p>
-            <p className="kicker">Bandeja · tiempo real</p>
+              {tr("Elige una conversación para ver el hilo")}</p>
+            <p className="kicker">{tr("Bandeja · tiempo real")}</p>
           </div>
         )}
       </section>
@@ -572,7 +575,7 @@ export function InboxClient({
       {/* Velo del cajón de detalles (solo donde no caben tres columnas). */}
       {panelOpen && selected && (
         <button
-          aria-label="Cerrar los detalles"
+          aria-label={tr("Cerrar los detalles")}
           tabIndex={-1}
           onClick={() => togglePanel(false)}
           className="fixed inset-0 z-30 bg-overlay xl:hidden"

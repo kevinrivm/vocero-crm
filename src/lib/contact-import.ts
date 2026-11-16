@@ -79,9 +79,9 @@ const plain = (s: string) =>
     .toLowerCase()
     .trim();
 
-const PHONE_HEADERS = ["telefono", "phone", "whatsapp", "celular", "movil", "numero", "tel"];
-const NAME_HEADERS = ["nombre", "name", "contacto", "first name", "firstname"];
-const SURNAME_HEADERS = ["apellido", "apellidos", "last name", "lastname"];
+const PHONE_HEADERS = ["telefono", "telefone", "phone", "whatsapp", "celular", "movil", "numero", "tel"];
+const NAME_HEADERS = ["nombre", "nome", "name", "contacto", "contato", "first name", "firstname"];
+const SURNAME_HEADERS = ["apellido", "apellidos", "sobrenome", "last name", "lastname"];
 
 /**
  * Qué columna es cuál, por el encabezado. Devuelve null si no hay columna de

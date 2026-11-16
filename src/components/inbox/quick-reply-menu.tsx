@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import type { RespuestaRapida } from "@/lib/respuestas-rapidas";
@@ -29,6 +31,7 @@ export function QuickReplyMenu({
   onElegir: (r: RespuestaRapida) => void;
   onActiva: (i: number) => void;
 }) {
+  const { t: tr } = useI18n();
   const listaRef = useRef<HTMLUListElement>(null);
 
   // La fila activa siempre a la vista al moverse con ↑ y ↓.
@@ -44,28 +47,26 @@ export function QuickReplyMenu({
       className="absolute bottom-full left-2 right-2 z-30 mb-2 max-h-[min(320px,50dvh)] overflow-hidden rounded-xl border border-border-strong bg-popover text-popover-foreground shadow-xl"
     >
       <p className="border-b px-3 py-2 font-mono text-[10.5px] uppercase tracking-[0.08em] text-text-3">
-        Respuestas rápidas
-      </p>
+        {tr("Respuestas rápidas")} </p>
       {vacio ? (
         <div className="space-y-1 px-3 py-3 text-sm">
-          <p className="text-text-2">Aún no hay respuestas rápidas.</p>
+          <p className="text-text-2">{tr("Aún no hay respuestas rápidas.")}</p>
           {puedeEditar && (
             <Link
               href="/settings/quick-replies"
               className="text-[13px] font-semibold text-brand-ink hover:underline"
               onMouseDown={(e) => e.preventDefault()}
             >
-              Crearlas en Ajustes →
-            </Link>
+              {tr("Crearlas en Ajustes →")} </Link>
           )}
         </div>
       ) : opciones.length === 0 ? (
-        <p className="px-3 py-3 text-sm text-text-2">Ninguna respuesta coincide.</p>
+        <p className="px-3 py-3 text-sm text-text-2">{tr("Ninguna respuesta coincide.")}</p>
       ) : (
         <ul
           ref={listaRef}
           role="listbox"
-          aria-label="Respuestas rápidas"
+          aria-label={tr("Respuestas rápidas")}
           className="max-h-[min(280px,44dvh)] overflow-y-auto py-1"
         >
           {opciones.map((r, i) => (

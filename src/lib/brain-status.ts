@@ -1,3 +1,4 @@
+import { systemText, type Locale } from "@/lib/i18n";
 /**
  * «Quién responde a tus clientes»: el contrato entre
  * `GET /api/agent/brain-status` y la UI (la tarjeta del Agente y el panel de
@@ -150,15 +151,15 @@ export function externalAnswerLabel(status: BrainStatusDto): string {
 }
 
 /** «hace 3 min». Tolera relojes desfasados: el futuro es «hace unos segundos». */
-export function haceCuanto(iso: string, now: number = Date.now()): string {
+export function haceCuanto(iso: string, now: number = Date.now(), locale: Locale = "es"): string {
   const s = Math.max(0, Math.floor((now - Date.parse(iso)) / 1000));
-  if (!Number.isFinite(s) || s < 60) return "hace unos segundos";
+  if (!Number.isFinite(s) || s < 60) return systemText(locale, "hace unos segundos");
   const m = Math.floor(s / 60);
-  if (m < 60) return `hace ${m} min`;
+  if (m < 60) return systemText(locale, `hace ${m} min`);
   const h = Math.floor(m / 60);
-  if (h < 24) return `hace ${h} h`;
+  if (h < 24) return systemText(locale, `hace ${h} h`);
   const d = Math.floor(h / 24);
-  return d === 1 ? "hace 1 día" : `hace ${d} días`;
+  return systemText(locale, d === 1 ? "hace 1 día" : `hace ${d} días`);
 }
 
 /**

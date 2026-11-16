@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -60,6 +64,8 @@ const TIPO_LABELS: Record<Hallazgo["tipo"], string> = {
 };
 
 export function LabClient() {
+  const { t: tr } = useI18n();
+
   const [runs, setRuns] = useState<Run[]>([]);
   const [aiConfigured, setAiConfigured] = useState(true);
   // 036 — El Laboratorio prueba al agente conectado; sin él no hay a quién.
@@ -125,7 +131,7 @@ export function LabClient() {
         setBrainConnected(false);
         return;
       }
-      setError(data?.error?.message ?? "No se pudo lanzar la corrida");
+      setError(data?.error?.message ?? tr("No se pudo lanzar la corrida"));
       return;
     }
     const data = (await res.json()) as { runId: string };
@@ -143,19 +149,15 @@ export function LabClient() {
         <div className="m-4 rounded-lg border border-brand-soft bg-brand-tint p-6 text-center sm:m-6 sm:p-8">
           <Sparkles className="mx-auto mb-2 h-8 w-8 text-primary" />
           <p className="font-medium">
-            Configura tu proveedor de IA para usar el Laboratorio
-          </p>
+            {tr("Configura tu proveedor de IA para usar el Laboratorio")}</p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Con esa llave piensan tu agente (a través del CRM) y el juez que
-            califica cada conversación: configúrala en{" "}
+            {tr("Con esa llave piensan tu agente (a través del CRM) y el juez que califica cada conversación: configúrala en")}{" "}
             <Link
               href="/settings/ai"
               className="font-medium text-brand-text underline underline-offset-2"
             >
-              Ajustes → IA
-            </Link>{" "}
-            y vuelve aquí.
-          </p>
+              {tr("Ajustes → IA")}</Link>{" "}
+            {tr("y vuelve aquí.")}</p>
         </div>
       </div>
     );
@@ -171,7 +173,7 @@ export function LabClient() {
         onLaunch={() => void launch()}
         disabled={!brainConnected}
       />
-      {error && <p className="px-4 pt-3 text-sm text-destructive sm:px-6">{error}</p>}
+      {error && <p className="px-4 pt-3 text-sm text-destructive sm:px-6">{systemText(tr.locale, error)}</p>}
 
       {!brainConnected && (
         <div
@@ -181,20 +183,16 @@ export function LabClient() {
         >
           <Cable aria-hidden className="mt-0.5 h-5 w-5 shrink-0 text-text-3" strokeWidth={1.7} />
           <div className="min-w-0 text-sm">
-            <p className="font-semibold">Sin agente conectado</p>
+            <p className="font-semibold">{tr("Sin agente conectado")}</p>
             <p className="mt-0.5 leading-relaxed text-text-2">
-              El Laboratorio prueba al agente que contesta a tus clientes:
-              clientes simulados conversan con él y un juez califica cada
-              conversación. Vocero no trae agente propio, y esta instancia aún
-              no tiene uno conectado.{" "}
+              {tr("El Laboratorio prueba al agente que contesta a tus clientes: clientes simulados conversan con él y un juez califica cada conversación. Vocero no trae agente propio, y esta instancia aún no tiene uno conectado.")}{" "}
               <a
                 href={GUIA_DEL_PAR_URL}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-0.5 whitespace-nowrap font-medium text-brand-text underline underline-offset-2 hover:text-brand"
               >
-                Cómo conectarlo
-                <ArrowUpRight aria-hidden className="h-3.5 w-3.5" strokeWidth={1.8} />
+                {tr("Cómo conectarlo")}<ArrowUpRight aria-hidden className="h-3.5 w-3.5" strokeWidth={1.8} />
               </a>
             </p>
           </div>
@@ -204,7 +202,7 @@ export function LabClient() {
       {running && progress && (
         <div className="mx-6 mt-4 rounded-lg border bg-card p-4">
           <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="font-medium">Evaluando personas…</span>
+            <span className="font-medium">{tr("Evaluando personas…")}</span>
             <span className="text-muted-foreground">
               {progress.done} / {progress.total}
             </span>
@@ -230,13 +228,13 @@ export function LabClient() {
           <EmptyState
             icon={FlaskConical}
             className="rounded-lg border border-dashed p-10"
-            title={runs.length === 0 ? "Sin corridas todavía" : "Elige una corrida"}
+            title={runs.length === 0 ? tr("Sin corridas todavía") : tr("Elige una corrida")}
             description={
               runs.length === 0
                 ? brainConnected
-                  ? "Corre tu primera evaluación: 6 clientes simulados conversarán con tu agente y un juez calificará cada conversación."
-                  : "Cuando conectes tu agente, aquí aparecerán sus evaluaciones."
-                : "Abre una corrida del historial para ver su reporte."
+                  ? tr("Corre tu primera evaluación: 6 clientes simulados conversarán con tu agente y un juez calificará cada conversación.")
+                  : tr("Cuando conectes tu agente, aquí aparecerán sus evaluaciones.")
+                : tr("Abre una corrida del historial para ver su reporte.")
             }
           />
         )}
@@ -256,19 +254,19 @@ function Header({
   onLaunch: () => void;
   disabled: boolean;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3 sm:px-6 sm:py-4">
       <div>
         <h2 className="flex items-center gap-2 text-[17px] font-bold tracking-tight">
-          <FlaskConical className="h-4 w-4 text-primary" /> Laboratorio
-        </h2>
+          <FlaskConical className="h-4 w-4 text-primary" /> {tr(" Laboratorio")}</h2>
         <p className="text-xs text-muted-foreground">
-          Sandbox interno — no envía mensajes reales
-        </p>
+          {tr("Sandbox interno — no envía mensajes reales")}</p>
       </div>
       <Button onClick={onLaunch} disabled={disabled || running || launching}>
         <Play className="h-4 w-4" />
-        {running ? "Corrida en curso…" : "Correr evaluación"}
+        {running ? tr("Corrida en curso…") : tr("Correr evaluación")}
       </Button>
     </header>
   );
@@ -283,13 +281,14 @@ function HistoryList({
   selectedRunId: string | null;
   onSelect: (id: string) => void;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <div className="space-y-2">
       <p className="kicker">
-        Historial
-      </p>
+        {tr("Historial")}</p>
       {runs.length === 0 && (
-        <p className="text-xs text-muted-foreground">Sin corridas todavía.</p>
+        <p className="text-xs text-muted-foreground">{tr("Sin corridas todavía.")}</p>
       )}
       {runs.map((run) => (
         <button
@@ -318,7 +317,7 @@ function HistoryList({
             )}
           </div>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            {new Date(run.startedAt).toLocaleString("es-MX", {
+            {new Date(run.startedAt).toLocaleString(tr.intl, {
               day: "numeric",
               month: "short",
               hour: "2-digit",
@@ -332,11 +331,13 @@ function HistoryList({
 }
 
 function ScoreBadge({ run }: { run: Run }) {
-  if (run.status === "running") return <Badge variant="secondary">En curso…</Badge>;
-  if (run.status === "failed") return <Badge variant="destructive">Fallida</Badge>;
+  const { t: tr } = useI18n();
+
+  if (run.status === "running") return <Badge variant="secondary">{tr("En curso…")}</Badge>;
+  if (run.status === "failed") return <Badge variant="destructive">{tr("Fallida")}</Badge>;
   const score = run.score ?? 0;
   const variant = score >= 80 ? "success" : score >= 50 ? "warning" : "destructive";
-  return <Badge variant={variant}>Score {score}</Badge>;
+  return <Badge variant={variant}>{tr("Score ")}{score}</Badge>;
 }
 
 function Report({
@@ -346,24 +347,24 @@ function Report({
   detail: { run: Run; cases: Case[] };
   onApplied: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const { run, cases } = detail;
   return (
     <div className="space-y-4">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Reporte</CardTitle>
+            <CardTitle>{tr("Reporte")}</CardTitle>
             <ScoreBadge run={run} />
           </div>
           {run.status === "failed" && (
             <p className="text-sm text-destructive">
-              La corrida falló: {run.error ?? "error desconocido"}. Vuelve a
-              intentarlo.
-            </p>
+              {tr("La corrida falló: ")}{run.error ?? tr("error desconocido")}{tr(". Vuelve a intentarlo.")}</p>
           )}
           {run.status === "done" && run.error && (
             <p className="text-sm text-warning-text">
-              Sin respuesta del agente: {run.error}
+              {tr("Sin respuesta del agente: ")}{run.error}
             </p>
           )}
         </CardHeader>
@@ -381,15 +382,11 @@ function Report({
             </div>
             {cases.some((c) => c.status === "judge_failed") && (
               <p className="mt-3 text-xs text-warning-text">
-                {cases.filter((c) => c.status === "judge_failed").length} caso(s) sin
-                veredicto (el juez no respondió válido); excluidos del score.
-              </p>
+                {cases.filter((c) => c.status === "judge_failed").length} {tr(" caso(s) sin veredicto (el juez no respondió válido); excluidos del score.")}</p>
             )}
             {cases.some((c) => c.status === "agent_failed") && (
               <p className="mt-3 text-xs text-warning-text">
-                {cases.filter((c) => c.status === "agent_failed").length} caso(s) sin
-                respuesta del agente; excluidos del score.
-              </p>
+                {cases.filter((c) => c.status === "agent_failed").length} {tr(" caso(s) sin respuesta del agente; excluidos del score.")}</p>
             )}
           </CardContent>
         )}
@@ -403,6 +400,8 @@ function Report({
 }
 
 function CaseCard({ testCase, onApplied }: { testCase: Case; onApplied: () => void }) {
+  const { t: tr } = useI18n();
+
   const [open, setOpen] = useState(false);
   const c = testCase;
   const icon =
@@ -427,14 +426,14 @@ function CaseCard({ testCase, onApplied }: { testCase: Case; onApplied: () => vo
             {icon}
             {c.personaLabel}
             {c.status === "judge_failed" && (
-              <Badge variant="secondary">sin veredicto</Badge>
+              <Badge variant="secondary">{tr("sin veredicto")}</Badge>
             )}
             {c.status === "agent_failed" && (
-              <Badge variant="secondary">el agente no contestó</Badge>
+              <Badge variant="secondary">{tr("el agente no contestó")}</Badge>
             )}
           </span>
           <span className="flex items-center gap-2 text-xs text-muted-foreground">
-            {c.hallazgos.length > 0 && `${c.hallazgos.length} hallazgo(s)`}
+            {c.hallazgos.length > 0 && tr("{v0} hallazgo(s)", {v0: c.hallazgos.length})}
             {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </span>
         </button>
@@ -446,8 +445,7 @@ function CaseCard({ testCase, onApplied }: { testCase: Case; onApplied: () => vo
           ))}
           <div className="rounded-md border bg-background p-3">
             <p className="mb-2 kicker">
-              Transcript
-            </p>
+              {tr("Transcript")}</p>
             <div className="space-y-1.5 text-sm">
               {c.transcript.map((t, i) => (
                 <p key={i}>
@@ -461,10 +459,10 @@ function CaseCard({ testCase, onApplied }: { testCase: Case; onApplied: () => vo
                     }
                   >
                     {t.role === "cliente"
-                      ? "Cliente"
+                      ? tr("Cliente")
                       : t.role === "sistema"
-                        ? "Sistema"
-                        : "Agente"}
+                        ? tr("Sistema")
+                        : tr("Agente")}
                     :
                   </span>{" "}
                   {t.text}
@@ -489,6 +487,8 @@ function HallazgoCard({
   index: number;
   onApplied: () => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [editing, setEditing] = useState(false);
   const [pregunta, setPregunta] = useState(hallazgo.sugerencia?.pregunta ?? "");
   const [respuesta, setRespuesta] = useState(hallazgo.sugerencia?.respuesta ?? "");
@@ -516,21 +516,20 @@ function HallazgoCard({
         <Badge variant="warning">{TIPO_LABELS[hallazgo.tipo]}</Badge>
         {hallazgo.sugerencia && !applied && !editing && (
           <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
-            Agregar al conocimiento
-          </Button>
+            {tr("Agregar al conocimiento")}</Button>
         )}
         {applied && (
-          <span className="text-xs text-success">Agregado al conocimiento ✓</span>
+          <span className="text-xs text-success">{tr("Agregado al conocimiento ✓")}</span>
         )}
       </div>
       <p className="mt-2 text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">Evidencia:</span>{" "}
+        <span className="font-medium text-foreground">{tr("Evidencia:")}</span>{" "}
         {hallazgo.evidencia}
       </p>
       {editing && hallazgo.sugerencia && (
         <div className="mt-3 space-y-2 rounded-md border bg-card p-3">
           <div className="space-y-1">
-            <Label htmlFor={`sug-q-${caseId}-${index}`}>Pregunta</Label>
+            <Label htmlFor={`sug-q-${caseId}-${index}`}>{tr("Pregunta")}</Label>
             <Input
               id={`sug-q-${caseId}-${index}`}
               value={pregunta}
@@ -538,7 +537,7 @@ function HallazgoCard({
             />
           </div>
           <div className="space-y-1">
-            <Label htmlFor={`sug-a-${caseId}-${index}`}>Respuesta</Label>
+            <Label htmlFor={`sug-a-${caseId}-${index}`}>{tr("Respuesta")}</Label>
             <Textarea
               id={`sug-a-${caseId}-${index}`}
               rows={3}
@@ -552,11 +551,10 @@ function HallazgoCard({
               onClick={() => void apply()}
               disabled={saving || !pregunta.trim() || !respuesta.trim()}
             >
-              {saving ? "Guardando…" : "Guardar en el KB"}
+              {saving ? tr("Guardando…") : tr("Guardar en el KB")}
             </Button>
             <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-              Cancelar
-            </Button>
+              {tr("Cancelar")}</Button>
           </div>
         </div>
       )}

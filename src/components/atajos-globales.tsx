@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageCircle, Search } from "lucide-react";
@@ -76,6 +78,7 @@ function BarraDeComandos({
   role: string;
   onClose: () => void;
 }) {
+  const { t: tr, text: tx } = useI18n();
   const router = useRouter();
   const [q, setQ] = useState("");
   const [activo, setActivo] = useState(0);
@@ -103,14 +106,14 @@ function BarraDeComandos({
 
   const resultados = useMemo<Resultado[]>(() => {
     const pantallas = [...appNavGroups({ agenda, role }).flatMap((g) => g.items), SETTINGS_ITEM]
-      .filter((item) => matchesQuery(q, { text: [item.label] }))
+      .filter((item) => matchesQuery(q, { text: [tx(item.label)] }))
       .map((item) => ({ clase: "pantalla" as const, item }));
     const convs = conversaciones
       .filter((c) => matchesQuery(q, { text: [c.contact.name], phone: c.contact.phone }))
       .slice(0, MAX_CONVERSACIONES)
       .map((conv) => ({ clase: "conversacion" as const, conv }));
     return [...pantallas, ...convs];
-  }, [q, conversaciones, agenda, role]);
+  }, [q, conversaciones, agenda, role, tx]);
 
   useEffect(() => setActivo(0), [q]);
   useEffect(() => {
@@ -133,7 +136,7 @@ function BarraDeComandos({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Barra de comandos"
+        aria-label={tr("Barra de comandos")}
         className="flex max-h-[70dvh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border-strong bg-popover text-popover-foreground shadow-2xl"
       >
         <div className="flex items-center gap-2 border-b px-3">
@@ -146,8 +149,8 @@ function BarraDeComandos({
             aria-expanded="true"
             aria-controls="barra-resultados"
             aria-activedescendant={resultados.length ? `barra-opcion-${activo}` : undefined}
-            aria-label="Buscar pantalla o conversación"
-            placeholder="Busca una pantalla o una conversación…"
+            aria-label={tr("Buscar pantalla o conversación")}
+            placeholder={tr("Busca una pantalla o una conversación…")}
             onKeyDown={(e) => {
               if (e.key === "ArrowDown") {
                 e.preventDefault();
@@ -168,13 +171,13 @@ function BarraDeComandos({
         </div>
         <ul id="barra-resultados" ref={listaRef} role="listbox" className="min-h-0 flex-1 overflow-y-auto p-1.5">
           {resultados.length === 0 && (
-            <li className="px-3 py-6 text-center text-sm text-text-3">Nada coincide con «{q}».</li>
+            <li className="px-3 py-6 text-center text-sm text-text-3">{tr("Nada coincide con «")}{q}».</li>
           )}
           {resultados.map((r, i) => (
             <li key={r.clase === "pantalla" ? r.item.href : r.conv.id} role="presentation">
               {(i === 0 || i === primeraConversacion) && (
                 <span className="kicker block px-2.5 pb-1 pt-2 text-text-3" aria-hidden>
-                  {r.clase === "pantalla" ? "Pantallas" : "Conversaciones"}
+                  {r.clase === "pantalla" ? tr("Pantallas") : tr("Conversaciones")}
                 </span>
               )}
               <div
@@ -195,7 +198,7 @@ function BarraDeComandos({
                   <MessageCircle className="h-4 w-4 shrink-0 text-text-3" strokeWidth={1.8} aria-hidden />
                 )}
                 <span className="min-w-0 flex-1 truncate">
-                  {r.clase === "pantalla" ? r.item.label : r.conv.contact.name}
+                  {r.clase === "pantalla" ? tx(r.item.label) : r.conv.contact.name}
                 </span>
                 {r.clase === "conversacion" && r.conv.contact.phone && (
                   <span className="shrink-0 font-mono text-[11px] text-text-3">{r.conv.contact.phone}</span>
@@ -205,14 +208,14 @@ function BarraDeComandos({
           ))}
         </ul>
         <p className="border-t px-3 py-2 text-[11.5px] text-text-3">
-          ↑ ↓ para moverte · Enter para ir · <kbd className="font-mono">?</kbd> para ver los atajos
-        </p>
+          {tr("↑ ↓ para moverte · Enter para ir ·")} <kbd className="font-mono">?</kbd> {tr("para ver los atajos")} </p>
       </div>
     </Velo>
   );
 }
 
 function AyudaAtajos({ onClose }: { onClose: () => void }) {
+  const { t: tr, text: tx } = useI18n();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -227,18 +230,18 @@ function AyudaAtajos({ onClose }: { onClose: () => void }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Atajos de teclado"
+        aria-label={tr("Atajos de teclado")}
         className="max-h-[80dvh] w-full max-w-md overflow-y-auto rounded-xl border border-border-strong bg-popover p-5 text-popover-foreground shadow-2xl"
       >
-        <h2 className="mb-1 font-semibold">Atajos de teclado</h2>
-        <p className="mb-4 text-xs text-text-3">En Mac, Ctrl es ⌘ y Alt es Option.</p>
+        <h2 className="mb-1 font-semibold">{tr("Atajos de teclado")}</h2>
+        <p className="mb-4 text-xs text-text-3">{tr("En Mac, Ctrl es ⌘ y Alt es Option.")}</p>
         {grupos.map((g) => (
           <section key={g} className="mb-4 last:mb-0">
-            <h3 className="kicker mb-2 text-text-3">{g}</h3>
+            <h3 className="kicker mb-2 text-text-3">{tx(g)}</h3>
             <dl className="space-y-1.5">
               {ATAJOS.filter((a) => a.donde === g).map((a) => (
-                <div key={a.que} className="flex items-center justify-between gap-4 text-sm">
-                  <dt>{a.que}</dt>
+                <div key={tx(a.que)} className="flex items-center justify-between gap-4 text-sm">
+                  <dt>{tx(a.que)}</dt>
                   <dd className="flex shrink-0 gap-1">
                     {a.teclas.map((t) => (
                       <kbd
@@ -254,7 +257,7 @@ function AyudaAtajos({ onClose }: { onClose: () => void }) {
             </dl>
           </section>
         ))}
-        <p className="mt-4 text-xs text-text-3">Escape para cerrar.</p>
+        <p className="mt-4 text-xs text-text-3">{tr("Escape para cerrar.")}</p>
       </div>
     </Velo>
   );

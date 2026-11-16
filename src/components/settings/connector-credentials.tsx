@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -87,6 +91,8 @@ export function ConnectorCredentials({
 }: {
   connector: ExternalConnector;
 }) {
+  const { t: tr } = useI18n();
+
   const meta = CONNECTOR_META[connector];
   const fields = FIELDS[connector];
   const help = HELP[connector];
@@ -134,17 +140,17 @@ export function ConnectorCredentials({
         kind: "error",
         text:
           data?.error?.message ??
-          `No se pudo conectar con ${meta.label}. Revisa las credenciales.`,
+          tr("No se pudo conectar con {v0}. Revisa las credenciales.", {v0: meta.label}),
       });
       return;
     }
     if (mode === "test") {
-      setMessage({ kind: "ok", text: "Conexión correcta" });
+      setMessage({ kind: "ok", text: tr("Conexión correcta") });
       return;
     }
     const data = (await res.json()) as { connection: Connection };
     setConnection(data.connection);
-    setMessage({ kind: "ok", text: `${meta.label} conectado` });
+    setMessage({ kind: "ok", text: tr("{v0} conectado", {v0: meta.label}) });
   }
 
   async function disconnect() {
@@ -161,27 +167,25 @@ export function ConnectorCredentials({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Conectar {meta.label}</CardTitle>
-        <CardDescription>{help.title}.</CardDescription>
+        <CardTitle>{tr("Conectar ")}{systemText(tr.locale, meta.label)}</CardTitle>
+        <CardDescription>{systemText(tr.locale, help.title)}.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <ul className="list-disc space-y-1 pl-5 text-xs text-text-2">
           {help.items.map((item, i) => (
-            <li key={i}>{item}</li>
+            <li key={i}>{systemText(tr.locale, item)}</li>
           ))}
         </ul>
 
         {connection?.status === "error" && (
           <p className="rounded-sm border border-danger-soft bg-danger-tint px-3 py-2 text-sm text-danger-text">
-            {meta.label} rechazó las últimas credenciales. Las citas se siguen
-            agendando, pero sin enlace hasta que vuelvas a conectar.
-          </p>
+            {systemText(tr.locale, meta.label)} {tr(" rechazó las últimas credenciales. Las citas se siguen agendando, pero sin enlace hasta que vuelvas a conectar.")}</p>
         )}
 
         <div className="space-y-3">
           {fields.map((f) => (
             <div key={f.name} className="space-y-1.5">
-              <Label htmlFor={`${connector}-${f.name}`}>{f.label}</Label>
+              <Label htmlFor={`${connector}-${f.name}`}>{systemText(tr.locale, f.label)}</Label>
               <Input
                 id={`${connector}-${f.name}`}
                 type={f.secret ? "password" : "text"}
@@ -195,17 +199,16 @@ export function ConnectorCredentials({
                   setValues((v) => ({ ...v, [f.name]: e.target.value }))
                 }
               />
-              {f.help && <p className="text-xs text-text-3">{f.help}</p>}
+              {f.help && <p className="text-xs text-text-3">{systemText(tr.locale, f.help)}</p>}
             </div>
           ))}
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="outline" onClick={() => submit("test")} disabled={busy}>
-            Probar
-          </Button>
+            {tr("Probar")}</Button>
           <Button onClick={() => submit("save")} disabled={busy}>
-            {connection ? "Actualizar" : "Conectar"}
+            {connection ? tr("Actualizar") : tr("Conectar")}
           </Button>
           {connection && (
             <button
@@ -214,8 +217,7 @@ export function ConnectorCredentials({
               disabled={busy}
               className="text-sm text-text-3 hover:text-foreground"
             >
-              Desconectar
-            </button>
+              {tr("Desconectar")}</button>
           )}
           {message && (
             <span
@@ -225,7 +227,7 @@ export function ConnectorCredentials({
                   : "text-sm text-destructive"
               }
             >
-              {message.text}
+              {systemText(tr.locale, message.text)}
             </span>
           )}
         </div>

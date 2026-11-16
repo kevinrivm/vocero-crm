@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import { MonitorDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -67,6 +69,7 @@ function yaInstalada(): boolean {
 }
 
 export function BotonInstalar({ className }: { className?: string }) {
+  const { t: tr } = useI18n();
   const [evento, setEvento] = useState<EventoInstalacion | null>(null);
 
   useEffect(() => {
@@ -88,11 +91,11 @@ export function BotonInstalar({ className }: { className?: string }) {
         setEvento(null);
         await evento.prompt().catch(() => {});
       }}
-      title="Instalar la app en este dispositivo"
+      title={tr("Instalar la app en este dispositivo")}
       className={cn("w-full text-left", className)}
     >
       <MonitorDown className="h-5 w-5 shrink-0 text-text-3" strokeWidth={1.8} aria-hidden />
-      <span className="flex-1">Instalar app</span>
+      <span className="flex-1">{tr("Instalar app")}</span>
     </button>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useMemo } from "react";
 import { bookingSegments, hhmm, weekdayShortNames } from "@/lib/time/calendar";
 import { cn } from "@/lib/utils";
@@ -33,6 +35,8 @@ export function MonthGrid({
   onSelect: (b: Booking) => void;
   onOpenDay: (day: string) => void;
 }) {
+  const { t: tr } = useI18n();
+
   // Cada cita en el día en que EMPIEZA en la zona del negocio.
   const byDay = useMemo(() => {
     const map = new Map<string, { booking: Booking; startMin: number }[]>();
@@ -50,7 +54,7 @@ export function MonthGrid({
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-auto rounded-lg border bg-card">
       <div className="grid min-w-[36rem] grid-cols-7 border-b">
-        {weekdayShortNames().map((w) => (
+        {weekdayShortNames(tr.locale).map((w) => (
           <div key={w} className="kicker border-l px-2 py-2 text-center first:border-l-0">
             {w}
           </div>
@@ -82,7 +86,7 @@ export function MonthGrid({
                   e.stopPropagation();
                   onOpenDay(day);
                 }}
-                aria-label={`Ver el día ${Number(day.slice(8))}`}
+                aria-label={tr("Ver el día {v0}", {v0: Number(day.slice(8))})}
                 className={cn(
                   "mx-auto flex h-6 min-w-6 items-center justify-center rounded-full px-1 text-[12.5px] font-semibold tabular-nums hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
                   isToday && "bg-brand text-brand-fg hover:bg-brand-hover",
@@ -110,7 +114,7 @@ export function MonthGrid({
                   <span className="hidden shrink-0 font-mono text-[10.5px] text-text-3 sm:inline">
                     {hhmm(startMin)}
                   </span>
-                  <span className="truncate">{bookingTitle(b)}</span>
+                  <span className="truncate">{bookingTitle(b, tr.locale)}</span>
                 </button>
               ))}
               {extra > 0 && (
@@ -122,8 +126,7 @@ export function MonthGrid({
                   }}
                   className="w-full rounded-[5px] px-1 text-left text-[11px] font-semibold text-text-2 hover:bg-accent"
                 >
-                  +{extra} más
-                </button>
+                  +{extra} {tr(" más")}</button>
               )}
             </div>
           );

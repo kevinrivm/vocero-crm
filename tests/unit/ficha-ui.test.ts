@@ -25,6 +25,8 @@ describe("fichaValueText", () => {
   it("los booleanos se leen Sí/No: nadie califica en true", () => {
     expect(fichaValueText(true)).toBe("Sí");
     expect(fichaValueText(false)).toBe("No");
+    expect(fichaValueText(true, "pt-BR")).toBe("Sim");
+    expect(fichaValueText(false, "pt-BR")).toBe("Não");
   });
 
   it("números y textos pasan tal cual", () => {
@@ -41,6 +43,10 @@ describe("parseFichaValue", () => {
     expect(parseFichaValue("60000", 50000)).toBe(60000);
     expect(parseFichaValue("No", true)).toBe(false);
     expect(parseFichaValue("sí", false)).toBe(true);
+    expect(parseFichaValue("Sim", false)).toBe(true);
+    expect(parseFichaValue("Não", true)).toBe(false);
+    expect(parseFichaValue("nao", true)).toBe(false);
+    expect(parseFichaValue("Sim", "Não")).toBe("Sim");
     expect(parseFichaValue("Polanco", "Roma")).toBe("Polanco");
   });
 

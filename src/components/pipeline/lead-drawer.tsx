@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { MessageSquareText, X } from "lucide-react";
@@ -47,6 +49,8 @@ export function LeadDrawer({
   onAmount: (cents: number | null) => void;
   onPriority: (value: PriorityValue | null) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [ficha, setFicha] = useState<FichaDto>({});
   // 018: de qué anuncio llegó; null si escribió por su cuenta.
   const [anuncio, setAnuncio] = useState<AnuncioDto | null>(null);
@@ -107,7 +111,7 @@ export function LeadDrawer({
     <>
       {/* Velo: cerrar tocando fuera es lo que uno intenta primero. */}
       <button
-        aria-label="Cerrar el trato"
+        aria-label={tr("Cerrar el trato")}
         tabIndex={-1}
         onClick={onClose}
         className="fixed inset-0 z-40 bg-overlay"
@@ -116,16 +120,15 @@ export function LeadDrawer({
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label={`Trato de ${lead.contact.name}`}
+        aria-label={tr("Trato de {v0}", {v0: lead.contact.name})}
         className="fixed inset-y-0 right-0 z-50 flex w-[min(360px,92vw)] flex-col border-l bg-popover shadow-pop"
       >
         <header className="flex items-center justify-between border-b px-4 py-3">
           <h3 className="kicker text-text-2">
-            Trato
-          </h3>
+            {tr("Trato")}</h3>
           <button
             onClick={onClose}
-            aria-label="Cerrar el panel del trato"
+            aria-label={tr("Cerrar el panel del trato")}
             className="rounded p-1 text-text-3 hover:bg-accent hover:text-foreground"
           >
             <X className="h-4 w-4" strokeWidth={1.7} />
@@ -154,12 +157,10 @@ export function LeadDrawer({
                 href={`/inbox?contact=${lead.contact.id}`}
                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border bg-secondary px-3 py-2 text-sm font-medium hover:bg-accent"
               >
-                <MessageSquareText className="h-4 w-4" /> Abrir conversación
-              </Link>
+                <MessageSquareText className="h-4 w-4" /> {tr(" Abrir conversación")}</Link>
             ) : (
               <p className="mt-3 text-xs text-text-3">
-                Todavía no hay conversación con este contacto.
-              </p>
+                {tr("Todavía no hay conversación con este contacto.")}</p>
             )}
 
             {anuncio && (
@@ -172,7 +173,7 @@ export function LeadDrawer({
           {/* Cuánto */}
           <section className="border-b p-4">
             <p className="mb-2 kicker">
-              Monto ({moneda})
+              {tr("Monto (")}{moneda})
             </p>
             {editandoMonto ? (
               <>
@@ -187,16 +188,16 @@ export function LeadDrawer({
                     }
                     if (e.key === "Escape") setEditandoMonto(false);
                   }}
-                  placeholder="12,500"
-                  aria-label="Monto del trato"
+                  placeholder={tr("12,500")}
+                  aria-label={tr("Monto del trato")}
                   className="h-8 text-sm"
                 />
                 <p className="mt-1 text-xs text-text-3">
                   {montoInvalido
-                    ? "No se entiende ese importe."
+                    ? tr("No se entiende ese importe.")
                     : montoParseado === null
-                      ? "Déjalo vacío para quitar el monto."
-                      : `Se guardará como ${formatMoneyCents(montoParseado, moneda)}`}
+                      ? tr("Déjalo vacío para quitar el monto.")
+                      : tr("Se guardará como {v0}", {v0: formatMoneyCents(montoParseado, moneda, tr.intl)})}
                 </p>
                 <div className="mt-2 flex gap-1.5">
                   <Button
@@ -207,21 +208,19 @@ export function LeadDrawer({
                       onAmount(montoParseado);
                     }}
                   >
-                    Guardar
-                  </Button>
+                    {tr("Guardar")}</Button>
                   <Button
                     size="sm"
                     variant="ghost"
                     onClick={() => setEditandoMonto(false)}
                   >
-                    Cancelar
-                  </Button>
+                    {tr("Cancelar")}</Button>
                 </div>
               </>
             ) : (
               <button
                 onClick={() => setEditandoMonto(true)}
-                aria-label="Editar el monto"
+                aria-label={tr("Editar el monto")}
                 className={cn(
                   "w-full rounded px-1 py-1 text-left text-sm tabular-nums hover:bg-accent",
                   lead.amountCents === null
@@ -230,8 +229,8 @@ export function LeadDrawer({
                 )}
               >
                 {lead.amountCents === null
-                  ? "Sin monto — captúralo"
-                  : formatMoneyCents(lead.amountCents, moneda)}
+                  ? tr("Sin monto — captúralo")
+                  : formatMoneyCents(lead.amountCents, moneda, tr.intl)}
               </button>
             )}
           </section>
@@ -239,16 +238,14 @@ export function LeadDrawer({
           {/* A quién llamar primero */}
           <section className="border-b p-4">
             <p className="mb-2 kicker">
-              Prioridad
-            </p>
+              {tr("Prioridad")}</p>
             <PriorityPicker value={lead.priority} onChange={onPriority} />
           </section>
 
           {/* Dónde va */}
           <section className="border-b p-4">
             <p className="mb-2 kicker">
-              Etapa
-            </p>
+              {tr("Etapa")}</p>
             <div className="flex flex-wrap gap-1.5">
               {stages.map((s) => {
                 const actual = s.id === lead.stageId;
@@ -257,7 +254,7 @@ export function LeadDrawer({
                     key={s.id}
                     onClick={() => !actual && onMoveStage(s.id)}
                     aria-pressed={actual}
-                    aria-label={`Mover a ${s.name}`}
+                    aria-label={tr("Mover a {v0}", {v0: s.name})}
                     className={cn(
                       "rounded-full border px-2.5 py-1 text-xs transition-colors",
                       actual

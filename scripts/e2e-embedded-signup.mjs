@@ -22,6 +22,7 @@ import { existsSync } from "node:fs";
 import { chromium } from "playwright";
 
 const BASE = process.env.APP_BASE_URL ?? "http://localhost:3000";
+const locale = process.env.E2E_LOCALE === "pt-BR" ? "pt-BR" : "es";
 const EMAIL = process.env.E2E_EMAIL ?? "e2e@vocero.test";
 const PASSWORD = process.env.E2E_PASSWORD ?? "password-e2e-123";
 
@@ -243,6 +244,7 @@ async function enElNavegador() {
   }
   try {
     const ctx = await browser.newContext();
+    await ctx.addCookies([{ name: "vocero-locale", value: locale, url: BASE }]);
     await ctx.route("**/api/events*", (route) => route.abort());
     await ctx.route("https://connect.facebook.net/**", (route) =>
       route.fulfill({ contentType: "application/javascript", body: SDK_FALSO })
@@ -251,7 +253,7 @@ async function enElNavegador() {
       route.fulfill({ contentType: "text/html", body: IFRAME_DE_META })
     );
     ctx.setDefaultNavigationTimeout(120000);
-    ctx.setDefaultTimeout(30000);
+    ctx.setDefaultTimeout(Number(process.env.E2E_TIMEOUT_MS) || 30000);
     const login = await ctx.request.post(`${BASE}/api/auth/sign-in/email`, {
       headers: { origin: BASE },
       data: { email: EMAIL, password: PASSWORD },
@@ -260,8 +262,9 @@ async function enElNavegador() {
 
     const page = await ctx.newPage();
     await page.goto(`${BASE}/settings/whatsapp`, { waitUntil: "domcontentloaded" });
-    const boton = page.getByRole("button", { name: "Conectar con Meta" });
+    const boton = page.getByRole("button", { name: locale === "pt-BR" ? "Conectar com a Meta" : "Conectar con Meta" });
     await boton.waitFor();
+    ok("idioma del documento y SDK", await page.locator("html").getAttribute("lang") === locale && await page.locator(`script[src*="connect.facebook.net/${locale === "pt-BR" ? "pt_BR" : "es_LA"}/"]`).count() === 1);
     ok("la tarjeta y el botón aparecen", await boton.isVisible());
     await page.waitForFunction(() => window.__fb?.init !== null && window.__fb?.init !== undefined);
     const init = await page.evaluate(() => window.__fb.init);

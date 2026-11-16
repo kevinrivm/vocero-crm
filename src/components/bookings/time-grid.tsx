@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useMemo, useRef } from "react";
 import { AlertTriangle, Sparkles } from "lucide-react";
 import {
@@ -62,6 +64,8 @@ export function TimeGrid({
   onEmptySlot: (day: string, time: string) => void;
   onOpenDay: (day: string) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const scrollRef = useRef<HTMLDivElement>(null);
   const scrolledFor = useRef<string | null>(null);
 
@@ -112,7 +116,7 @@ export function TimeGrid({
           {tzLabel}
         </div>
         {days.map((day) => {
-          const h = dayHeading(day);
+          const h = dayHeading(day, tr.locale);
           const isToday = day === today;
           return (
             <button
@@ -120,7 +124,7 @@ export function TimeGrid({
               type="button"
               onClick={() => onOpenDay(day)}
               disabled={!multi}
-              aria-label={`Ver el ${h.weekday} ${h.day} en la vista de día`}
+              aria-label={tr("Ver el {v0} {v1} en la vista de día", {v0: h.weekday, v1: h.day})}
               className="sticky top-0 z-30 flex flex-col items-center gap-0.5 border-b border-l bg-card py-2 transition-colors enabled:hover:bg-row-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-soft"
             >
               <span className={cn("kicker", isToday && "text-brand-text")}>{h.weekday}</span>
@@ -243,10 +247,12 @@ function EventBlock({
   selected: boolean;
   onSelect: (b: Booking) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const { booking: b, startMin, endMin, col, cols } = placed;
   const top = (startMin / 60) * HOUR_PX;
   const height = Math.max(MIN_EVENT_PX, ((endMin - startMin) / 60) * HOUR_PX - 2);
-  const title = bookingTitle(b);
+  const title = bookingTitle(b, tr.locale);
   const start = hhmm(startMin);
   const end = hhmm(endMin);
   const range = `${placed.continuesBefore ? "…" : start} – ${placed.continuesAfter ? "…" : end}`;
@@ -262,7 +268,7 @@ function EventBlock({
         e.stopPropagation();
         onSelect(b);
       }}
-      aria-label={`${title}, ${start} a ${end}`}
+      aria-label={tr("{v0}, {v1} a {v2}", {v0: title, v1: start, v2: end})}
       className={cn(
         "absolute z-10 overflow-hidden rounded-[6px] border text-left leading-tight shadow-sm transition-[box-shadow,filter] hover:brightness-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-soft",
         cols > 1 ? "px-1" : "px-1.5",
@@ -283,13 +289,13 @@ function EventBlock({
     >
       <span className="flex min-w-0 max-w-full items-center gap-1 font-semibold">
         {b.source === "ai" && b.kind === "session" && (
-          <Sparkles aria-label="Agendó la IA" className="h-3 w-3 shrink-0" strokeWidth={2} />
+          <Sparkles aria-label={tr("Agendó la IA")} className="h-3 w-3 shrink-0" strokeWidth={2} />
         )}
         {hasDeliveryIssue(b) && (
-          <AlertTriangle aria-label="Sin enlace de la reunión" className="h-3 w-3 shrink-0" strokeWidth={2} />
+          <AlertTriangle aria-label={tr("Sin enlace de la reunión")} className="h-3 w-3 shrink-0" strokeWidth={2} />
         )}
         <span className="truncate">
-          {b.isTest && "Prueba · "}
+          {b.isTest && tr("Prueba · ")}
           {title}
         </span>
       </span>

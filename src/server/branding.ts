@@ -1,3 +1,4 @@
+import { parseMetadata, brandingMetadata } from "@/lib/branding-metadata";
 import { eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import {
@@ -8,17 +9,6 @@ import {
 
 /** Marca guardada en organization.metadata (JSON de Better Auth). */
 
-function parseMetadata(metadata: string | null): Record<string, unknown> {
-  if (!metadata) return {};
-  try {
-    const parsed = JSON.parse(metadata) as unknown;
-    return typeof parsed === "object" && parsed !== null
-      ? (parsed as Record<string, unknown>)
-      : {};
-  } catch {
-    return {};
-  }
-}
 
 /**
  * Marca + a qué organización pertenece.
@@ -68,10 +58,9 @@ export async function saveBranding(
     .from(schema.organization)
     .where(eq(schema.organization.id, organizationId))
     .limit(1);
-  const meta = parseMetadata(rows[0]?.metadata ?? null);
-  meta.branding = normalizeBranding(branding);
+  const metadata = brandingMetadata(rows[0]?.metadata ?? null, branding);
   await db
     .update(schema.organization)
-    .set({ metadata: JSON.stringify(meta) })
+    .set({ metadata })
     .where(eq(schema.organization.id, organizationId));
 }

@@ -1,5 +1,9 @@
 "use client";
 
+import { translator, type Translator } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -65,6 +69,8 @@ type ContactPayload = {
 
 /** 008 — Previsualización del adjunto de un mensaje, por tipo. */
 function MediaBlock({ media }: { media: MessageMediaDto }) {
+  const { t: tr } = useI18n();
+
   const src = `/api/media/${media.assetId}`;
 
   if (media.kind === "location") {
@@ -77,7 +83,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
       <span className="flex items-start gap-1.5">
         <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand" strokeWidth={1.7} />
         <span className="min-w-0">
-          <span className="block font-medium">{loc.name ?? "Ubicación"}</span>
+          <span className="block font-medium">{loc.name ?? tr("Ubicación")}</span>
           {loc.address && (
             <span className="block text-[12.5px] text-text-3">{loc.address}</span>
           )}
@@ -88,8 +94,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
               target="_blank"
               rel="noreferrer noopener"
             >
-              {coords} — abrir mapa
-            </a>
+              {coords} {tr(" — abrir mapa")}</a>
           )}
         </span>
       </span>
@@ -107,7 +112,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
             const name =
               typeof c.name === "string"
                 ? c.name
-                : c.name?.formatted_name ?? c.name?.first_name ?? "Contacto";
+                : c.name?.formatted_name ?? c.name?.first_name ?? tr("Contacto");
             const phone = c.phones?.[0]?.phone ?? c.phone ?? null;
             return (
               <span key={i} className="flex items-center gap-1.5">
@@ -122,7 +127,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
             );
           })
         ) : (
-          <span className="text-text-3">Contacto compartido</span>
+          <span className="text-text-3">{tr("Contacto compartido")}</span>
         )}
       </span>
     );
@@ -132,21 +137,21 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
     return (
       <span className="inline-flex items-center gap-1.5 text-text-3">
         <Paperclip className="h-3.5 w-3.5" strokeWidth={1.7} />
-        {mediaLabel(media.kind)}
+        {mediaLabel(media.kind, tr.locale)}
         {media.fetchStatus === "failed"
-          ? " — contenido no disponible"
-          : " — descargando…"}
+          ? tr(" — contenido no disponible")
+          : tr(" — descargando…")}
       </span>
     );
   }
 
   if (media.kind === "image" || media.kind === "sticker") {
     return (
-      <a href={src} target="_blank" rel="noreferrer noopener" title="Ver completa">
+      <a href={src} target="_blank" rel="noreferrer noopener" title={tr("Ver completa")}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
-          alt={media.caption ?? mediaLabel(media.kind)}
+          alt={media.caption ?? mediaLabel(media.kind, tr.locale)}
           className="max-h-72 max-w-full rounded-md object-contain"
           loading="lazy"
         />
@@ -175,7 +180,7 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
       <FileText className="h-6 w-6 shrink-0 text-brand" strokeWidth={1.5} />
       <span className="min-w-0">
         <span className="block truncate font-medium">
-          {media.fileName ?? "Documento"}
+          {media.fileName ?? tr("Documento")}
         </span>
         {media.fileSize != null && (
           <span className="block text-[12px] text-text-3">
@@ -187,13 +192,13 @@ function MediaBlock({ media }: { media: MessageMediaDto }) {
   );
 }
 
-function dayLabel(iso: string): string {
+function dayLabel(iso: string, tr: Translator = translator("es")): string {
   const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date(today.getTime() - 86400000);
-  if (d.toDateString() === today.toDateString()) return "Hoy";
-  if (d.toDateString() === yesterday.toDateString()) return "Ayer";
-  return d.toLocaleDateString("es-MX", { day: "numeric", month: "long" });
+  if (d.toDateString() === today.toDateString()) return tr("Hoy");
+  if (d.toDateString() === yesterday.toDateString()) return tr("Ayer");
+  return d.toLocaleDateString(tr.intl, { day: "numeric", month: "long" });
 }
 
 /**
@@ -202,6 +207,7 @@ function dayLabel(iso: string): string {
  * reenviar.
  */
 function NotaInterna({ nota, onBorrar }: { nota: NotaDto; onBorrar?: (n: NotaDto) => void }) {
+  const { t: tr } = useI18n();
   return (
     <div
       data-nota-id={nota.id}
@@ -209,16 +215,16 @@ function NotaInterna({ nota, onBorrar }: { nota: NotaDto; onBorrar?: (n: NotaDto
     >
       <div className="mb-0.5 flex items-center gap-1.5 text-[11.5px] font-semibold text-warning-text">
         <Lock className="h-3 w-3" strokeWidth={2} aria-hidden />
-        <span>Nota interna</span>
+        <span>{tr("Nota interna")}</span>
         <span className="font-normal opacity-80">
-          · {nota.autor?.nombre ?? "Alguien del equipo"} · {bubbleTime(nota.createdAt)}
+          · {nota.autor?.nombre ?? tr("Alguien del equipo")} · {bubbleTime(nota.createdAt)}
         </span>
         {nota.puedeBorrar && onBorrar && (
           <button
             type="button"
             onClick={() => onBorrar(nota)}
-            aria-label="Borrar nota interna"
-            title="Borrar nota"
+            aria-label={tr("Borrar nota interna")}
+            title={tr("Borrar nota")}
             className="ml-auto rounded p-0.5 opacity-70 hover:bg-warning-soft hover:opacity-100"
           >
             <Trash2 className="h-3.5 w-3.5" strokeWidth={1.8} />
@@ -360,8 +366,8 @@ type Intercalado =
   | ({ clase: "nota" } & NotaDto)
   | ({ clase: "evento" } & EventoHiloDto);
 
-function bubbleTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString("es-MX", {
+function bubbleTime(iso: string, tr: Translator = translator("es")): string {
+  return new Date(iso).toLocaleTimeString(tr.intl, {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
@@ -392,6 +398,7 @@ export function MessageThread({
   /** 054 — Cambios de etapa y traspaso, intercalados por hora. */
   eventos?: EventoHiloDto[];
 }) {
+  const { t: tr } = useI18n();
   const scrollRef = useRef<HTMLDivElement>(null);
   // 045 — El hilo se queda abajo mientras crece (una foto o un audio que
   // terminan de cargar), salvo que el operador haya subido a leer.
@@ -479,7 +486,7 @@ export function MessageThread({
                 }
               : undefined
           }
-          onCopied={(ok) => setNotice(ok ? "Texto copiado" : "No se pudo copiar el texto")}
+          onCopied={(ok) => setNotice(ok ? tr("Texto copiado") : tr("No se pudo copiar el texto"))}
         />
       )}
       {(() => {
@@ -518,7 +525,7 @@ export function MessageThread({
             {newDay && (
               <div className="my-3 flex justify-center">
                 <span className="kicker rounded-full border border-border-strong bg-background px-3 py-1 text-text-2 shadow-sm">
-                  {dayLabel(m.createdAt)}
+                  {dayLabel(m.createdAt, tr)}
                 </span>
               </div>
             )}
@@ -573,7 +580,7 @@ export function MessageThread({
                 ) : (
                   <span className="inline-flex items-center gap-1.5 text-text-3">
                     <Paperclip className="h-3.5 w-3.5" strokeWidth={1.7} />
-                    {mediaLabel(m.type)}
+                    {mediaLabel(m.type, tr.locale)}
                     {m.text ? ` — ${m.text}` : ""}
                   </span>
                 )}
@@ -581,21 +588,19 @@ export function MessageThread({
                   {m.aiGenerated && (
                     <span
                       className="inline-flex items-center gap-0.5 text-[10px] font-medium text-brand-ink"
-                      title="Respuesta generada por IA"
+                      title={tr("Respuesta generada por IA")}
                     >
-                      <Sparkles className="h-3 w-3" strokeWidth={1.7} /> IA
-                    </span>
+                      <Sparkles className="h-3 w-3" strokeWidth={1.7} /> {tr(" IA")}</span>
                   )}
                   {m.origin === "manual" && (
                     <span
                       className="inline-flex items-center gap-0.5 text-[10px] font-medium text-text-3"
-                      title="Enviado a mano desde la app de WhatsApp Business"
+                      title={tr("Enviado a mano desde la app de WhatsApp Business")}
                     >
-                      <Smartphone className="h-3 w-3" strokeWidth={1.7} /> Celular
-                    </span>
+                      <Smartphone className="h-3 w-3" strokeWidth={1.7} /> {tr(" Celular")}</span>
                   )}
                   <span className="font-mono text-[10px] tracking-[0.04em] text-text-3">
-                    {bubbleTime(m.createdAt)}
+                    {bubbleTime(m.createdAt, tr)}
                   </span>
                   {out && <StatusTicks status={m.status} />}
                 </span>
@@ -608,8 +613,8 @@ export function MessageThread({
                       strokeWidth={1.8}
                     />
                     <span>
-                      <span className="font-semibold">No se entregó.</span>{" "}
-                      {m.error ?? "Meta no informó el motivo."}
+                      <span className="font-semibold">{tr("No se entregó.")}</span>{" "}
+                      {m.error ?? tr("Meta no informó el motivo.")}
                     </span>
                   </p>
                 )}
@@ -629,8 +634,8 @@ export function MessageThread({
                     <button
                       type="button"
                       onClick={() => onReply!(m)}
-                      aria-label="Responder"
-                      title="Responder"
+                      aria-label={tr("Responder")}
+                      title={tr("Responder")}
                       className={ICONO_ACCION}
                     >
                       <Reply className="h-4 w-4" strokeWidth={1.7} />
@@ -644,8 +649,8 @@ export function MessageThread({
                         setNotice(null);
                         setForwarding(m);
                       }}
-                      aria-label="Reenviar"
-                      title="Reenviar"
+                      aria-label={tr("Reenviar")}
+                      title={tr("Reenviar")}
                       className={ICONO_ACCION}
                     >
                       <Forward className="h-4 w-4" strokeWidth={1.7} />
@@ -694,6 +699,7 @@ function MenuMensaje({
   onForward?: () => void;
   onCopied: (ok: boolean) => void;
 }) {
+  const { t: tr } = useI18n();
   const texto = message.media ? message.media.caption : message.text;
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -731,13 +737,13 @@ function MenuMensaje({
     <div className="fixed inset-0 z-50 bg-overlay" onClick={onClose}>
       <div
         role="menu"
-        aria-label="Acciones del mensaje"
+        aria-label={tr("Acciones del mensaje")}
         className="fixed inset-x-0 bottom-0 rounded-t-2xl border-t bg-card p-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] text-card-foreground shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {onReply && item("Responder", Reply, onReply)}
-        {onForward && item("Reenviar", Forward, onForward)}
-        {texto && item("Copiar texto", Copy, () => void copiar(texto))}
+        {onReply && item(tr("Responder"), Reply, onReply)}
+        {onForward && item(tr("Reenviar"), Forward, onForward)}
+        {texto && item(tr("Copiar texto"), Copy, () => void copiar(texto))}
       </div>
     </div>
   );

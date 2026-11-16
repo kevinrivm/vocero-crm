@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, CheckCircle2, Copy, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +68,8 @@ const HELP: Record<Source, { title: string; items: string[] }> = {
 };
 
 export function MessengerClient() {
+  const { t: tr } = useI18n();
+
   const [connection, setConnection] = useState<Connection | null>(null);
   const [webhook, setWebhook] = useState<WebhookInfo | null>(null);
   const [loaded, setLoaded] = useState(false);
@@ -114,12 +120,12 @@ export function MessengerClient() {
       const data = (await res?.json().catch(() => null)) as {
         error?: { message?: string };
       } | null;
-      setError(data?.error?.message ?? "No se pudo conectar la página");
+      setError(data?.error?.message ?? tr("No se pudo conectar la página"));
       return;
     }
     const data = (await res.json()) as { pageName?: string | null };
     setToken("");
-    setSaved(data.pageName ? `Página conectada: ${data.pageName}` : "Conexión guardada");
+    setSaved(data.pageName ? tr("Página conectada: {v0}", {v0: data.pageName}) : tr("Conexión guardada"));
     void refetch();
   }
 
@@ -133,7 +139,7 @@ export function MessengerClient() {
     }
   }
 
-  if (!loaded) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (!loaded) return <p className="text-sm text-muted-foreground">{tr("Cargando…")}</p>;
 
   const help = HELP[source];
   const canSave = token.trim().length > 0 && pageId.trim().length > 0;
@@ -145,12 +151,9 @@ export function MessengerClient() {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
           <div>
             <p className="font-medium text-danger-text">
-              El token expiró o fue revocado.
-            </p>
+              {tr("El token expiró o fue revocado.")}</p>
             <p className="text-danger-text opacity-80">
-              Los envíos por Messenger están pausados. Pega uno nuevo abajo para
-              reconectar.
-            </p>
+              {tr("Los envíos por Messenger están pausados. Pega uno nuevo abajo para reconectar.")}</p>
           </div>
         </div>
       )}
@@ -160,33 +163,32 @@ export function MessengerClient() {
           <CheckCircle2 className="h-5 w-5 text-success" />
           <div className="flex-1 text-sm">
             <p className="font-medium text-success-text">
-              Conectado por {connection.source === "zernio" ? "Zernio" : "Meta"}
+              {tr("Conectado por ")}{connection.source === "zernio" ? "Zernio" : "Meta"}
               {connection.pageName ? `: ${connection.pageName}` : ""}
             </p>
             <p className="text-success-text opacity-80">
               {connection.source === "zernio"
-                ? `Cuenta ${connection.accountRef}`
-                : `Página ${connection.pageId}`}{" "}
-              · token que termina en ····{connection.tokenLast4}
+                ? tr("Cuenta {v0}", {v0: connection.accountRef})
+                : tr("Página {v0}", {v0: connection.pageId})}{" "}
+              {tr("· token que termina en ····")}{connection.tokenLast4}
             </p>
           </div>
-          <Badge variant="success">Messenger activo</Badge>
+          <Badge variant="success">{tr("Messenger activo")}</Badge>
         </div>
       )}
 
       <Card>
         <CardHeader>
           <CardTitle>
-            {connection ? "Reconectar Messenger" : "Conectar Messenger"}
+            {connection ? tr("Reconectar Messenger") : tr("Conectar Messenger")}
           </CardTitle>
           <CardDescription>
-            Los mensajes que la gente le escribe a tu página entran a la misma
-            bandeja que WhatsApp, con su distintivo de canal. {help.title}.
+            {tr("Los mensajes que la gente le escribe a tu página entran a la misma bandeja que WhatsApp, con su distintivo de canal. ")}{systemText(tr.locale, help.title)}.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label>¿De dónde llegan los mensajes?</Label>
+            <Label>{tr("¿De dónde llegan los mensajes?")}</Label>
             <div className="flex flex-wrap gap-2">
               {(["zernio", "meta"] as const).map((s) => (
                 <button
@@ -201,7 +203,7 @@ export function MessengerClient() {
                       : "border-border-strong hover:bg-accent"
                   )}
                 >
-                  {s === "zernio" ? "Zernio (API unificada)" : "App propia de Meta"}
+                  {s === "zernio" ? tr("Zernio (API unificada)") : tr("App propia de Meta")}
                 </button>
               ))}
             </div>
@@ -209,7 +211,7 @@ export function MessengerClient() {
 
           <ul className="list-disc space-y-1 pl-5 text-xs text-text-2">
             {help.items.map((item, i) => (
-              <li key={i}>{item}</li>
+              <li key={i}>{systemText(tr.locale, item)}</li>
             ))}
           </ul>
 
@@ -225,7 +227,7 @@ export function MessengerClient() {
             <>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="fb-page-id">ID de la página</Label>
+                  <Label htmlFor="fb-page-id">{tr("ID de la página")}</Label>
                   <Input
                     id="fb-page-id"
                     value={pageId}
@@ -235,7 +237,7 @@ export function MessengerClient() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="fb-token">Token de la página</Label>
+                  <Label htmlFor="fb-token">{tr("Token de la página")}</Label>
                   <Input
                     id="fb-token"
                     type="password"
@@ -247,11 +249,11 @@ export function MessengerClient() {
                 </div>
               </div>
 
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-sm text-destructive">{systemText(tr.locale, error)}</p>}
               {saved && <p className="text-sm text-success-text">{saved} ✓</p>}
 
               <Button disabled={saving || !canSave} onClick={() => void save()}>
-                {saving ? "Probando…" : "Probar y guardar"}
+                {saving ? tr("Probando…") : tr("Probar y guardar")}
               </Button>
             </>
           )}
@@ -262,11 +264,9 @@ export function MessengerClient() {
         <p className="flex items-start gap-2 text-xs text-text-2">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <span>
-            El webhook lo da de alta Vocero en tu Zernio al conectar, limitado a
-            tus cuentas. Si un día dejan de llegar mensajes, revisa{" "}
+            {tr("El webhook lo da de alta Vocero en tu Zernio al conectar, limitado a tus cuentas. Si un día dejan de llegar mensajes, revisa")}{" "}
             <Link href="/settings/channels" className="font-semibold underline">
-              el estado de los canales
-            </Link>
+              {tr("el estado de los canales")}</Link>
             .
           </span>
         </p>
@@ -274,22 +274,20 @@ export function MessengerClient() {
         webhook?.messengerUrl && (
           <Card>
             <CardHeader>
-              <CardTitle>Webhook de Messenger</CardTitle>
+              <CardTitle>{tr("Webhook de Messenger")}</CardTitle>
               <CardDescription>
-                En tu app de Meta: Messenger → Configuración → Webhooks. Objeto{" "}
-                <code>page</code>, campo <code>messages</code>. Pega esta URL y
-                este token de verificación, y suscribe la página a la app.
-              </CardDescription>
+                {tr("En tu app de Meta: Messenger → Configuración → Webhooks. Objeto")}{" "}
+                <code>page</code>{tr(", campo ")}<code>messages</code>{tr(". Pega esta URL y este token de verificación, y suscribe la página a la app.")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1.5">
-                <Label>URL de callback</Label>
+                <Label>{tr("URL de callback")}</Label>
                 <div className="flex gap-2">
                   <Input readOnly value={webhook.messengerUrl} className="font-mono text-xs" />
                   <Button
                     variant="outline"
                     size="icon"
-                    aria-label="Copiar la URL"
+                    aria-label={tr("Copiar la URL")}
                     onClick={() => void copy(webhook.messengerUrl!, "url")}
                   >
                     {copied === "url" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -297,13 +295,13 @@ export function MessengerClient() {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label>Token de verificación</Label>
+                <Label>{tr("Token de verificación")}</Label>
                 <div className="flex gap-2">
                   <Input readOnly value={webhook.verifyToken} className="font-mono text-xs" />
                   <Button
                     variant="outline"
                     size="icon"
-                    aria-label="Copiar el token de verificación"
+                    aria-label={tr("Copiar el token de verificación")}
                     onClick={() => void copy(webhook.verifyToken, "token")}
                   >
                     {copied === "token" ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -313,8 +311,8 @@ export function MessengerClient() {
               <p className="flex items-start gap-2 text-xs text-text-2">
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 {webhook.signatureLayer
-                  ? "Cada entrega se verifica con la firma del App Secret de tu app."
-                  : "Define META_APP_SECRET en la instancia para que además se verifique la firma de cada entrega."}
+                  ? tr("Cada entrega se verifica con la firma del App Secret de tu app.")
+                  : tr("Define META_APP_SECRET en la instancia para que además se verifique la firma de cada entrega.")}
               </p>
             </CardContent>
           </Card>

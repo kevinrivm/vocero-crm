@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Inbox } from "lucide-react";
@@ -19,6 +23,7 @@ import {
   type Currency,
 } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { LOCALES, LOCALE_NAMES, type Locale } from "@/lib/i18n/locale";
 import { useResolvedTheme } from "@/components/use-theme";
 import { BrandLogo } from "@/components/brand-mark";
 import { navItemClass } from "@/components/app-nav";
@@ -54,8 +59,11 @@ export function BrandingClient({
    */
   favicon?: Branding["favicon"];
 }) {
+  const { t: tr } = useI18n();
+
   const router = useRouter();
   const mode = useResolvedTheme();
+  const [locale, setLocale] = useState<Locale>("es");
   const [name, setName] = useState("");
   const [accent, setAccent] = useState<string>(DEFAULT_BRANDING.accent);
   const [currency, setCurrency] = useState<Currency>(DEFAULT_CURRENCY);
@@ -70,6 +78,7 @@ export function BrandingClient({
       .then((d: { branding: Branding } | null) => {
         if (d) {
           setName(d.branding.name);
+          setLocale(d.branding.locale ?? "es");
           setAccent(d.branding.accent);
           if (d.branding.currency) setCurrency(d.branding.currency);
         }
@@ -92,14 +101,14 @@ export function BrandingClient({
     const res = await fetch("/api/settings/branding", {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), accent, currency }),
+      body: JSON.stringify({ name: name.trim(), accent, currency, locale }),
     }).catch(() => null);
     setSaving(false);
     if (!res?.ok) {
       const data = (await res?.json().catch(() => null)) as {
         error?: { message?: string };
       } | null;
-      setError(data?.error?.message ?? "No se pudo guardar");
+      setError(data?.error?.message ?? tr("No se pudo guardar"));
       return;
     }
     setSaved(true);
@@ -107,21 +116,28 @@ export function BrandingClient({
     router.refresh();
   }
 
-  if (!loaded) return <p className="text-sm text-text-3">Cargando…</p>;
+  if (!loaded) return <p className="text-sm text-text-3">{tr("Cargando…")}</p>;
 
   return (
     <div className="max-w-2xl space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Marca del CRM</CardTitle>
+          <CardTitle>{tr("Marca del CRM")}</CardTitle>
           <CardDescription>
-            Este CRM es tuyo: ponle el nombre de tu negocio y tu color. Se
-            reflejan en toda la interfaz y en la pantalla de inicio de sesión.
-          </CardDescription>
+            {tr("Este CRM es tuyo: ponle el nombre de tu negocio y tu color. Se reflejan en toda la interfaz y en la pantalla de inicio de sesión.")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-1.5">
-            <Label htmlFor="brand-name">Nombre</Label>
+            <Label htmlFor="brand-locale">{tr("Idioma predeterminado")}</Label>
+            <select id="brand-locale" value={locale}
+              onChange={(e) => setLocale(e.target.value as Locale)}
+              className="h-9 max-w-xs rounded-md border border-input bg-card px-2 text-sm">
+              {LOCALES.map((code) => <option key={code} value={code}>{LOCALE_NAMES[code]}</option>)}
+            </select>
+            <p className="text-xs text-text-3">{tr("Cada persona puede elegir otro idioma en este navegador.")}</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="brand-name">{tr("Nombre")}</Label>
             <Input
               id="brand-name"
               maxLength={30}
@@ -133,7 +149,7 @@ export function BrandingClient({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="brand-currency">Moneda del negocio</Label>
+            <Label htmlFor="brand-currency">{tr("Moneda del negocio")}</Label>
             <select
               id="brand-currency"
               value={currency}
@@ -141,30 +157,28 @@ export function BrandingClient({
               className="h-9 max-w-xs rounded-md border border-input bg-card px-2 text-sm"
             >
               {CURRENCY_GROUPS.map((g) => (
-                <optgroup key={g.id} label={g.label}>
+                <optgroup key={g.id} label={systemText(tr.locale, g.label)}>
                   {CURRENCY_OPTIONS.filter((c) => c.group === g.id).map((c) => (
                     <option key={c.code} value={c.code}>
-                      {c.code} · {c.name} ({c.where})
+                      {c.code} · {systemText(tr.locale, c.name)} ({systemText(tr.locale, c.where)})
                     </option>
                   ))}
                 </optgroup>
               ))}
             </select>
             <p className="text-xs text-text-3">
-              Es la única que el Pipeline suma. Los montos capturados en otra
-              moneda se muestran, pero quedan fuera del total de su columna.
-            </p>
+              {tr("Es la única que el Pipeline suma. Los montos capturados en otra moneda se muestran, pero quedan fuera del total de su columna.")}</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Color de acento</Label>
+            <Label>{tr("Color de acento")}</Label>
             <div className="flex flex-wrap items-center gap-2">
               {Object.entries(ACCENT_PRESETS).map(([hex, preset]) => (
                 <button
                   key={hex}
                   onClick={() => setAccent(hex)}
-                  title={preset.label}
-                  aria-label={preset.label}
+                  title={systemText(tr.locale, preset.label)}
+                  aria-label={systemText(tr.locale, preset.label)}
                   className={cn(
                     "flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] font-medium transition-colors",
                     accent.toLowerCase() === hex
@@ -176,7 +190,7 @@ export function BrandingClient({
                     className="h-4 w-4 rounded-full"
                     style={{ background: resolveAccentSet(hex, mode).accent }}
                   />
-                  {preset.label}
+                  {systemText(tr.locale, preset.label)}
                 </button>
               ))}
               <label
@@ -191,13 +205,10 @@ export function BrandingClient({
                   onChange={(e) => setAccent(e.target.value)}
                   className="h-4 w-4 cursor-pointer appearance-none border-0 bg-transparent p-0"
                 />
-                Personalizado
-              </label>
+                {tr("Personalizado")}</label>
             </div>
             <p className="text-xs text-text-3">
-              Con un color personalizado, los tonos derivados (hover, fondos
-              suaves) se calculan solos y se ajusta el contraste.
-            </p>
+              {tr("Con un color personalizado, los tonos derivados (hover, fondos suaves) se calculan solos y se ajusta el contraste.")}</p>
           </div>
 
           {/* Vista previa: el bicolor real en miniatura, con el color que se
@@ -205,7 +216,7 @@ export function BrandingClient({
               misma clase (`nav-dark`) y el mismo renglón activo que la de
               verdad; a la derecha la página en el tema activo, con su botón. */}
           <div
-            aria-label="Vista previa de la marca"
+            aria-label={tr("Vista previa de la marca")}
             className="flex flex-col overflow-hidden rounded-md border border-border-strong sm:flex-row"
           >
             <div
@@ -216,11 +227,11 @@ export function BrandingClient({
                 <BrandLogo
                   branding={{ name: name.trim() || DEFAULT_BRANDING.name, accent, favicon }}
                 />
-                <span className="kicker mt-2 block">{kicker}</span>
+                <span className="kicker mt-2 block">{systemText(tr.locale, kicker)}</span>
               </div>
               <span className={cn(navItemClass(true), "mt-3")}>
                 <Inbox className="h-[17px] w-[17px] text-brand" strokeWidth={1.8} />
-                <span className="flex-1">Bandeja</span>
+                <span className="flex-1">{tr("Bandeja")}</span>
               </span>
             </div>
             <div
@@ -228,15 +239,14 @@ export function BrandingClient({
               style={accentVars(previewSet)}
             >
               <span className="rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-brand-fg shadow-sm">
-                Botón de ejemplo
-              </span>
+                {tr("Botón de ejemplo")}</span>
             </div>
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          {saved && <p className="text-sm" style={{ color: previewSet.text }}>Marca guardada ✓</p>}
+          {error && <p className="text-sm text-destructive">{systemText(tr.locale, error)}</p>}
+          {saved && <p className="text-sm" style={{ color: previewSet.text }}>{tr("Marca guardada ✓")}</p>}
           <Button disabled={saving || !name.trim()} onClick={() => void save()}>
-            {saving ? "Guardando…" : "Guardar marca"}
+            {saving ? tr("Guardando…") : tr("Guardar marca")}
           </Button>
         </CardContent>
       </Card>

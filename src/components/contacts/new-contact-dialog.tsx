@@ -1,4 +1,9 @@
-﻿"use client";
+"use client";
+
+import { systemText } from "@/lib/i18n";
+
+﻿
+import { useI18n } from "@/components/i18n-provider";
 
 import { useEffect, useState } from "react";
 import type { SourceValue, StageDto } from "@/lib/types";
@@ -29,6 +34,8 @@ export function NewContactDialog({
   /** Duplicado: en vez de un error seco, se ofrece ir a quien ya existe. */
   onOpenExisting: (contactId: string) => void;
 }) {
+  const { t: tr } = useI18n();
+
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [source, setSource] = useState<SourceValue>("referido");
@@ -70,7 +77,7 @@ export function NewContactDialog({
     setSaving(false);
 
     if (!res) {
-      setError("No se pudo guardar. Revisa tu conexión.");
+      setError(tr("No se pudo guardar. Revisa tu conexión."));
       return;
     }
     const data = (await res.json().catch(() => null)) as {
@@ -83,7 +90,7 @@ export function NewContactDialog({
       return;
     }
     if (!res.ok) {
-      setError(data?.error?.message ?? "No se pudo guardar el contacto");
+      setError(data?.error?.message ?? tr("No se pudo guardar el contacto"));
       return;
     }
     onCreated();
@@ -100,52 +107,44 @@ export function NewContactDialog({
     >
       <div
         role="dialog"
-        aria-label="Nuevo contacto"
+        aria-label={tr("Nuevo contacto")}
         className="w-full max-w-md rounded-lg border bg-popover p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-1 font-semibold">Nuevo contacto</h3>
+        <h3 className="mb-1 font-semibold">{tr("Nuevo contacto")}</h3>
         <p className="mb-4 text-xs text-text-3">
-          Para prospectos que no llegaron por WhatsApp: referidos, gente que te
-          escribió por otra red, conocidos.
-        </p>
+          {tr("Para prospectos que no llegaron por WhatsApp: referidos, gente que te escribió por otra red, conocidos.")}</p>
 
         <div className="space-y-3">
           <div className="space-y-1.5">
             <label className="text-sm font-medium" htmlFor="nc-name">
-              Nombre
-            </label>
+              {tr("Nombre")}</label>
             <Input
               id="nc-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ferretería La Central"
+              placeholder={tr("Ferretería La Central")}
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium" htmlFor="nc-phone">
-              Teléfono con código de país
-            </label>
+              {tr("Teléfono con código de país")}</label>
             <Input
               id="nc-phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="52 555 000 1234"
+              placeholder={tr("52 555 000 1234")}
             />
             <p className="text-[11px] text-text-3">
-              Escríbelo con espacios si quieres, pero{" "}
-              <strong>incluye el código de país</strong> (52 para México). Sin
-              él, WhatsApp no lo reconoce como la misma persona que te escriba
-              después.
-            </p>
+              {tr("Escríbelo con espacios si quieres, pero")}{" "}
+              <strong>{tr("incluye el código de país")}</strong> {tr(" (52 para México). Sin él, WhatsApp no lo reconoce como la misma persona que te escriba después.")}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-sm font-medium" htmlFor="nc-source">
-                ¿De dónde salió?
-              </label>
+                {tr("¿De dónde salió?")}</label>
               <select
                 id="nc-source"
                 value={source}
@@ -154,15 +153,14 @@ export function NewContactDialog({
               >
                 {SOURCES.map((s) => (
                   <option key={s.value} value={s.value}>
-                    {s.label}
+                    {systemText(tr.locale, s.label)}
                   </option>
                 ))}
               </select>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium" htmlFor="nc-stage">
-                Etapa inicial
-              </label>
+                {tr("Etapa inicial")}</label>
               <select
                 id="nc-stage"
                 value={stageId}
@@ -180,14 +178,13 @@ export function NewContactDialog({
 
           <div className="space-y-1.5">
             <label className="text-sm font-medium" htmlFor="nc-notes">
-              Notas (opcional)
-            </label>
+              {tr("Notas (opcional)")}</label>
             <Textarea
               id="nc-notes"
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Me lo pasó Juan; tiene taller de motos…"
+              placeholder={tr("Me lo pasó Juan; tiene taller de motos…")}
             />
           </div>
         </div>
@@ -195,36 +192,30 @@ export function NewContactDialog({
         {duplicado && (
           <div className="mt-3 rounded-md border border-warning-soft bg-warning-tint px-3 py-2.5">
             <p className="text-[13px] text-warning-text">
-              Ese teléfono ya es de <strong>{duplicado.name}</strong>. No se creó
-              un duplicado.
-            </p>
+              {tr("Ese teléfono ya es de ")}<strong>{duplicado.name}</strong>{tr(". No se creó un duplicado.")}</p>
             <Button
               size="sm"
               variant="secondary"
               className="mt-2"
               onClick={() => onOpenExisting(duplicado.id)}
             >
-              Abrir su conversación
-            </Button>
+              {tr("Abrir su conversación")}</Button>
           </div>
         )}
-        {error && <p className="mt-3 text-xs text-danger-text">{error}</p>}
+        {error && <p className="mt-3 text-xs text-danger-text">{systemText(tr.locale, error)}</p>}
         {stages.length === 0 && (
           <p className="mt-3 text-xs text-warning-text">
-            Tu embudo no tiene etapas abiertas. Crea una en el Pipeline antes de
-            capturar contactos.
-          </p>
+            {tr("Tu embudo no tiene etapas abiertas. Crea una en el Pipeline antes de capturar contactos.")}</p>
         )}
 
         <div className="mt-4 flex justify-end gap-2">
           <Button variant="ghost" onClick={onClose}>
-            Cancelar
-          </Button>
+            {tr("Cancelar")}</Button>
           <Button
             disabled={!listo || saving || stages.length === 0}
             onClick={() => void guardar()}
           >
-            {saving ? "Guardando…" : "Crear contacto"}
+            {saving ? tr("Guardando…") : tr("Crear contacto")}
           </Button>
         </div>
       </div>

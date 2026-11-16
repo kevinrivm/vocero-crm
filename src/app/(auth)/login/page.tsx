@@ -1,4 +1,7 @@
 "use client";
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -10,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
+  const { t: tr } = useI18n();
+
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,8 +30,8 @@ export default function LoginPage() {
     if (err) {
       setError(
         err.status === 429
-          ? "Demasiados intentos. Espera unos minutos."
-          : "Correo o contraseña incorrectos."
+          ? tr("Demasiados intentos. Espera unos minutos.")
+          : tr("Correo o contraseña incorrectos.")
       );
       return;
     }
@@ -39,12 +44,12 @@ export default function LoginPage() {
   return (
     <Card className="shadow-md">
       <CardHeader>
-        <CardTitle>Iniciar sesión</CardTitle>
+        <CardTitle>{tr("Iniciar sesión")}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="email">Correo</Label>
+            <Label htmlFor="email">{tr("Correo")}</Label>
             <Input
               id="email"
               type="email"
@@ -55,7 +60,7 @@ export default function LoginPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">{tr("Contraseña")}</Label>
             <Input
               id="password"
               type="password"
@@ -65,15 +70,14 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm text-destructive">{systemText(tr.locale, error)}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Entrando…" : "Entrar"}
+            {loading ? tr("Entrando…") : tr("Entrar")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            ¿Primera vez aquí?{" "}
+            {tr("¿Primera vez aquí?")}{" "}
             <Link href="/register" className="text-primary hover:underline">
-              Crear la cuenta inicial
-            </Link>
+              {tr("Crear la cuenta inicial")}</Link>
           </p>
         </form>
       </CardContent>

@@ -1,5 +1,11 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { translator, type Translator } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import type { BotBlockDto } from "@/lib/analytics";
 import { BarChart } from "./bar-chart";
 import { Rate, Section, Subhead } from "./section";
@@ -22,69 +28,71 @@ export function BotSection({
   /** 015 — Sin la bandera AGENDA no se habla de citas en ningún lado. */
   agenda: boolean;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <Section
       id="agente"
-      title="El agente"
+      title={tr("El agente")}
       hint={
         agenda
-          ? "Si contesta, qué tan rápido, cuándo pasa a un humano y cómo salen las citas."
-          : "Si contesta, qué tan rápido y cuándo pasa la conversación a un humano."
+          ? tr("Si contesta, qué tan rápido, cuándo pasa a un humano y cómo salen las citas.")
+          : tr("Si contesta, qué tan rápido y cuándo pasa la conversación a un humano.")
       }
       loading={loading}
-      error={error}
+      error={systemText(tr.locale, error)}
       hasData={!!data}
       empty={!!data?.empty}
-      emptyText="Todavía no hay conversaciones en este periodo."
+      emptyText={tr("Todavía no hay conversaciones en este periodo.")}
     >
       {data && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
-            <StatCard label="Conversaciones nuevas" value={String(data.conversations)} />
+            <StatCard label={tr("Conversaciones nuevas")} value={String(data.conversations)} />
             <RateCard
-              label="Contestó el agente"
+              label={tr("Contestó el agente")}
               rate={data.aiReplyRate}
-              unit="con mensaje del cliente"
+              unit={tr("con mensaje del cliente")}
             />
             <StatCard
-              label="Primera respuesta"
+              label={tr("Primera respuesta")}
               value={
                 data.firstResponseSeconds === null
                   ? "—"
-                  : formatSegundos(data.firstResponseSeconds)
+                  : formatSegundos(data.firstResponseSeconds, tr)
               }
               hint={
                 data.firstResponseSample === 0
-                  ? "el agente aún no ha contestado a nadie"
-                  : `mediana de ${data.firstResponseSample} conversaciones`
+                  ? tr("el agente aún no ha contestado a nadie")
+                  : tr("mediana de {v0} conversaciones", {v0: data.firstResponseSample})
               }
             />
             <RateCard
-              label="Pasaron a un humano"
+              label={tr("Pasaron a un humano")}
               rate={data.handoffRate}
-              unit="conversaciones"
+              unit={tr("conversaciones")}
             />
           </div>
 
           {agenda && data.sessions && (
             <div>
-              <Subhead>Citas del periodo</Subhead>
+              <Subhead>{tr("Citas del periodo")}</Subhead>
               {data.sessions.booked === 0 ? (
-                <p className="text-sm text-text-3">Ninguna cita cae en este periodo.</p>
+                <p className="text-sm text-text-3">{tr("Ninguna cita cae en este periodo.")}</p>
               ) : (
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-5">
                   <StatCard
-                    label="Citas"
+                    label={tr("Citas")}
                     value={String(data.sessions.booked)}
-                    hint={pendientes(data.sessions)}
+                    hint={pendientes(data.sessions, tr)}
                   />
-                  <StatCard label="Realizadas" value={String(data.sessions.done)} />
-                  <StatCard label="No llegaron" value={String(data.sessions.noShow)} />
-                  <StatCard label="Canceladas" value={String(data.sessions.cancelled)} />
+                  <StatCard label={tr("Realizadas")} value={String(data.sessions.done)} />
+                  <StatCard label={tr("No llegaron")} value={String(data.sessions.noShow)} />
+                  <StatCard label={tr("Canceladas")} value={String(data.sessions.cancelled)} />
                   <RateCard
-                    label="Asistencia"
+                    label={tr("Asistencia")}
                     rate={data.sessions.showRate}
-                    unit="con desenlace"
+                    unit={tr("con desenlace")}
                   />
                 </div>
               )}
@@ -93,32 +101,28 @@ export function BotSection({
 
           <div className="grid gap-6 lg:grid-cols-2">
             <div>
-              <Subhead>Por qué pasó a un humano</Subhead>
+              <Subhead>{tr("Por qué pasó a un humano")}</Subhead>
               <BarChart
                 items={data.handoffs}
-                emptyText="Ninguna conversación del periodo pasó a un humano."
+                emptyText={tr("Ninguna conversación del periodo pasó a un humano.")}
               />
             </div>
 
             <div>
-              <Subhead>Ficha del prospecto</Subhead>
+              <Subhead>{tr("Ficha del prospecto")}</Subhead>
               {data.fichaCoverage === null ? (
                 // `null` NO es 0 %: es que el agente de esta instancia no escribe
                 // ficha. Enseñar 0 % sería acusarlo de no hacer algo que nunca se
                 // le pidió.
                 <p className="text-sm text-text-3">
-                  Nadie está llenando la ficha de los prospectos. La escribe un cerebro
-                  externo (<code className="font-mono text-xs">PUT /api/bot/ficha</code>) o
-                  tu equipo desde el panel de la conversación.
-                </p>
+                  {tr("Nadie está llenando la ficha de los prospectos. La escribe un cerebro externo (")}<code className="font-mono text-xs">PUT /api/bot/ficha</code>{tr(") o tu equipo desde el panel de la conversación.")}</p>
               ) : (
                 <>
                   <p className="text-sm">
-                    <Rate rate={data.fichaCoverage} unit="contactos nuevos" />
+                    <Rate rate={data.fichaCoverage} unit={tr("contactos nuevos")} />
                   </p>
                   <p className="mt-1 text-xs text-text-3">
-                    De los contactos que llegaron en este periodo, a cuántos les sacó datos.
-                  </p>
+                    {tr("De los contactos que llegaron en este periodo, a cuántos les sacó datos.")}</p>
                 </>
               )}
             </div>
@@ -130,15 +134,15 @@ export function BotSection({
 }
 
 /** Las citas del periodo que todavía no tienen desenlace (siguen agendadas). */
-function pendientes(s: NonNullable<BotBlockDto["sessions"]>): string | undefined {
+function pendientes(s: NonNullable<BotBlockDto["sessions"]>, tr: Translator = translator("es")): string | undefined {
   const n = s.booked - s.done - s.noShow - s.cancelled;
   if (n <= 0) return undefined;
-  return n === 1 ? "1 sin desenlace todavía" : `${n} sin desenlace todavía`;
+  return n === 1 ? tr("1 sin desenlace todavía") : tr("{v0} sin desenlace todavía", {v0: n});
 }
 
 /** Segundos en algo que se lee de un vistazo. */
-export function formatSegundos(s: number): string {
-  if (s < 60) return `${Math.round(s)} s`;
-  if (s < 3600) return `${Math.round(s / 60)} min`;
-  return `${Math.round((s / 3600) * 10) / 10} h`;
+export function formatSegundos(s: number, tr: Translator = translator("es")): string {
+  if (s < 60) return tr("{v0} s", {v0: Math.round(s)});
+  if (s < 3600) return tr("{v0} min", {v0: Math.round(s / 60)});
+  return tr("{v0} h", {v0: Math.round((s / 3600) * 10) / 10});
 }

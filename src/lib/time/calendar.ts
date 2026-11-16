@@ -1,3 +1,4 @@
+import { intlLocale, type Locale } from "@/lib/i18n/locale";
 import { addDaysISO, tzOffsetMinutes, WEEKDAYS, zonedWallClockToUtc, type Interval, type WeekdayKey } from "@/lib/time/slots";
 
 /**
@@ -197,7 +198,8 @@ function shortDate(iso: string, withYear: boolean, withMonth = true): string {
  * «14 – 20 de sep de 2026» · «28 de sep – 4 de oct de 2026» ·
  * «29 de dic de 2025 – 4 de ene de 2026»: lo mismo que escribe Google.
  */
-export function spanLabel(range: DateRange): string {
+export function spanLabel(range: DateRange, locale: Locale = "es"): string {
+  if (locale !== "es") { const fmt = new Intl.DateTimeFormat(intlLocale(locale), {timeZone:"UTC", day:"numeric", month:"short", year:"numeric"}); return range.from === range.to ? fmt.format(new Date(range.from+"T12:00:00Z")) : fmt.format(new Date(range.from+"T12:00:00Z")) + " – " + fmt.format(new Date(range.to+"T12:00:00Z")); }
   if (range.from === range.to) return shortDate(range.from, true);
   const a = parts(range.from);
   const b = parts(range.to);
@@ -207,7 +209,8 @@ export function spanLabel(range: DateRange): string {
 }
 
 /** Lo que dice la barra: el día, la semana, el mes o el rango de la Lista. */
-export function rangeLabel(view: CalendarView, anchor: string, listTo?: string | null): string {
+export function rangeLabel(view: CalendarView, anchor: string, listTo?: string | null, locale: Locale = "es"): string {
+  if (locale !== "es") { if(view === "dia" || view === "mes") return new Intl.DateTimeFormat(intlLocale(locale), {timeZone:"UTC", year:"numeric", month:"long", ...(view === "dia" ? {day:"numeric",weekday:"long"} as const : {})}).format(new Date(anchor+"T12:00:00Z")); return spanLabel(visibleRange(view,anchor,listTo),locale); }
   switch (view) {
     case "dia":
       return capitalize(`${longDayLabel(anchor)} de ${parts(anchor).y}`);
@@ -223,19 +226,21 @@ export function rangeLabel(view: CalendarView, anchor: string, listTo?: string |
 }
 
 /** "viernes, 18 de septiembre". */
-export function longDayLabel(iso: string): string {
+export function longDayLabel(iso: string, locale: Locale = "es"): string {
+  if(locale !== "es") return new Intl.DateTimeFormat(intlLocale(locale), {timeZone:"UTC",weekday:"long",day:"numeric",month:"long"}).format(new Date(iso+"T12:00:00Z"));
   const { m, d } = parts(iso);
   return `${WEEKDAYS_LONG[weekdayIndex(iso)]}, ${d} de ${MONTHS[m - 1]}`;
 }
 
 /** Encabezado de columna: "vie" y 18. */
-export function dayHeading(iso: string): { weekday: string; day: number; month: string } {
+export function dayHeading(iso: string, locale: Locale = "es"): { weekday: string; day: number; month: string } {
+  if(locale !== "es") { const date = new Date(iso+"T12:00:00Z"); return {day:date.getUTCDate(),weekday:new Intl.DateTimeFormat(intlLocale(locale),{timeZone:"UTC",weekday:"short"}).format(date),month:new Intl.DateTimeFormat(intlLocale(locale),{timeZone:"UTC",month:"short"}).format(date)}; }
   const { m, d } = parts(iso);
   return { weekday: WEEKDAYS_SHORT[weekdayIndex(iso)]!, day: d, month: MONTHS_SHORT[m - 1]! };
 }
 
-export function weekdayShortNames(): readonly string[] {
-  return WEEKDAYS_SHORT;
+export function weekdayShortNames(locale: Locale = "es"): readonly string[] {
+  return locale === "es" ? WEEKDAYS_SHORT : Array.from({length:7},(_,i)=>dayHeading("2026-10-"+String(19+i),locale).weekday);
 }
 
 /* ------------------------------------------------------------------ zona */

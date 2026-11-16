@@ -1,5 +1,9 @@
 "use client";
 
+import { systemText } from "@/lib/i18n";
+
+import { useI18n } from "@/components/i18n-provider";
+
 import type { ReactNode } from "react";
 import type { AdRowDto, AdsBlockDto, RateDto } from "@/lib/analytics";
 import { etiquetaDeOrigen, titularDeOrigen } from "@/lib/anuncios";
@@ -30,50 +34,51 @@ export function AdsSection({
   loading: boolean;
   error: string | null;
 }) {
+  const { t: tr } = useI18n();
+
   return (
     <Section
       id="origen"
-      title="Origen y anuncios"
-      hint="Por dónde llegan las conversaciones y qué anuncio trae gente que compra."
+      title={tr("Origen y anuncios")}
+      hint={tr("Por dónde llegan las conversaciones y qué anuncio trae gente que compra.")}
       loading={loading}
-      error={error}
+      error={systemText(tr.locale, error)}
       hasData={!!data}
       empty={!!data?.empty}
-      emptyText="No empezó ninguna conversación en este periodo."
+      emptyText={tr("No empezó ninguna conversación en este periodo.")}
     >
       {data && (
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:max-w-xl">
             <StatCard
-              label="Conversaciones nuevas"
+              label={tr("Conversaciones nuevas")}
               value={String(data.conversations.current)}
               compare={data.conversations}
             />
             <RateCard
-              label="Llegaron por un anuncio"
+              label={tr("Llegaron por un anuncio")}
               rate={data.adShare}
-              unit="conversaciones"
+              unit={tr("conversaciones")}
             />
           </div>
 
           <div>
-            <Subhead>Por origen</Subhead>
+            <Subhead>{tr("Por origen")}</Subhead>
             <Filas
               primera="Origen"
               filas={data.sources.map((s) => ({
                 key: s.value,
-                titulo: <span className="font-medium">{s.label}</span>,
+                titulo: <span className="font-medium">{systemText(tr.locale, s.label)}</span>,
                 conteos: s,
               }))}
             />
           </div>
 
           <div>
-            <Subhead>Por anuncio</Subhead>
+            <Subhead>{tr("Por anuncio")}</Subhead>
             {data.ads.length === 0 ? (
               <p className="text-sm text-text-3">
-                Ninguna conversación de este periodo llegó por un anuncio de Click a WhatsApp.
-              </p>
+                {tr("Ninguna conversación de este periodo llegó por un anuncio de Click a WhatsApp.")}</p>
             ) : (
               <Filas
                 primera="Anuncio"
@@ -89,14 +94,9 @@ export function AdsSection({
 
           <div className="space-y-1 text-[11px] text-text-3">
             <p>
-              «Ventas» son los prospectos del periodo que hoy están en Ganado; «Cierre» es
-              ventas entre prospectos, atenuado con menos de 10 (muestra chica).
-            </p>
+              {tr("«Ventas» son los prospectos del periodo que hoy están en Ganado; «Cierre» es ventas entre prospectos, atenuado con menos de 10 (muestra chica).")}</p>
             <p>
-              El origen es el que capturaste en el contacto; si no hay, se deduce «Anuncio»
-              cuando Meta dijo de qué anuncio llegó. Aquí solo se cuenta: el costo por
-              prospecto y el retorno necesitarían el gasto de cada anuncio.
-            </p>
+              {tr("El origen es el que capturaste en el contacto; si no hay, se deduce «Anuncio» cuando Meta dijo de qué anuncio llegó. Aquí solo se cuenta: el costo por prospecto y el retorno necesitarían el gasto de cada anuncio.")}</p>
           </div>
         </div>
       )}
@@ -108,6 +108,8 @@ type Fila = { key: string; titulo: ReactNode; conteos: Conteos; sourceId?: strin
 
 /** La misma lista como tabla (desde `sm`) o como tarjetas (teléfono). */
 function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
+  const { t: tr } = useI18n();
+
   return (
     <>
       <ul className="divide-y border-y text-sm sm:hidden">
@@ -115,16 +117,16 @@ function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
           <li key={f.key} className="py-2.5" data-anuncio={f.sourceId ?? undefined}>
             {f.titulo}
             <dl className="mt-2 grid grid-cols-4 gap-2 text-center">
-              <Dato etiqueta="conversaciones" valor={f.conteos.conversations} />
-              <Dato etiqueta="prospectos" valor={f.conteos.leads} />
+              <Dato etiqueta={tr("conversaciones")} valor={f.conteos.conversations} />
+              <Dato etiqueta={tr("prospectos")} valor={f.conteos.leads} />
               <Dato etiqueta="ventas" valor={f.conteos.won} />
               <div className="min-w-0">
-                <dt className="sr-only">Cierre</dt>
+                <dt className="sr-only">{tr("Cierre")}</dt>
                 <dd className="text-sm font-semibold">
                   <TasaCorta rate={f.conteos.winRate} conDenominador={false} />
                 </dd>
                 <dd className="truncate text-[11px] text-text-3">
-                  {f.conteos.winRate.value === null ? "cierre" : `cierre de ${f.conteos.winRate.sample}`}
+                  {f.conteos.winRate.value === null ? "cierre" : tr("cierre de {v0}", {v0: f.conteos.winRate.sample})}
                 </dd>
               </div>
             </dl>
@@ -139,10 +141,10 @@ function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
               <th scope="col" className="py-1.5 pr-2 text-left font-medium">
                 {primera}
               </th>
-              <Num>Conversaciones</Num>
-              <Num>Prospectos</Num>
-              <Num>Ventas</Num>
-              <Num>Cierre</Num>
+              <Num>{tr("Conversaciones")}</Num>
+              <Num>{tr("Prospectos")}</Num>
+              <Num>{tr("Ventas")}</Num>
+              <Num>{tr("Cierre")}</Num>
             </tr>
           </thead>
           <tbody>
@@ -165,10 +167,12 @@ function Filas({ primera, filas }: { primera: string; filas: Fila[] }) {
 }
 
 function Anuncio({ anuncio: a }: { anuncio: AdRowDto }) {
+  const { t: tr } = useI18n();
+
   const titular = titularDeOrigen(a.headline, a.sourceType);
   return (
     <div className="flex min-w-0 items-center gap-2.5">
-      <MiniaturaDeAnuncio imageAssetId={a.imageAssetId} alt={`Creativo: ${titular}`} />
+      <MiniaturaDeAnuncio imageAssetId={a.imageAssetId} alt={tr("Creativo: {v0}", {v0: titular})} />
       <div className="min-w-0">
         <p className="truncate font-medium sm:max-w-[20rem]" title={titular}>
           {titular}
@@ -211,14 +215,16 @@ function Cell({ children }: { children: ReactNode }) {
  * chica (la nota al pie lo explica) para no ensanchar la columna.
  */
 function TasaCorta({ rate, conDenominador = true }: { rate: RateDto; conDenominador?: boolean }) {
+  const { t: tr } = useI18n();
+
   if (rate.value === null) return <span className="text-text-3">—</span>;
   return (
     <span
       className={cn(!rate.reliable && "text-text-3")}
-      title={`${rate.value}% de ${rate.sample} prospectos${rate.reliable ? "" : " · muestra chica"}`}
+      title={tr("{v0}% de {v1} prospectos{v2}", {v0: rate.value, v1: rate.sample, v2: rate.reliable ? "" : tr(" · muestra chica")})}
     >
       {rate.value}%
-      {conDenominador && <span className="ml-1 text-[11px] text-text-3">de {rate.sample}</span>}
+      {conDenominador && <span className="ml-1 text-[11px] text-text-3">{tr("de ")}{rate.sample}</span>}
     </span>
   );
 }

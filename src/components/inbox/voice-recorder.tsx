@@ -1,5 +1,7 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
+
 import { useEffect, useRef, useState } from "react";
 import { Send, Square, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -56,6 +58,7 @@ export function VoiceRecorder({
   /** No se pudo grabar: se cierra la grabadora y el compositor dice por qué. */
   onError: (mensaje: string) => void;
 }) {
+  const { t: tr, text: tx } = useI18n();
   const [fase, setFase] = useState<"pidiendo" | "grabando" | "lista" | "enviando">("pidiendo");
   const [segundos, setSegundos] = useState(0);
   const [niveles, setNiveles] = useState<number[]>(() => Array(NIVELES).fill(0));
@@ -226,8 +229,8 @@ export function VoiceRecorder({
           type="button"
           onClick={descartar}
           disabled={fase === "enviando"}
-          aria-label="Descartar nota de voz"
-          title="Descartar"
+          aria-label={tr("Descartar nota de voz")}
+          title={tr("Descartar")}
           className="rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-destructive disabled:opacity-40"
         >
           <Trash2 className="h-[18px] w-[18px]" strokeWidth={1.7} />
@@ -247,7 +250,7 @@ export function VoiceRecorder({
               {formatoTiempo(segundos)}
             </span>
             <span className="sr-only">
-              {fase === "pidiendo" ? "Pidiendo el micrófono…" : "Grabando nota de voz"}
+              {fase === "pidiendo" ? tr("Pidiendo el micrófono…") : tr("Grabando nota de voz")}
             </span>
             <div aria-hidden className="flex h-6 min-w-0 flex-1 items-center gap-px overflow-hidden">
               {niveles.map((n, i) => (
@@ -262,8 +265,8 @@ export function VoiceRecorder({
               <button
                 type="button"
                 onClick={() => recorder.current?.state === "recording" && recorder.current.stop()}
-                aria-label="Detener y escuchar"
-                title="Detener y escuchar antes de enviar"
+                aria-label={tr("Detener y escuchar")}
+                title={tr("Detener y escuchar antes de enviar")}
                 className="rounded-full p-1.5 text-danger-text transition-colors hover:bg-danger-tint"
               >
                 <Square className="h-4 w-4" fill="currentColor" strokeWidth={0} />
@@ -276,7 +279,7 @@ export function VoiceRecorder({
           type="button"
           onClick={() => void enviar()}
           disabled={fase === "pidiendo" || fase === "enviando"}
-          aria-label="Enviar nota de voz"
+          aria-label={tr("Enviar nota de voz")}
           className={cn(
             "flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-brand text-brand-fg transition-[opacity,background-color] hover:bg-brand-hover",
             (fase === "pidiendo" || fase === "enviando") && "opacity-40"
@@ -287,7 +290,7 @@ export function VoiceRecorder({
       </div>
       {error && (
         <p role="alert" className="mt-1.5 text-xs text-destructive">
-          {error}
+          {tx(error)}
         </p>
       )}
     </div>

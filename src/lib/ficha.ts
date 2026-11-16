@@ -1,4 +1,5 @@
 import type { FichaDto, FichaValue } from "./types";
+import type { Locale } from "./i18n/locale";
 
 /**
  * Presentación de la ficha del lead.
@@ -21,14 +22,17 @@ export function fichaLabel(key: string): string {
 }
 
 /** Cómo se muestra un valor. Los booleanos en Sí/No: nadie califica en `true`. */
-export function fichaValueText(value: FichaValue): string {
-  if (typeof value === "boolean") return value ? "Sí" : "No";
+export function fichaValueText(value: FichaValue, locale: Locale = "es"): string {
+  if (typeof value === "boolean") {
+    if (locale === "pt-BR") return value ? "Sim" : "Não";
+    return value ? "Sí" : "No";
+  }
   if (typeof value === "number") return String(value);
   return value ?? "";
 }
 
-const SI = new Set(["si", "sí", "true", "1"]);
-const NO = new Set(["no", "false", "0"]);
+const SI = new Set(["si", "sí", "sim", "true", "1"]);
+const NO = new Set(["no", "n\u00e3o", "nao", "false", "0"]);
 
 /**
  * Lo que el dueño teclea, de vuelta a un valor guardable.
@@ -45,8 +49,9 @@ export function parseFichaValue(
 ): FichaValue {
   const t = text.trim();
   if (typeof previous === "boolean") {
-    if (SI.has(t.toLowerCase())) return true;
-    if (NO.has(t.toLowerCase())) return false;
+    const normalized = t.toLocaleLowerCase("pt-BR");
+    if (SI.has(normalized)) return true;
+    if (NO.has(normalized)) return false;
     return t;
   }
   if (typeof previous === "number") {
