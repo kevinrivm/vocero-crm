@@ -9,6 +9,7 @@ import {
   rolDe,
   type ClaveHerramienta,
 } from "@/lib/agent-roles";
+import { CLAVES_SECTOR, sectorDe, type ClaveSector } from "@/lib/agent-sectores";
 import { agendaEnabled } from "@/server/agenda/flag";
 import { leerConfigDespacho, urlSaludCerebro } from "@/server/brains/config";
 import { getBrainHealth } from "@/server/bot/status";
@@ -35,6 +36,8 @@ export const GET = withAuth(async (session) => {
       greeting: p.greeting,
       // 034
       role: rolDe(p.role).clave,
+      // 067 — La clave efectiva: una que ya no exista cae al General.
+      sector: sectorDe(p.sector).clave,
       tools: herramientasEfectivas(p.tools),
     },
     // 034 — Sin la bandera, la pantalla no ofrece agendar ni reprogramar.
@@ -53,6 +56,10 @@ const putSchema = z.object({
   instructions: z.string().max(8000).nullable().optional(),
   escalationRules: z.string().max(4000).nullable().optional(),
   greeting: z.string().max(1000).nullable().optional(),
+  // 067 — Solo claves del catálogo de sectores; el que elige es el dueño.
+  sector: z
+    .enum(CLAVES_SECTOR as [ClaveSector, ...ClaveSector[]])
+    .optional(),
   // 034 — Solo claves del catálogo; `escalar` se guarda siempre.
   tools: z
     .array(z.enum(CLAVES_HERRAMIENTA as [ClaveHerramienta, ...ClaveHerramienta[]]))

@@ -17,6 +17,7 @@ import {
   ROLES,
   type ClaveHerramienta,
 } from "@/lib/agent-roles";
+import { SECTORES, sectorDe, type ClaveSector } from "@/lib/agent-sectores";
 
 type Profile = {
   enabled: boolean;
@@ -27,6 +28,8 @@ type Profile = {
   greeting: string | null;
   /** 034 */
   role: string;
+  /** 067 — Clave del catálogo (`src/lib/agent-sectores.ts`). */
+  sector: string;
   tools: ClaveHerramienta[];
 };
 
@@ -216,6 +219,7 @@ export function AgentClient() {
           onTools={(tools) => void saveProfile({ tools })}
           onPreset={() => void cargarPreset()}
         />
+        <SectorSection profile={profile} onSave={saveProfile} />
         <ProfileSection profile={profile} onSave={saveProfile} />
         <KbSection entries={entries} kbSize={kbSize} onChanged={() => void refetch()} />
       </div>
@@ -283,6 +287,51 @@ function RolSection({
         <p className="text-xs text-muted-foreground">
           El agente toma los cambios en unos minutos, sin redesplegar nada.
         </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * 067 — El sector del negocio: elige el dueño, activa en el cerebro las reglas
+ * de cumplimiento del rubro. El texto de las reglas no es editable aquí: lo
+ * escribe y prueba el agente conectado (en Nea, `SECTOR_PACKS`), y no se
+ * puede debilitar desde el chat ni desde el conocimiento.
+ */
+function SectorSection({
+  profile,
+  onSave,
+}: {
+  profile: Profile;
+  onSave: (patch: Partial<Profile>) => Promise<boolean>;
+}) {
+  const actual = sectorDe(profile.sector);
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <CardTitle>Sector del negocio</CardTitle>
+        <CardDescription>
+          A qué se dedica el negocio: activa en tu agente las reglas de
+          cumplimiento del rubro, que pesan como las reglas base del agente.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="space-y-1.5">
+          <Label htmlFor="agent-sector">Sector</Label>
+          <select
+            id="agent-sector"
+            value={actual.clave}
+            onChange={(e) => void onSave({ sector: e.target.value as ClaveSector })}
+            className="h-9 w-full max-w-sm rounded-md border border-input bg-card px-2 text-sm"
+          >
+            {SECTORES.map((s) => (
+              <option key={s.clave} value={s.clave}>
+                {s.etiqueta}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="text-xs text-muted-foreground">{actual.reglas}</p>
       </CardContent>
     </Card>
   );

@@ -42,6 +42,7 @@ function profileRow(overrides: Partial<AgentProfile> = {}): AgentProfile {
     escalationRules: "Urgencias de dolor → humano.",
     greeting: "¡Hola! Soy Sofi 🦷",
     role: "calificador",
+    sector: null,
     tools: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -76,6 +77,23 @@ describe("034 — role y tools en el perfil", () => {
   });
 });
 
+describe("067 — sector en el perfil", () => {
+  it("viaja siempre, con la clave del catálogo", () => {
+    const out = serializeBotProfile(profileRow({ sector: "estetica_salud" }), []);
+    expect(out.profile.sector).toBe("estetica_salud");
+    // Y no toca el resto del perfil.
+    expect(out.profile.name).toBe("Sofi");
+    expect(out.profile.role).toBe("calificador");
+  });
+
+  it("null o una clave que ya no existe caen al General", () => {
+    const nulo = serializeBotProfile(profileRow({ sector: null }), []);
+    const raro = serializeBotProfile(profileRow({ sector: "finanzas" }), []);
+    expect(nulo.profile.sector).toBe("general");
+    expect(raro.profile.sector).toBe("general");
+  });
+});
+
 describe("serializeBotProfile", () => {
   it("perfil completo → shape exacto del contrato", () => {
     const out = serializeBotProfile(profileRow(), [
@@ -89,6 +107,7 @@ describe("serializeBotProfile", () => {
         escalationRules: "Urgencias de dolor → humano.",
         greeting: "¡Hola! Soy Sofi 🦷",
         role: "calificador",
+        sector: "general",
         tools: ["ficha", "etapa", "agendar", "reprogramar", "salida", "escalar"],
       },
       kb: "P: ¿Cuánto cuesta?\nR: $800.",

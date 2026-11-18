@@ -697,6 +697,11 @@ export const agentProfile = pgTable(
     /** 034 — El rol del agente (`src/lib/agent-roles.ts`). */
     role: text("role").notNull().default("calificador"),
     /**
+     * 067 — El sector del negocio (`src/lib/agent-sectores.ts`): activa en el
+     * cerebro las reglas de cumplimiento del rubro. `null` = General.
+     */
+    sector: text("sector"),
+    /**
      * 034 — Las herramientas encendidas, por clave del catálogo. `null` =
      * todas: lo que tiene una instalación que actualiza.
      */
