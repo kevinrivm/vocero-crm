@@ -9,6 +9,15 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ### Nuevo
 
+- **Sector del negocio en la pantalla Agente** (spec 067). Un select —General,
+  Salud y estética— activa en el cerebro conectado las reglas de cumplimiento
+  del rubro, con la misma autoridad que las reglas base del agente: con
+  «Salud y estética», el agente no diagnostica, no promete resultados ni
+  evalúa fotos del caso, y escala a una persona las dudas clínicas (lado
+  Nea: `feat/067-sectores-cumplimiento` en nea-agent). Sin tocar el sector,
+  nada cambia: una instalación que actualiza queda en General. Migración
+  `0027_sector_del_agente` (aditiva y anulable).
+
 - **«Conectar con Meta» (Embedded Signup v4)** en Ajustes → WhatsApp (spec
   066). Con `META_APP_ID`, `META_EMBEDDED_CONFIG_ID` y `META_APP_SECRET` en la
   instancia, quien administra la cuenta autoriza su WhatsApp en la ventana
