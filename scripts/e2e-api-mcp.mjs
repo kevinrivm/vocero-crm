@@ -211,6 +211,24 @@ async function guion(cerebro, duena) {
   const contrato = await r.json().catch(() => null);
   ok("openapi.json sin llave, con la URL pública de la instancia", r.ok && contrato?.servers?.[0]?.url === `${BASE}/api/v1`, JSON.stringify(contrato?.servers));
 
+  console.log("\n== 3b · Enviar por la API pausa la IA (068) ==");
+  const nombreApi = `Cliente API ${RUN}`;
+  await fetch(`${BASE}/api/dev/wa-mock/inbound`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ phoneNumberId: PN, from: `52155${String(Date.now()).slice(-8)}`, name: nombreApi, text: `hola ${RUN}`, waMessageId: `wamid.api.${RUN}` }),
+  });
+  let convApi = null;
+  for (let i = 0; i < 40 && !convApi; i++) {
+    convApi = ((await v1(n8n.secret, "/conversations")).json?.conversations ?? []).find((c) => c.contact?.name === nombreApi) ?? null;
+    if (!convApi) await new Promise((ok2) => setTimeout(ok2, 250));
+  }
+  ok("la conversación entra y la v1 la lista, con la IA encendida", convApi?.aiEnabled === true, JSON.stringify(convApi?.aiEnabled));
+  r = await v1(n8n.secret, `/conversations/${convApi?.id}/messages`, { method: "POST", body: JSON.stringify({ text: `te atiende una persona ${RUN}` }) });
+  ok("n8n contesta por la v1 (200)", r.res.ok, JSON.stringify(r.json));
+  const trasEnviar = ((await v1(n8n.secret, "/conversations")).json?.conversations ?? []).find((c) => c.id === convApi?.id);
+  ok("…y la IA de esa conversación queda en pausa (manual_reply)", trasEnviar?.aiEnabled === false && trasEnviar?.handoffReason === "manual_reply", JSON.stringify({ ai: trasEnviar?.aiEnabled, motivo: trasEnviar?.handoffReason }));
+
   console.log("\n== 4 · MCP ==");
   r = await mcp(null, "initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "e2e", version: "1" } });
   const www = r.res.headers.get("www-authenticate") ?? "";

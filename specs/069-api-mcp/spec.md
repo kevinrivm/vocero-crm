@@ -74,6 +74,11 @@ scripts. Detalle de uso en [docs/api-v1.md](../../docs/api-v1.md).
   públicos), consentimiento en el CRM con mismo origen, PKCE S256, refresco que
   rota, reuso detectado, revocación; `configure` solo lo concede quien
   configura; Ajustes → Apps conectadas lista y desconecta al instante.
+- **FR-9** (068) Enviar por `POST /conversations/{id}/messages` pausa la IA de
+  esa conversación con `manual_reply`, igual que contestar desde la Bandeja:
+  el handler compartido (`src/server/http/conversation-messages.ts`) llama a
+  `pausarIaTrasEnvioDeLaBandeja` tras un envío que salió. Esta spec va encima
+  de la 068.
 
 ## Pendiente
 
