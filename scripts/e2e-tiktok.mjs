@@ -415,6 +415,13 @@ async function limites({ conv, hilo, sender, nombre }) {
     (await enviadosPorZernio(hilo)).length === 10 &&
       !(await mensajesDe(conv.id)).some((m) => m.text === `el undécimo ${MARCA}`)
   );
+  // 068: el operador escribió desde la Bandeja y eso pausa la IA. Para probar
+  // el tope por el lado del cerebro, el dueño se la devuelve.
+  const reactivada = await api(`/api/conversations/${conv.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ reactivate: true }),
+  });
+  ok("068: el dueño reactiva la IA de la conversación", reactivada.res.ok, String(reactivada.res.status));
   if (BOT_KEY.length >= 16) {
     const porBot = await bot("/api/bot/messages", {
       method: "POST",

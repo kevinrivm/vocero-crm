@@ -211,6 +211,40 @@ ok(
   !outbox2.some((o) => String(o.body?.text?.body ?? "").includes(`no debe salir ${S}`))
 );
 
+console.log("\n== 068: Meta rechaza la cita con 131009 → sale como texto simple ==");
+/**
+ * El wa-mock rechaza con 131009 cuando el mensaje citado trae «rechaza-cita»
+ * en su wamid. El cliente tiene que recibir la respuesta igual, sin la cita, y
+ * el hilo tiene que guardar lo que el cliente vio.
+ */
+const WAMID_R = `wamid.rc.rechaza-cita.${S}`;
+const TEXTO_R = `¿y en azul? ${S}`;
+await inbound({ text: TEXTO_R, waMessageId: WAMID_R });
+let citable = null;
+await until(async () => {
+  citable = (await mensajes()).find((m) => m.text === TEXTO_R) ?? null;
+  return Boolean(citable);
+});
+ok("llega un entrante que Meta no deja citar", Boolean(citable));
+const RESP_R = `En azul también ${S}`;
+const rechazo = await req.post(`${BASE}/api/conversations/${conv.id}/messages`, {
+  data: { text: RESP_R, replyToMessageId: citable?.id },
+});
+ok("068: el envío sale igual (200)", rechazo.ok(), `${rechazo.status()} ${await rechazo.text()}`);
+const outbox3 = (await (await req.get(`${BASE}/api/dev/wa-mock/outbox`)).json()).outbox ?? [];
+const salio = outbox3.filter((o) => o.body?.text?.body === RESP_R);
+ok(
+  "068: a Graph llegó una vez, como texto simple y sin context",
+  salio.length === 1 && !salio[0].body.context,
+  JSON.stringify(salio.map((o) => o.body))
+);
+const guardadoR = (await mensajes()).find((m) => m.text === RESP_R);
+ok(
+  "068: el hilo lo guarda enviado y sin cita",
+  Boolean(guardadoR) && guardadoR.status !== "failed" && !guardadoR.replyTo,
+  JSON.stringify({ status: guardadoR?.status, replyTo: guardadoR?.replyTo })
+);
+
 await browser.close();
 console.log(`\n${checks - failures}/${checks} comprobaciones en verde`);
 process.exit(failures ? 1 : 0);

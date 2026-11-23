@@ -374,6 +374,70 @@ describe("envío con context", () => {
     expect(nuevo.data.message.replyTo.id).toBe("msg_in");
   });
 
+  it("068: Meta rechaza la cita con 131009 → se reintenta una vez sin cita y el hilo la guarda sin cita", async () => {
+    conectado();
+    const { MetaApiError } = await import("@/lib/meta/client");
+    h.graphRequest
+      .mockRejectedValueOnce(
+        new MetaApiError("(#131009) Parameter value is not valid", { status: 400, code: 131009 })
+      )
+      .mockResolvedValueOnce({ messages: [{ id: "wamid.OUT2" }] });
+    h.selectRows.push([CONVERSACION_WA], [CITADO]);
+    const { sendText } = await import("@/server/inbox/send");
+
+    const r = await sendText({
+      conversationId: "cv_1",
+      organizationId: "org_1",
+      text: "Sí, lo tenemos",
+      replyToMessageId: "msg_in",
+    });
+
+    expect(h.graphRequest).toHaveBeenCalledTimes(2);
+    expect(h.graphRequest.mock.calls[0]![1].body).toHaveProperty("context");
+    const reintento = h.graphRequest.mock.calls[1]![1].body;
+    expect(reintento).not.toHaveProperty("context");
+    expect(reintento).toMatchObject({ type: "text", text: { body: "Sí, lo tenemos" } });
+    expect(r.messageId).toBeTruthy();
+    expect(insertsDeMensajes()[0]).toMatchObject({
+      waMessageId: "wamid.OUT2",
+      replyToWaMessageId: null,
+    });
+  });
+
+  it("068: un 131009 sin cita no se reintenta (no hay nada que quitar)", async () => {
+    conectado();
+    const { MetaApiError } = await import("@/lib/meta/client");
+    h.graphRequest.mockReset();
+    h.graphRequest.mockRejectedValue(
+      new MetaApiError("(#131009) Parameter value is not valid", { status: 400, code: 131009 })
+    );
+    h.selectRows.push([CONVERSACION_WA]);
+    const { sendText, SendError } = await import("@/server/inbox/send");
+
+    const err = await sendText({ conversationId: "cv_1", organizationId: "org_1", text: "hola" }).catch(
+      (e: unknown) => e
+    );
+    expect(err).toBeInstanceOf(SendError);
+    expect((err as InstanceType<typeof SendError>).metaCode).toBe(131009);
+    expect(h.graphRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it("068: otro rechazo de Meta con cita no se reintenta", async () => {
+    conectado();
+    const { MetaApiError } = await import("@/lib/meta/client");
+    h.graphRequest.mockReset();
+    h.graphRequest.mockRejectedValue(
+      new MetaApiError("(#131047) Re-engagement message", { status: 400, code: 131047 })
+    );
+    h.selectRows.push([CONVERSACION_WA], [CITADO]);
+    const { sendText } = await import("@/server/inbox/send");
+
+    await expect(
+      sendText({ conversationId: "cv_1", organizationId: "org_1", text: "hola", replyToMessageId: "msg_in" })
+    ).rejects.toMatchObject({ code: "meta_error", metaCode: 131047 });
+    expect(h.graphRequest).toHaveBeenCalledTimes(1);
+  });
+
   it("sendText sin cita → sin context en el payload", async () => {
     conectado();
     h.selectRows.push([CONVERSACION_WA]);

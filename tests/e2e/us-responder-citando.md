@@ -19,6 +19,10 @@ app viva, `WA_MOCK_ENABLED=true` y `META_GRAPH_BASE_URL` apuntando a wa-mock.
    dice «Mensaje no disponible», también tras recargar.
 7. Por API, citar el id de un mensaje de otra conversación. **Esperado:** 422
    `reply_unavailable` y nada sale a Graph.
+8. (068) Meta rechaza la cita con `131009` (el wa-mock lo hace cuando el
+   wamid citado trae `rechaza-cita`). **Esperado:** el envío responde 200, a
+   Graph llega una sola vez y sin `context`, y el hilo lo guarda enviado y sin
+   cita.
 
 ## Fuera del guion
 

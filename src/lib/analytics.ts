@@ -276,5 +276,5 @@ export const HANDOFF_LABEL: Record<string, string> = {
   error: "Error del proveedor de IA",
   ventana: "Ventana de 24 h cerrada",
   hostilidad: "El cliente se puso agresivo",
-  manual_reply: "Respondiste desde el teléfono",
+  manual_reply: "Respondió una persona del equipo",
 };

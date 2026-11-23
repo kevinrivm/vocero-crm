@@ -73,8 +73,14 @@ corridas, cada una con la app arrancada en su modo.
   desde la bandeja (`POST /api/conversations/{id}/messages`). El cerebro no
   recibe **nada**: ni ese mensaje ni un despacho vacío.
 - **025·AC5** `dispatch.pending = 0`, `dispatch.lastFailure` no cambió y la
-  conversación no pasó a un humano. El siguiente mensaje de ese cliente sí se
-  despacha, y el evento trae solo ese.
+  conversación no pasó a un humano por `error`.
+- **068·AC1** La conversación queda en pausa con `manual_reply`: contestó una
+  persona.
+- **068·AC2** El cliente vuelve a escribir: el mensaje entra a la bandeja y el
+  cerebro no recibe nada.
+- **068·AC3** El dueño reactiva la IA (`PATCH {reactivate:true}`) y el cliente
+  escribe otra vez: el despacho trae los dos que nadie contestó y no repite el
+  que contestó la persona.
 
 Los dos casos dependen de ganarle a la ventana de agrupado. Si el guion pierde
 esa carrera (máquina cargada), lo reintenta con otro contacto, hasta tres
