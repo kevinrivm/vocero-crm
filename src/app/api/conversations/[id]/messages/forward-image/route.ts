@@ -3,6 +3,7 @@ import { apiError, parseBody, withAuth } from "@/lib/api";
 import { getConversation } from "@/server/inbox/queries";
 import { capabilitiesFor } from "@/server/channels/capabilities";
 import { ForwardImageError, forwardImage } from "@/server/inbox/forward-image";
+import { pausarIaTrasEnvioDeLaBandeja } from "@/server/inbox/pausa-manual";
 import { SendError } from "@/server/inbox/send";
 import { MediaValidationError } from "@/server/whatsapp/media";
 
@@ -56,6 +57,8 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
       conversationId: id,
       ...body.data,
     });
+    // 068: reenviar lo hace una persona: la IA se hace a un lado.
+    await pausarIaTrasEnvioDeLaBandeja(session.organizationId, id);
     return Response.json({ messageId: result.messageId }, { status: 201 });
   } catch (err) {
     if (err instanceof ForwardImageError) return apiError(err.status, err.code, err.message);

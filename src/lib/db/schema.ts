@@ -376,7 +376,8 @@ export const conversation = pgTable(
     aiEnabled: boolean("ai_enabled").notNull().default(true),
     handoffAt: timestamp("handoff_at"),
     handoffReason: text("handoff_reason", {
-      // 008: manual_reply = el dueño respondió desde la app del teléfono.
+      // 008: manual_reply = una persona del negocio respondió (068: desde el
+      // teléfono o desde la Bandeja).
       // hostilidad = el lead se puso agresivo y el agente se retiró.
       enum: [
         "cliente",

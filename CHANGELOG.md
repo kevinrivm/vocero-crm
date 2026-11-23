@@ -20,6 +20,17 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ### Arreglado
 
+- **La IA ya no habla encima de una persona** (spec 068). Contestar desde la
+  Bandeja (texto, adjunto, reenvío o plantilla) pausa la IA de esa
+  conversación igual que contestar desde el teléfono: antes, si el cliente
+  volvía a escribir, el cerebro le contestaba encima. Se devuelve con
+  «Reactivar» en el panel. El motivo ahora dice «Respondió una persona del
+  equipo».
+- **Una respuesta citando ya no se pierde por el `131009` de Meta**: se
+  reintenta una vez como texto simple y el hilo la guarda sin la cita.
+- **El panel del contacto ya no arrastra datos del chat anterior** al cambiar
+  de conversación (antes, guardar en ese instante podía escribir las notas de
+  un contacto en otro).
 - **`#100/2388339` al suscribir la app en la Cuenta de WhatsApp ya no es
   fatal** si la Cuenta de mensajes quedó suscrita: desde el 28-oct-2026 Meta
   lo responde en las cuentas partidas, y el registro del webhook se cortaba

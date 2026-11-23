@@ -492,6 +492,25 @@ export async function POST(req: Request, ctx: Params) {
         { status: 400 }
       );
     }
+    /**
+     * 068 — Meta a veces rechaza con 131009 una respuesta que cita. El mock lo
+     * reproduce cuando el mensaje citado trae «rechaza-cita» en su wamid, que
+     * el self-test controla al inyectar el entrante.
+     */
+    const citado = (body.context as { message_id?: string } | undefined)?.message_id;
+    if (citado?.includes("rechaza-cita")) {
+      return Response.json(
+        {
+          error: {
+            message: "(#131009) Parameter value is not valid",
+            type: "OAuthException",
+            code: 131009,
+            fbtrace_id: "mock",
+          },
+        },
+        { status: 400 }
+      );
+    }
     // Meta responde 132000 si los parámetros no cuadran con las {{n}} de la
     // plantilla aprobada. El mock lo replica para que un desfase no pase.
     if (body.type === "template") {

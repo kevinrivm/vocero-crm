@@ -1,6 +1,7 @@
 import { apiError, withAuth } from "@/lib/api";
 import { getConversation } from "@/server/inbox/queries";
 import { SendError, sendMediaMessage } from "@/server/inbox/send";
+import { pausarIaTrasEnvioDeLaBandeja } from "@/server/inbox/pausa-manual";
 import { MediaValidationError } from "@/server/whatsapp/media";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,8 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
       replyToMessageId,
       voz,
     });
+    // 068: un adjunto mandado por una persona también pausa la IA.
+    await pausarIaTrasEnvioDeLaBandeja(session.organizationId, id);
     return Response.json({ messageId: result.messageId }, { status: 201 });
   } catch (err) {
     if (err instanceof MediaValidationError) {

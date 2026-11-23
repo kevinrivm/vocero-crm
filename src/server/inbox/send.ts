@@ -73,11 +73,18 @@ export class SendError extends Error {
     | "reply_unavailable";
   /** 008: presente cuando el fallo ocurrió TRAS persistir el mensaje (failed). */
   messageId?: string;
+  /** 068: código numérico de Meta (`errors[0].code`) cuando el rechazo vino de Graph. */
+  metaCode?: number | null;
 
-  constructor(code: SendError["code"], message: string) {
+  constructor(
+    code: SendError["code"],
+    message: string,
+    opts?: { metaCode?: number | null }
+  ) {
     super(message);
     this.name = "SendError";
     this.code = code;
+    this.metaCode = opts?.metaCode ?? null;
   }
 }
 
@@ -488,7 +495,42 @@ export async function sendText(input: {
     throw new SendError("text_too_long", textLimitMessage(canal));
   }
 
-  const cita = await resolverMensajeCitado(target, input.replyToMessageId);
+  // `let`: si Meta rechaza la cita (068), el mensaje sale y se guarda sin ella.
+  let cita = await resolverMensajeCitado(target, input.replyToMessageId);
+
+  const enviarPorWhatsapp = (conLaCita: boolean) =>
+    callGraphSend(
+      credentials!,
+      conCita(
+        {
+          messaging_product: "whatsapp",
+          ...target.destinatario,
+          type: "text",
+          text: { body: text },
+        },
+        conLaCita ? cita?.message.waMessageId : undefined
+      )
+    );
+
+  /**
+   * 068 — Meta a veces rechaza con 131009 («Parameter value is not valid») una
+   * respuesta que cita, y el cliente se quedaba sin respuesta. Si lo rechazado
+   * llevaba cita, se reintenta UNA vez como texto simple. Lo que queda en el
+   * hilo es lo que el cliente recibió: sin la cita. En el log solo va la forma
+   * del mensaje, nunca su texto.
+   */
+  const enviarPorWhatsappConRespaldo = async (): Promise<string> => {
+    try {
+      return await enviarPorWhatsapp(true);
+    } catch (err) {
+      if (!cita || !esRechazoDeParametro(err)) throw err;
+      console.warn(
+        `[envío] Meta rechazó con 131009 un texto que citaba en ${input.conversationId} (cuerpo=${text.length} car.); se reintenta como texto simple`
+      );
+      cita = null;
+      return enviarPorWhatsapp(false);
+    }
+  };
 
   const waMessageId = target.instagram
     ? await callInstagramSend(target, text)
@@ -496,18 +538,7 @@ export async function sendText(input: {
       ? await callMessengerSend(target, text)
       : target.tiktok
         ? await callTiktokSend(target, text)
-        : await callGraphSend(
-          credentials!,
-          conCita(
-            {
-              messaging_product: "whatsapp",
-              ...target.destinatario,
-              type: "text",
-              text: { body: text },
-            },
-            cita?.message.waMessageId
-          )
-        );
+        : await enviarPorWhatsappConRespaldo();
 
   const messageId = await persistOutbound({
     organizationId: input.organizationId,
@@ -748,6 +779,13 @@ export async function sendStructured(
   return { messageId };
 }
 
+/** 068 — Meta rechazó un parámetro del mensaje (131009), no la conexión ni el destino. */
+export const META_PARAMETRO_INVALIDO = 131009;
+
+function esRechazoDeParametro(err: unknown): boolean {
+  return err instanceof SendError && err.metaCode === META_PARAMETRO_INVALIDO;
+}
+
 /** Llama a Graph /messages y traduce errores de Meta a SendError. */
 export async function callGraphSend(
   credentials: Credentials,
@@ -771,9 +809,11 @@ export async function callGraphSend(
         );
       }
       if (err.status === 0 || err.status >= 500) {
-        throw new SendError("meta_unavailable", "Meta no está disponible ahora");
+        throw new SendError("meta_unavailable", "Meta no está disponible ahora", {
+          metaCode: err.code,
+        });
       }
-      throw new SendError("meta_error", err.message);
+      throw new SendError("meta_error", err.message, { metaCode: err.code });
     }
     throw err;
   }

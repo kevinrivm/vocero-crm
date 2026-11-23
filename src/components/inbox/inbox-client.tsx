@@ -592,7 +592,12 @@ export function InboxClient({
       >
         {selected && (
           <div className="h-full w-[320px] max-xl:w-[min(320px,88vw)]">
+            {/* 068: `key` por conversación. Sin ella, el estado local (notas,
+                borrador de la ficha, confirmación de borrado) sobrevivía al
+                cambio de chat, y guardar en ese instante escribía las notas
+                del contacto anterior en el nuevo. */}
             <ContactPanel
+              key={selected.id}
               conversation={selected}
               refreshKey={detailRev}
               onPatchConversation={patchConversation}
