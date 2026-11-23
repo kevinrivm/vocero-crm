@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "@/lib/auth/client";
+import { siguienteSeguro } from "@/lib/oauth-next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,13 @@ export default function LoginPage() {
           ? "Demasiados intentos. Espera unos minutos."
           : "Correo o contraseña incorrectos."
       );
+      return;
+    }
+    // 069 — Si el login lo pidió el OAuth del MCP, se vuelve a su pantalla de
+    // consentimiento (solo rutas propias de `/oauth/`: no es un redireccionador).
+    const next = siguienteSeguro(new URLSearchParams(window.location.search).get("next") ?? undefined);
+    if (next) {
+      window.location.assign(next);
       return;
     }
     // A la raíz, no a la Bandeja: ahí se decide si toca la guía de inicio

@@ -17,6 +17,13 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
   Cuenta de WhatsApp, en la de mensajes y en el número. Sin esas variables
   todo queda como antes. Pasos del panel de Meta en
   [docs/embedded-signup.md](docs/embedded-signup.md). Sin migración.
+- **API pública v1, MCP y conexión con Claude** (spec 069), detrás de
+  `API_V1=on` (apagada, toda la superficie responde 404). El dueño crea llaves
+  en Ajustes → API y MCP para n8n o scripts, o conecta Claude (claude.ai,
+  Claude Code) por OAuth para configurar y probar su agente desde la
+  conversación: `simulate_conversation` lo prueba sin WhatsApp con el cerebro
+  conectado. Guía en [docs/api-v1.md](docs/api-v1.md). **Migración
+  `0027_api_v1_mcp`** (se aplica sola al arrancar).
 
 ### Arreglado
 

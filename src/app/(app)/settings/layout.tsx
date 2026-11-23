@@ -1,4 +1,7 @@
 import { SettingsNav } from "@/components/settings/settings-nav";
+import { canConfigure } from "@/lib/auth/roles";
+import { getSessionOrNull } from "@/lib/auth/session";
+import { apiV1Enabled } from "@/server/api-v1/flag";
 import { agendaEnabled } from "@/server/agenda/flag";
 import { atribucionEnabled } from "@/server/attribution/flag";
 import { isChannelEnabled } from "@/server/channels/enabled";
@@ -8,9 +11,11 @@ import { isChannelEnabled } from "@/server/channels/enabled";
 // plataforma no haría nada.
 export const dynamic = "force-dynamic";
 
-export default function SettingsLayout({
+export default async function SettingsLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // 069 — Ajustes → API solo existe con la bandera y para quien configura.
+  const api = apiV1Enabled() && canConfigure((await getSessionOrNull())?.role);
   return (
     <div className="flex h-full flex-col">
       <header className="border-b px-4 py-3 sm:px-6 sm:py-4">
@@ -24,6 +29,7 @@ export default function SettingsLayout({
           instagram={isChannelEnabled("instagram")}
           messenger={isChannelEnabled("messenger")}
           tiktok={isChannelEnabled("tiktok")}
+          api={api}
         />
         <div className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
