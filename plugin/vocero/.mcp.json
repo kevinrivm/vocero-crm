@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "vocero": {
+      "type": "http",
+      "url": "${VOCERO_MCP_URL}",
+      "headers": {
+        "Authorization": "Bearer ${VOCERO_API_KEY}"
+      }
+    }
+  }
+}

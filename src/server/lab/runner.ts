@@ -335,7 +335,7 @@ async function runConversation(
  * falla solo si el despacho no se entregó: el cerebro no lo aceptó (cayó a
  * humano) o no lo recibió a tiempo.
  */
-async function turnoPorDespacho(
+export async function turnoPorDespacho(
   organizationId: string,
   conversationId: string,
   messageId: string,
@@ -403,7 +403,7 @@ async function turnoPorDespacho(
 }
 
 /** 033 — Que el cerebro olvide la conversación de prueba al terminar el caso. */
-async function olvidar(
+export async function olvidar(
   organizationId: string,
   conversationId: string,
   contactId: string
