@@ -1,0 +1,1513 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Vocero CRM · API pública v1",
+    "version": "1.0.0",
+    "description": "API para integrar el CRM de un negocio con n8n, scripts propios o agentes de IA (con el MCP en `/mcp`).\n\n**Encenderla.** La API existe solo con la variable de despliegue `API_V1=on`. Apagada, toda ruta responde 404 sin cuerpo, antes de revisar la llave.\n\n**Autenticación.** Cada petición lleva `Authorization: Bearer vk_…`. Las llaves se crean en Ajustes → API y MCP; el valor completo se muestra una sola vez. Un cliente MCP (claude.ai, ChatGPT, Claude Code) también puede conectarse por OAuth contra esta misma instancia y presenta un token `vat_…` con las mismas reglas.\n\n**Organización.** Una instancia de Vocero es un negocio: la organización sale de la llave y tiene que ser la de esta instancia.\n\n**Permisos.** Una llave actúa con los permisos de quien la creó, recortados a los suyos: `read` (leer), `operate` (crear y editar), `send` (mandar mensajes a clientes) y `configure` (configurar el agente: instrucciones, conocimiento, agenda, etapas, respuestas rápidas y la llave de la IA). `configure` solo funciona si quien creó la llave es dueño o administrador. Si quien la creó deja el equipo, la llave deja de servir.\n\n**Configuración.** Lo que falta para que el agente conteste está en `GET /agent/readiness` → `pendientes`, cada uno con su explicación y los enlaces donde se resuelve. No hay historial de versiones: lee antes de reemplazar. El agente que contesta (Nea u otro) se conecta en el despliegue (`BRAIN_DISPATCH_URL` + `BOT_API_KEY`); aquí solo se lee (`GET /brain`).\n\n**Límites.** 120 peticiones por minuto por llave y 20 envíos de mensajes por minuto. Al pasarse: 429 con `Retry-After`.\n\n**Errores.** Siempre `{ \"error\": { \"code\", \"message\" } }`. Códigos de la puerta: `missing_key`, `invalid_key`, `key_owner_without_access` (401), `insufficient_scope` (403), `rate_limited` (429)."
+  },
+  "servers": [
+    {
+      "url": "https://tu-crm.example.com/api/v1",
+      "description": "Se reemplaza por la URL pública de la instancia (APP_BASE_URL) al servirlo desde /api/v1/openapi.json"
+    }
+  ],
+  "security": [
+    {
+      "llave": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "llave": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "vk_…"
+      }
+    },
+    "parameters": {
+      "id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/openapi.json": {
+      "get": {
+        "summary": "Este documento",
+        "description": "Sin llave. Solo existe para los negocios con la API encendida; para el resto, 404. `servers` trae la URL base real del negocio que lo pide.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "El contrato OpenAPI 3.1"
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "summary": "Organización, llave, permisos y límites",
+        "description": "Permiso: read. Lo primero que conviene llamar para no adivinar.",
+        "responses": {
+          "200": {
+            "description": "`{ organization: {id, slug, name}, key: {id, name, prefix, last4}, scopes, capabilities, limits }`"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/contacts": {
+      "get": {
+        "summary": "Listar y buscar contactos",
+        "description": "Permiso: read. `q` busca por nombre (sin acentos ni mayúsculas) o por dígitos del teléfono.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage",
+            "in": "query",
+            "description": "Nombre de etapa del embudo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "archived",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`{ contacts: Contact[] }`"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear un contacto (y su lead)",
+        "description": "Permiso: operate.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "phone"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "phone": {
+                    "type": "string",
+                    "pattern": "^\\d{7,15}$",
+                    "description": "Dígitos con código de país, p. ej. 5215512345678"
+                  },
+                  "notes": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "anuncio",
+                      "organico",
+                      "referido",
+                      "conocido",
+                      "otro"
+                    ]
+                  },
+                  "stageId": {
+                    "type": "string",
+                    "description": "Etapa inicial; por defecto la primera abierta"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contacto creado"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/contacts/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/id"
+        }
+      ],
+      "get": {
+        "summary": "Un contacto con su ficha",
+        "description": "Permiso: read.",
+        "responses": {
+          "200": {
+            "description": "Contacto"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Editar un contacto",
+        "description": "Permiso: operate.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "notes": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 4000
+                  },
+                  "archived": {
+                    "type": "boolean"
+                  },
+                  "aiPaused": {
+                    "type": "boolean",
+                    "description": "Pausa o reanuda la IA para este contacto"
+                  },
+                  "ficha": {
+                    "type": "object",
+                    "additionalProperties": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contacto actualizado"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/conversations": {
+      "get": {
+        "summary": "Listar conversaciones",
+        "description": "Permiso: read. Con `since` (ISO 8601) solo las que cambiaron después.",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`{ conversations: Conversation[] }`"
+          }
+        }
+      }
+    },
+    "/conversations/{id}/messages": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/id"
+        }
+      ],
+      "get": {
+        "summary": "Mensajes de una conversación",
+        "description": "Permiso: read.",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`{ messages: Message[] }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Mandar un mensaje al cliente",
+        "description": "Permiso: send. Solo dentro de la ventana de 24 h de WhatsApp (fuera de ella: 409 `window_closed`; para reabrirla hace falta una plantilla: `POST /templates/send`, donde esté encendida). Igual que contestar desde la Bandeja, **pausa la IA** de esa conversación.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "text"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "text"
+                      },
+                      "text": {
+                        "type": "string",
+                        "maxLength": 4096
+                      },
+                      "replyToMessageId": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "location"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "location"
+                      },
+                      "location": {
+                        "type": "object",
+                        "required": [
+                          "latitude",
+                          "longitude"
+                        ],
+                        "properties": {
+                          "latitude": {
+                            "type": "number"
+                          },
+                          "longitude": {
+                            "type": "number"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "address": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "replyToMessageId": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "type",
+                      "contacts"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "contacts"
+                      },
+                      "contacts": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 5,
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "name",
+                            "phone"
+                          ],
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "phone": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      "replyToMessageId": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ messageId }`"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/conversations/{id}/notes": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/id"
+        }
+      ],
+      "get": {
+        "summary": "Notas internas de la conversación",
+        "description": "Permiso: read. Las ve el equipo, nunca el cliente.",
+        "responses": {
+          "200": {
+            "description": "`{ notas: Nota[] }`"
+          }
+        }
+      },
+      "post": {
+        "summary": "Escribir una nota interna",
+        "description": "Permiso: operate. No envía nada al cliente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "texto"
+                ],
+                "properties": {
+                  "texto": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "`{ nota }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/pipeline/stages": {
+      "get": {
+        "summary": "Etapas del embudo",
+        "description": "Permiso: read.",
+        "responses": {
+          "200": {
+            "description": "`{ stages: Stage[] }`"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear una etapa",
+        "description": "Permiso: configure. Se agrega al final del embudo.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 60
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "`{ stage }`"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/leads/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/id"
+        }
+      ],
+      "patch": {
+        "summary": "Mover un lead de etapa o cambiar su monto y prioridad",
+        "description": "Permiso: operate. Sin `stageId` no se mueve nada.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "stageId": {
+                    "type": "string"
+                  },
+                  "position": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "lossReason": {
+                    "type": "string",
+                    "enum": [
+                      "precio",
+                      "no_es_perfil",
+                      "sin_presupuesto",
+                      "eligio_otro",
+                      "nunca_contesto",
+                      "otro"
+                    ]
+                  },
+                  "lossNote": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "amountCents": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 0
+                  },
+                  "currency": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "minLength": 3,
+                    "maxLength": 3
+                  },
+                  "priority": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "alta",
+                      "media",
+                      "baja",
+                      null
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Lead actualizado"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/bookings": {
+      "get": {
+        "summary": "Citas en un rango",
+        "description": "Permiso: read. Solo si la agenda está encendida en la instancia. `from` y `to` van juntos, en formato AAAA-MM-DD y con 92 días como máximo; sin ellos, las próximas citas.",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`{ bookings: Booking[] }`"
+          }
+        }
+      },
+      "post": {
+        "summary": "Agendar una cita o bloquear un horario",
+        "description": "Permiso: operate.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "contactId",
+                      "startUtc"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "session"
+                      },
+                      "contactId": {
+                        "type": "string"
+                      },
+                      "conversationId": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "startUtc": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "notes": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "attendeeEmail": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "email"
+                      },
+                      "reminderConsent": {
+                        "type": "boolean"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "startUtc",
+                      "durationMinutes"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "block"
+                      },
+                      "startUtc": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "durationMinutes": {
+                        "type": "integer",
+                        "minimum": 5,
+                        "maximum": 600
+                      },
+                      "notes": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Cita creada"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "summary": "Servidor MCP (Model Context Protocol)",
+        "description": "Permiso: read para conectarse; las herramientas que operan exigen operate y las de configurar el agente, configure (van primero en `tools/list`). El MCP no manda mensajes al cliente, ni con `send`: para eso está `POST /conversations/{id}/messages`. Transporte Streamable HTTP sin estado: cada POST lleva un mensaje JSON-RPC 2.0 (`initialize`, `tools/list`, `tools/call`, `prompts/list`, `prompts/get`, `ping`). El prompt `configurar_vocero` es la guía para configurar bien el agente y la respuesta es `application/json`. Sin flujo SSE: GET responde 405. `tools/list` solo enseña las herramientas que la llave puede usar. Para conectarlo desde Claude Code: `claude mcp add --transport http vocero https://tu-crm.example.com/api/v1/mcp --header \"Authorization: Bearer vk_…\"`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "jsonrpc",
+                  "method"
+                ],
+                "properties": {
+                  "jsonrpc": {
+                    "const": "2.0"
+                  },
+                  "id": {
+                    "type": [
+                      "string",
+                      "integer"
+                    ]
+                  },
+                  "method": {
+                    "type": "string"
+                  },
+                  "params": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta JSON-RPC. Un error de una herramienta (404, ventana cerrada…) llega como `result.isError: true` con el `{ error }` de la API en el texto."
+          },
+          "202": {
+            "description": "Notificación recibida (sin cuerpo)"
+          },
+          "401": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/agent/profile": {
+      "get": {
+        "summary": "Configuración del agente",
+        "description": "Permiso: configure. Nombre, tono, instrucciones, reglas de escalado, saludo, rol, herramientas y si está encendido. También dice si la IA del negocio está lista (`aiConfigured`, `aiMensaje`) y si la agenda existe en esta instancia (`agendaEnabled`).",
+        "responses": {
+          "200": {
+            "description": "`{ profile: { enabled, name, tone, instructions, escalationRules, greeting, role, tools }, agendaEnabled, aiConfigured, aiMensaje }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Cambiar la configuración del agente",
+        "description": "Permiso: configure. Solo los campos que mandes. Encender (`enabled: true`) exige un agente conectado y sano: si no, 409 `sin_cerebro`. Revisa antes `GET /agent/readiness`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Encender o apagar el agente"
+                  },
+                  "name": {
+                    "type": "string",
+                    "maxLength": 60,
+                    "description": "Nombre del agente"
+                  },
+                  "tone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 500,
+                    "description": "Cómo habla"
+                  },
+                  "instructions": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 8000,
+                    "description": "Instrucciones: qué hace el negocio, cómo atender, qué ofrecer"
+                  },
+                  "escalationRules": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 4000,
+                    "description": "Cuándo pasar la conversación a una persona"
+                  },
+                  "greeting": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "maxLength": 1000,
+                    "description": "Saludo del primer mensaje"
+                  },
+                  "tools": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "ficha",
+                        "etapa",
+                        "agendar",
+                        "reprogramar",
+                        "salida",
+                        "escalar"
+                      ]
+                    },
+                    "description": "Lo que el agente puede hacer. `escalar` se guarda siempre."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ ok: true }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/agent/readiness": {
+      "get": {
+        "summary": "¿Está listo para contestar? Qué falta",
+        "description": "Permiso: configure. Cada paso (configuración del agente, IA, WhatsApp, el agente conectado, agenda) con su estado. `pendientes` trae solo lo que falta, cada uno con `explicacion`, `problema`, `enlaces` (URLs absolutas: la del proveedor, como https://openrouter.ai/settings/keys, y la pantalla exacta del CRM) y `api` (la ruta de esta API que lo resuelve, si la hay). Dale esos enlaces al usuario tal cual.",
+        "responses": {
+          "200": {
+            "description": "`{ steps, enabled, pendientes: { key, label, status, explicacion, problema, enlaces: { titulo, url }[], api }[] }`"
+          }
+        }
+      }
+    },
+    "/agent/simulate": {
+      "post": {
+        "summary": "Simular una conversación con el agente",
+        "description": "Permiso: configure. Le escribes al agente como si fueras un cliente y devuelve lo que contestó, con la configuración real del negocio y el agente que de verdad contesta (Nea u otro), por el mismo camino que el Laboratorio: una conversación de prueba que nunca toca WhatsApp y que se borra al terminar; una cita agendada es de prueba y no llega a ningún calendario. Cada simulación GASTA saldo del proveedor de IA del negocio. Funciona con el agente apagado, pero necesita uno conectado: si no, 409 `sin_cerebro` con `enlaces`. Cada turno espera la respuesta real (de 5 a 30 s; hasta 90 s antes de darlo por fallido). Máximo 10 simulaciones por minuto y una a la vez por negocio (409 `simulacion_en_curso`).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "turns"
+                ],
+                "properties": {
+                  "turns": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 2000
+                    },
+                    "description": "Lo que escribe el cliente, un mensaje por turno, en orden."
+                  },
+                  "history": {
+                    "type": "array",
+                    "maxItems": 40,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "role",
+                        "text"
+                      ],
+                      "properties": {
+                        "role": {
+                          "type": "string",
+                          "enum": [
+                            "customer",
+                            "agent"
+                          ]
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 2000
+                        }
+                      }
+                    },
+                    "description": "La conversación de antes (cliente y agente), si la hay."
+                  },
+                  "contactName": {
+                    "type": "string",
+                    "maxLength": 80,
+                    "description": "Cómo se llama el cliente de prueba (por defecto «Cliente de prueba»)."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ simulated: true, notice, turns: [{ customer, replies: string[], actions: [{ type: handoff, reason } | { type: stage, from, to } | { type: booking, scheduledAt, durationMinutes, status }], error: string | null, skipped?: \"handoff\" }] }`. Un turno sin `replies` ni `error` es un silencio del agente; `skipped: \"handoff\"` quiere decir que la conversación ya estaba con una persona."
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          },
+          "429": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/knowledge": {
+      "get": {
+        "summary": "Base de conocimiento",
+        "description": "Permiso: configure. Preguntas y respuestas (`qa`) y bloques de texto (`block`) que el agente consulta, en orden de creación.",
+        "responses": {
+          "200": {
+            "description": "`{ entries: KbEntry[] }`"
+          }
+        }
+      },
+      "post": {
+        "summary": "Agregar conocimiento",
+        "description": "Permiso: configure. Una pregunta con su respuesta (`kind: \"qa\"`) o un bloque de texto (`kind: \"block\"`). Todo el conocimiento va en el contexto del agente: revisa `GET /knowledge/size` (avisa desde ~24.000 caracteres).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "question",
+                      "answer"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "qa"
+                      },
+                      "question": {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      "answer": {
+                        "type": "string",
+                        "maxLength": 4000
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "content"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "block"
+                      },
+                      "content": {
+                        "type": "string",
+                        "maxLength": 8000
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "`{ entry }`"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/knowledge/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/id"
+        }
+      ],
+      "patch": {
+        "summary": "Editar conocimiento",
+        "description": "Permiso: configure. Solo los campos de su tipo: `question`/`answer` en una `qa`, `content` en un `block`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "question": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "answer": {
+                    "type": "string",
+                    "maxLength": 4000
+                  },
+                  "content": {
+                    "type": "string",
+                    "maxLength": 8000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ entry }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Borrar conocimiento",
+        "description": "Permiso: configure.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "`{ deleted: true }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/knowledge/size": {
+      "get": {
+        "summary": "Tamaño del conocimiento",
+        "description": "Permiso: configure. Caracteres usados y desde cuántos conviene recortar (todo el conocimiento va en el contexto del agente).",
+        "responses": {
+          "200": {
+            "description": "`{ chars, warnAt, warning }`"
+          }
+        }
+      }
+    },
+    "/calendar/settings": {
+      "get": {
+        "summary": "Ajustes de la agenda",
+        "description": "Permiso: configure. Horario semanal, duración de las citas, márgenes, anticipación, zona horaria y cómo se entrega la reunión (conector). Sin configurar, devuelve los valores por defecto. Nunca devuelve credenciales de Google o Zoom. Si la agenda no está encendida en esta instancia (`AGENDA=on`), 404.",
+        "responses": {
+          "200": {
+            "description": "`{ settings }`"
+          }
+        }
+      },
+      "put": {
+        "summary": "Cambiar la agenda",
+        "description": "Permiso: configure. Solo los campos que mandes. Los números fuera de rango se recortan y los intervalos mal escritos se descartan; una zona horaria desconocida es 422. Conectar Google o Zoom se hace en el CRM (Ajustes → Agenda), no aquí.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "weeklyHours": {
+                    "type": "object",
+                    "description": "Por día de la semana, lista de intervalos `{ start: \"09:00\", end: \"14:00\" }`. Usa las mismas claves que devuelve GET.",
+                    "additionalProperties": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "start": {
+                            "type": "string"
+                          },
+                          "end": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "slotMinutes": {
+                    "type": "number",
+                    "description": "Duración de cada cita"
+                  },
+                  "bufferMinutes": {
+                    "type": "number",
+                    "description": "Margen entre citas"
+                  },
+                  "minNoticeHours": {
+                    "type": "number",
+                    "description": "Anticipación mínima"
+                  },
+                  "maxDaysAhead": {
+                    "type": "number",
+                    "description": "Hasta cuántos días adelante se agenda"
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "description": "Zona IANA, p. ej. America/Mexico_City"
+                  },
+                  "connector": {
+                    "type": "string",
+                    "enum": [
+                      "enlace-fijo",
+                      "zoom",
+                      "google"
+                    ],
+                    "description": "Cómo se entrega la reunión"
+                  },
+                  "meetingLink": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Enlace fijo de reunión (con `enlace-fijo`)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ settings }`"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/calendar/availability": {
+      "get": {
+        "summary": "Horarios libres",
+        "description": "Permiso: configure. Para revisar que la agenda quedó como se quería. Sin huecos: `{ slots: [] }`.",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`{ slots: { startUtc, endUtc, dayIso, dayLabel, time }[] }`"
+          }
+        }
+      }
+    },
+    "/pipeline/stages/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/id"
+        }
+      ],
+      "patch": {
+        "summary": "Renombrar u ordenar una etapa",
+        "description": "Permiso: configure.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "maxLength": 60
+                  },
+                  "position": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ stage }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Borrar una etapa",
+        "description": "Permiso: configure. Las de ganado y perdido no se borran (409). Si tiene tarjetas, `?moveTo=<etapa>` las mueve antes.",
+        "parameters": [
+          {
+            "name": "moveTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`{ deleted, movedLeads }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/quick-replies": {
+      "get": {
+        "summary": "Respuestas rápidas",
+        "description": "Permiso: configure. Los textos que el equipo inserta con `/atajo` en la Bandeja.",
+        "responses": {
+          "200": {
+            "description": "`{ respuestas, puedeEditar }`"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear una respuesta rápida",
+        "description": "Permiso: configure.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "atajo",
+                  "texto"
+                ],
+                "properties": {
+                  "atajo": {
+                    "type": "string",
+                    "description": "1 a 32 letras, números, - o _"
+                  },
+                  "texto": {
+                    "type": "string",
+                    "maxLength": 4096
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "`{ respuesta }`"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/quick-replies/{id}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/id"
+        }
+      ],
+      "patch": {
+        "summary": "Editar una respuesta rápida",
+        "description": "Permiso: configure.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "atajo",
+                  "texto"
+                ],
+                "properties": {
+                  "atajo": {
+                    "type": "string"
+                  },
+                  "texto": {
+                    "type": "string",
+                    "maxLength": 4096
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ respuesta }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Borrar una respuesta rápida",
+        "description": "Permiso: configure.",
+        "responses": {
+          "204": {
+            "description": "Borrada"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/brain": {
+      "get": {
+        "summary": "Quién contesta",
+        "description": "Permiso: configure. El agente conectado (Nea u otro), si contesta y, si no, por qué (`sin_cerebro`, `apagado`, …). Se conecta en el despliegue con `BRAIN_DISPATCH_URL` y `BOT_API_KEY`; esta API no lo cambia. Nunca devuelve secretos.",
+        "responses": {
+          "200": {
+            "description": "El estado de «quién responde a tus clientes», el mismo de la pantalla Agente."
+          }
+        }
+      }
+    },
+    "/agent/preset": {
+      "post": {
+        "summary": "Cargar un rol de agente",
+        "description": "Permiso: configure. Carga un rol completo: REEMPLAZA las instrucciones y las reglas de escalado, y deja las herramientas del rol.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "role"
+                ],
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "calificador"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ ok: true, role }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/ai": {
+      "get": {
+        "summary": "Estado del proveedor de IA",
+        "description": "Permiso: configure. Proveedor, modelo, estado y los últimos 4 de la llave. La llave NUNCA se lee. Si el entorno trae `OPENROUTER_*`, dice el respaldo que aplica mientras no haya nada guardado.",
+        "responses": {
+          "200": {
+            "description": "La misma vista de Ajustes → IA."
+          }
+        }
+      },
+      "put": {
+        "summary": "Guardar proveedor, modelo y llave de la IA",
+        "description": "Permiso: configure. La llave se guarda cifrada; la respuesta solo trae los últimos 4. Sin `token` solo cambia proveedor o modelo. Con OpenRouter la llave se crea en https://openrouter.ai/settings/keys. No hay DELETE por la API.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "provider",
+                  "model"
+                ],
+                "properties": {
+                  "provider": {
+                    "type": "string",
+                    "enum": [
+                      "openrouter",
+                      "openai_compatible"
+                    ]
+                  },
+                  "model": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "token": {
+                    "type": "string",
+                    "minLength": 8,
+                    "maxLength": 4096,
+                    "description": "La llave (sk-or-…)"
+                  },
+                  "baseUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Obligatoria con `openai_compatible`"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "La vista de Ajustes → IA ya con lo guardado."
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    }
+  }
+}

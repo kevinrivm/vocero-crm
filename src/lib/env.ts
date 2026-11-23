@@ -43,6 +43,10 @@ export const envSchema = z.object({
   // conversacion, no se le reporta nada a Meta y la superficie da 404.
   // Ej.: ATRIBUCION=on
   ATRIBUCION: z.string().optional(),
+  // 069: API publica v1 (/api/v1/*), su MCP y el OAuth para conectarlo desde
+  // claude.ai o ChatGPT. Apagada por defecto: sin ella toda esa superficie y
+  // Ajustes -> API responden 404. Ej.: API_V1=on
+  API_V1: z.string().optional(),
   // 015: bases de los conectores. Solo se sobreescriben para apuntar a los
   // mocks en el self-test; en producción se usan las reales.
   ZOOM_BASE_URL: z.string().url().default("https://api.zoom.us/v2"),

@@ -1,0 +1,9 @@
+{
+  "name": "vocero",
+  "version": "0.1.0",
+  "description": "Configura y opera tu Vocero CRM desde Claude: el MCP de Vocero y la guía para configurar el agente de WhatsApp.",
+  "author": {
+    "name": "Vocero"
+  },
+  "homepage": "https://vocerocrm.com"
+}

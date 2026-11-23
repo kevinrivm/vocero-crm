@@ -1,0 +1,236 @@
+<title>Probar mi agente</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --panel: #ffffff;
+    --ink: #1b1b1b;
+    --muted: #6b6760;
+    --line: #e2ddd3;
+    --cliente: #d9fdd3;
+    --agente: #ffffff;
+    --accent: #0d5bff;
+    --aviso: #fff4d6;
+    --aviso-ink: #6b4e00;
+    --error: #fde2e1;
+    --error-ink: #8a1c17;
+    --chip: #eef2ff;
+    --chip-ink: #233a8a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1112;
+      --panel: #181b1d;
+      --ink: #ececec;
+      --muted: #9a9a9a;
+      --line: #2a2e31;
+      --cliente: #144d37;
+      --agente: #202427;
+      --accent: #5b8cff;
+      --aviso: #3a3115;
+      --aviso-ink: #f2d98b;
+      --error: #3d1b1a;
+      --error-ink: #f4b4b0;
+      --chip: #1e2645;
+      --chip-ink: #b9c8ff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1112; --panel: #181b1d; --ink: #ececec; --muted: #9a9a9a; --line: #2a2e31;
+    --cliente: #144d37; --agente: #202427; --accent: #5b8cff; --aviso: #3a3115; --aviso-ink: #f2d98b;
+    --error: #3d1b1a; --error-ink: #f4b4b0; --chip: #1e2645; --chip-ink: #b9c8ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex; justify-content: center;
+  }
+  .app { width: 100%; max-width: 720px; height: 100%; display: flex; flex-direction: column; padding: 0 16px; }
+  header { padding: 16px 0 10px; border-bottom: 1px solid var(--line); }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+  .aviso { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--aviso); color: var(--aviso-ink); font-size: 13px; }
+  #chat { flex: 1; overflow-y: auto; padding: 16px 0; display: flex; flex-direction: column; gap: 8px; }
+  .vacio { margin: auto; text-align: center; color: var(--muted); max-width: 420px; }
+  .burbuja { max-width: 82%; padding: 8px 11px; border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere; box-shadow: 0 1px 0 rgba(0,0,0,.06); }
+  .cliente { align-self: flex-end; background: var(--cliente); border-top-right-radius: 3px; }
+  .agente { align-self: flex-start; background: var(--agente); border: 1px solid var(--line); border-top-left-radius: 3px; }
+  .acciones { align-self: flex-start; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: var(--chip); color: var(--chip-ink); }
+  .silencio { align-self: flex-start; font-size: 13px; color: var(--muted); font-style: italic; }
+  .error { align-self: stretch; padding: 8px 10px; border-radius: 8px; background: var(--error); color: var(--error-ink); font-size: 13px; }
+  .pensando { align-self: flex-start; color: var(--muted); font-size: 13px; }
+  form { display: flex; gap: 8px; padding: 10px 0 16px; border-top: 1px solid var(--line); }
+  textarea {
+    flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit;
+  }
+  button { border: 0; border-radius: 10px; padding: 0 16px; font: inherit; font-weight: 600; background: var(--accent); color: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  .secundario { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 500; padding: 6px 10px; font-size: 13px; white-space: nowrap; flex: none; }
+  .barra { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; }
+  .uso { font-size: 12px; color: var(--muted); }
+</style>
+
+<div class="app">
+  <header>
+    <h1>Probar mi agente · <span id="negocio"></span></h1>
+    <p>Escribe como si fueras un cliente. Contesta tu agente de verdad, con tu configuración, pero nada sale por WhatsApp y las citas son simuladas.</p>
+    <div class="aviso">Cada mensaje gasta saldo de tu proveedor de IA.</div>
+    <div class="barra">
+      <span class="uso" id="uso"></span>
+      <button class="secundario" id="reiniciar" type="button">Empezar de nuevo</button>
+    </div>
+  </header>
+  <main id="chat" aria-live="polite">
+    <div class="vacio" id="vacio">Escribe abajo el primer mensaje de un cliente, por ejemplo «Hola, ¿tienen citas esta semana?».</div>
+  </main>
+  <form id="form">
+    <textarea id="texto" rows="1" maxlength="2000" placeholder="Escribe como cliente…" aria-label="Mensaje del cliente"></textarea>
+    <button id="enviar" type="submit">Enviar</button>
+  </form>
+</div>
+
+<script>
+  // Lo llena Claude al abrir la ventana: el nombre del conector de Vocero del
+  // usuario (el mismo que declara la capacidad mcp) y el del negocio.
+  const CONECTOR = "__CONECTOR__";
+  const NEGOCIO = "__NEGOCIO__";
+  const HERRAMIENTA = "simulate_conversation";
+  const MAX_HISTORIAL = 40;
+
+  const $ = (id) => document.getElementById(id);
+  const chat = $("chat"), texto = $("texto"), enviar = $("enviar");
+  $("negocio").textContent = NEGOCIO;
+
+  let historial = [];
+  let ocupado = false;
+  let gasto = { llamadas: 0, mensajes: 0 };
+  // Se pide al primer mensaje, no al cargar: el visor puede tardar en servirlo.
+  let mcpPromesa = null;
+  const obtenerMcp = () => {
+    if (!mcpPromesa) {
+      mcpPromesa = window.claude && window.claude.use ? window.claude.use("mcp").catch(() => null) : Promise.resolve(null);
+    }
+    return mcpPromesa;
+  };
+
+  const ACCIONES = {
+    availability: (a) => a.slots ? `Consultó horarios (${a.slots})` : "Consultó horarios: no encontró",
+    booking_simulated: (a) => `Agendó una cita simulada · ${hora(a.startUtc)}`,
+    booking_rescheduled_simulated: (a) => `Movió la cita simulada · ${hora(a.startUtc)}`,
+    booking_cancelled_simulated: () => "Canceló la cita simulada",
+    handoff: (a) => `Pasó la conversación a una persona${a.reason ? ` (${a.reason})` : ""}`,
+    ficha: (a) => `Anotó en la ficha: ${Object.keys(a.fields || {}).join(", ")}`,
+    stage: (a) => `Lo movió a la etapa «${a.stage}»`,
+    coordination_consent: () => "Registró el permiso para coordinar",
+  };
+  function hora(iso) {
+    try { return new Date(iso).toLocaleString("es", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }); }
+    catch { return iso; }
+  }
+
+  function quitarVacio() { const v = $("vacio"); if (v) v.remove(); }
+  function agregar(clase, contenido) {
+    quitarVacio();
+    const el = document.createElement("div");
+    el.className = clase;
+    el.textContent = contenido;
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+    return el;
+  }
+  function acciones(lista) {
+    if (!lista.length) return;
+    const fila = document.createElement("div");
+    fila.className = "acciones";
+    for (const a of lista) {
+      const c = document.createElement("span");
+      c.className = "chip";
+      c.textContent = (ACCIONES[a.type] || (() => a.type))(a);
+      fila.appendChild(c);
+    }
+    chat.appendChild(fila);
+    chat.scrollTop = chat.scrollHeight;
+  }
+  function mostrarUso() {
+    $("uso").textContent = gasto.mensajes ? `${gasto.mensajes} mensaje(s) probados · ${gasto.llamadas} llamada(s) al modelo` : "";
+  }
+
+  function mensajeDeError(e) {
+    const code = e && e.code;
+    if (code === "server_not_connected" || code === "selection_required" || code === "server_not_found")
+      return `No encuentro tu conector «${CONECTOR}». Agrégalo en claude.ai → Ajustes → Conectores y vuelve a abrir esta ventana. Mientras, puedes seguir probando en el chat con Claude.`;
+    if (code === "needs_reauth") return `Tu conector «${CONECTOR}» necesita volver a conectarse (claude.ai → Ajustes → Conectores).`;
+    if (code === "not_in_manifest" || code === "approval_required" || code === "consent_required")
+      return "Esta ventana necesita tu permiso para usar el conector de Vocero. Vuelve a enviar el mensaje y acepta el permiso.";
+    if (code === "cancelled") return "Cancelaste el envío; no se gastó nada.";
+    if (code === "tool_error") {
+      // El MCP de Vocero devuelve el error de la API como texto JSON.
+      let r = e.result && e.result.structuredContent;
+      if (!r) { try { r = JSON.parse(e.result.content[0].text); } catch { r = null; } }
+      const err = r && r.error;
+      if (err && err.code === "rate_limited") return "Llegaste al máximo de simulaciones por minuto. Espera un minuto y vuelve a enviar.";
+      if (err && (err.code === "sin_ia" || err.code === "sin_nea")) {
+        const enlaces = (err.enlaces || []).map((x) => `${x.titulo}: ${x.url}`).join("\n");
+        return `${err.message}\n${enlaces}`;
+      }
+      return `Vocero no pudo correr la simulación: ${(err && err.message) || e.message || "error"}`;
+    }
+    if (code === "server_unavailable" || code === "upstream_error")
+      return "Vocero no contestó a tiempo. No sabemos si llegó a pensar: vuelve a enviar en un momento.";
+    return `No se pudo simular (${code || "error"}).`;
+  }
+
+  async function mandar(textoCliente) {
+    const mcp = await obtenerMcp();
+    if (!mcp) {
+      mcpPromesa = null; // otra oportunidad en el siguiente mensaje
+      agregar("error", "Esta vista no puede usar tu conector de Vocero. Ábrela en claude.ai o en la app de Claude, o sigue probando en el chat con Claude.");
+      return;
+    }
+    agregar("burbuja cliente", textoCliente);
+    const espera = agregar("pensando", "Tu agente está escribiendo…");
+    ocupado = true; enviar.disabled = true;
+    try {
+      const r = await mcp.callTool(CONECTOR, HERRAMIENTA, {
+        turns: [textoCliente],
+        history: historial.slice(-MAX_HISTORIAL),
+      }, { cache: false });
+      espera.remove();
+      const datos = r.payload || {};
+      const turno = (datos.turns || [])[0] || { replies: [], actions: [] };
+      historial.push({ role: "customer", text: textoCliente });
+      for (const t of turno.replies) {
+        agregar("burbuja agente", t);
+        historial.push({ role: "agent", text: t });
+      }
+      acciones(turno.actions || []);
+      if (!turno.replies.length) agregar("silencio", "(el agente no contestó: si pasó la conversación a una persona, ya no responde)");
+      gasto.mensajes += 1;
+      gasto.llamadas += (datos.usage && datos.usage.llmCalls) || 0;
+      mostrarUso();
+    } catch (e) {
+      espera.remove();
+      agregar("error", mensajeDeError(e));
+    } finally {
+      ocupado = false; enviar.disabled = false; texto.focus();
+    }
+  }
+
+  $("form").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    const t = texto.value.trim();
+    if (!t || ocupado) return;
+    texto.value = "";
+    mandar(t);
+  });
+  texto.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); $("form").requestSubmit(); }
+  });
+  $("reiniciar").addEventListener("click", () => {
+    historial = [];
+    chat.innerHTML = '<div class="vacio" id="vacio">Conversación nueva. Escribe el primer mensaje de un cliente.</div>';
+  });
+</script>
