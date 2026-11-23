@@ -43,8 +43,8 @@ los pasos visuales de Playwright.
    ubicación con enlace, y el adjunto roto con "contenido no disponible".
 2. Composer: clip 📎 abre el picker; imagen seleccionada muestra preview con
    nombre/tamaño; el texto pasa a ser "pie del adjunto".
-3. Panel de contacto: la conversación pausada muestra "Respondiste desde el
-   teléfono — IA en pausa" y el botón de reactivar funciona.
+3. Panel de contacto: la conversación pausada muestra "Respondió una persona del
+   equipo — IA en pausa" y el botón de reactivar funciona.
 
 ## En vivo (producción, reglas Evolution)
 

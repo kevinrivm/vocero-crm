@@ -711,19 +711,51 @@ async function personaEnLaVentana(cerebro) {
     JSON.stringify(st?.dispatch?.lastFailure)
   );
   const despues = (await conversaciones()).find((c) => c.id === conv.id);
+  /**
+   * 068: contestar desde la Bandeja pausa la IA, igual que contestar desde el
+   * teléfono. Antes la IA seguía encendida y el siguiente mensaje del cliente
+   * se despachaba: el cerebro contestaba encima de una persona.
+   */
   ok(
-    "la conversación NO pasó a un humano: la IA sigue encendida",
-    despues?.aiEnabled === true && !despues?.handoffAt,
+    "068: la IA queda en pausa porque contestó una persona (manual_reply), no por error",
+    despues?.aiEnabled === false && despues?.handoffReason === "manual_reply",
     JSON.stringify({ ai: despues?.aiEnabled, handoffAt: despues?.handoffAt, reason: despues?.handoffReason })
   );
 
+  console.log("\n== 068·AC2: el cliente vuelve a escribir y el cerebro no le contesta encima ==");
   const otro = `¿y los domingos? ${i} ${MARCA}`;
   await entranteWa(telefono(30 + i), nombre, otro);
-  const llego = await hasta(() => cerebro.de(conv.id)[0], COALESCE + 12000);
+  await entranteGuardado(conv.id, otro);
+  await sleep(TRAS_LA_VENTANA);
   ok(
-    "el siguiente mensaje del cliente sí se despacha, y solo ese",
-    llego?.evento.messages.length === 1 && llego.evento.messages[0].text === otro,
-    JSON.stringify(llego?.evento.messages.map((m) => m.text))
+    "068: el mensaje está en la bandeja, pero no llegó al cerebro",
+    cerebro.de(conv.id).length === 0,
+    JSON.stringify(cerebro.de(conv.id).map((r) => r.evento?.messages?.map((m) => m.text)))
+  );
+
+  console.log("\n== 068·AC3: el dueño reactiva la IA y el siguiente mensaje sí se despacha ==");
+  const reactivar = await api(`/api/conversations/${conv.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ reactivate: true }),
+  });
+  ok("el dueño reactiva la IA de la conversación", reactivar.res.ok, String(reactivar.res.status));
+  const tercero = `¿abren temprano? ${i} ${MARCA}`;
+  await entranteWa(telefono(30 + i), nombre, tercero);
+  const llego = await hasta(() => cerebro.de(conv.id)[0], COALESCE + 12000);
+  /**
+   * Viajan los dos que nadie contestó (el de la pausa y el nuevo), como en la
+   * 025: el despacho recuerda qué debe. El que ya contestó la persona, nunca.
+   */
+  const textos = llego?.evento.messages.map((m) => m.text) ?? [];
+  ok(
+    "el siguiente despacho trae lo que nadie contestó: el de la pausa y el nuevo",
+    JSON.stringify(textos) === JSON.stringify([otro, tercero]),
+    JSON.stringify(textos)
+  );
+  ok(
+    "y no repite el mensaje que ya contestó la persona",
+    !textos.some((t) => t.startsWith("¿a qué hora cierran?")),
+    JSON.stringify(textos)
   );
 }
 

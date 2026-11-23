@@ -139,6 +139,8 @@ conversación ya tenga una respuesta después.
   cloud lo confirmó el dueño el 12-oct: una respuesta manual en la ventana
   salda el mensaje.) La IA de la conversación sigue encendida: el siguiente
   mensaje del cliente sí lo atiende el agente.
+  *(Cambió en la 068: contestar desde la bandeja ahora pausa la IA con
+  `manual_reply`, igual que contestar desde el teléfono.)*
 
 ### Historia 3 — El agente incluido con un mensaje en vuelo (P1)
 

@@ -26,6 +26,7 @@ import { registrarAnuncioDeOrigen } from "@/server/attribution/store";
 import { onLeadActivity } from "@/server/inbox/lead-activity";
 import { despachoActivo } from "@/server/brains/config";
 import { despacharAlCerebro } from "@/server/dispatch/encolar";
+import { pausarIaPorRespuestaManual } from "@/server/inbox/pausa-manual";
 import {
   aCitaDto,
   citaDelWebhook,
@@ -409,26 +410,8 @@ async function ingestManualEcho(
     .where(eq(schema.conversation.id, conversation.id));
 
   // Pausa automática de la IA, idempotente y atómica (solo si no hay handoff).
-  const paused = await db
-    .update(schema.conversation)
-    .set({
-      aiEnabled: false,
-      handoffAt: new Date(),
-      handoffReason: "manual_reply",
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(schema.conversation.id, conversation.id),
-        sql`${schema.conversation.handoffAt} is null`
-      )
-    )
-    .returning();
-  if (paused[0]) {
-    console.log(
-      `[webhook] respuesta manual del dueño en ${conversation.id} — IA pausada (manual_reply)`
-    );
-  }
+  // 068: la misma que usa la Bandeja (`pausa-manual.ts`).
+  await pausarIaPorRespuestaManual(organizationId, conversation.id);
 
   publish(organizationId, {
     type: "message.new",

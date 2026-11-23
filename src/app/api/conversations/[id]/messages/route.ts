@@ -8,6 +8,7 @@ import { getConversation, listMessages } from "@/server/inbox/queries";
 import { serializeMessage } from "@/server/inbox/ingest";
 import { resolverCitas } from "@/server/inbox/quotes";
 import { SendError, sendStructured, sendText } from "@/server/inbox/send";
+import { pausarIaTrasEnvioDeLaBandeja } from "@/server/inbox/pausa-manual";
 
 export const dynamic = "force-dynamic";
 
@@ -125,6 +126,9 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
               contacts: data.contacts,
               replyToMessageId: data.replyToMessageId,
             });
+    // 068: contestó una persona; la IA se hace a un lado, igual que si lo
+    // hubiera hecho desde el teléfono. Solo tras un envío que salió.
+    await pausarIaTrasEnvioDeLaBandeja(session.organizationId, id);
     return Response.json({ messageId: result.messageId });
   } catch (err) {
     if (err instanceof SendError) {

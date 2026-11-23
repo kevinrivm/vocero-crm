@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { apiError, parseBody, withAuth } from "@/lib/api";
 import { SendError } from "@/server/inbox/send";
+import { pausarIaTrasEnvioDeLaBandeja } from "@/server/inbox/pausa-manual";
 import {
   sendTemplate,
   TemplateError,
@@ -32,6 +33,8 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
         body.data.variables ??
         (body.data.variable === undefined ? undefined : [body.data.variable]),
     });
+    // 068: una plantilla mandada a mano desde la Bandeja también pausa la IA.
+    await pausarIaTrasEnvioDeLaBandeja(session.organizationId, id);
     return Response.json({ messageId: result.messageId });
   } catch (err) {
     if (err instanceof TemplateError) {
