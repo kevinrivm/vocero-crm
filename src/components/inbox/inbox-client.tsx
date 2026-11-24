@@ -16,6 +16,8 @@ import { CHANNEL_LABEL, type Channel } from "@/lib/channels";
 import { ChannelBadge } from "@/components/channel-badge";
 import { useEvents } from "@/components/use-events";
 import { ConversationList } from "./conversation-list";
+import { useFijar } from "./use-fijar";
+import { PinHeaderButton } from "./pin-toggle";
 import { MessageThread } from "./message-thread";
 import { Composer } from "./composer";
 import {
@@ -113,6 +115,8 @@ export function InboxClient({
     // 064 — El menú y Ctrl+K toman la lista de aquí en vez de pedir otra.
     publicarLista(data.conversations);
   }, []);
+  // 070 — Chats fijados (de cada usuario).
+  const fijar = useFijar(conversations, setConversations, refetchConversations);
 
   // 064 — Los eventos en vivo recargan la lista juntos: una ráfaga de
   // mensajes es una petición, no una por evento, y nunca dos a la vez.
@@ -426,11 +430,17 @@ export function InboxClient({
           selected && "max-md:hidden"
         )}
       >
+        {fijar.error && (
+          <p data-aviso-fijar role="status" className="border-b px-4 py-2.5 text-xs text-danger-text">
+            {fijar.error}
+          </p>
+        )}
         <ConversationList
           conversations={conversations}
           channels={channels}
           selectedId={selectedId}
           onSelect={select}
+          onTogglePin={(c) => void fijar.toggle(c)}
           onSeeded={() => void refetchConversations()}
         />
       </section>
@@ -488,6 +498,10 @@ export function InboxClient({
                   </p>
                 </div>
               </div>
+              <PinHeaderButton
+                pinned={Boolean(selected.pinnedAt)}
+                onToggle={() => void fijar.toggle(selected)}
+              />
               {!panelOpen && (
                 <button
                   onClick={() => togglePanel(true)}
