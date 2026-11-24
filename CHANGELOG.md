@@ -7,6 +7,26 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+### Nuevo
+
+- **Que no se pierda nada** (spec 074). Las fotos, videos, audios y archivos
+  de **Instagram, Messenger y TikTok** entran todos (antes, solo el texto o el
+  primer adjunto), por Meta directo y por Zernio, y se copian a `MEDIA_DIR` al
+  llegar: la URL que mandan caduca en horas. Un grupo de fotos despierta al
+  cerebro una sola vez, con todo en la ráfaga; el cerebro las baja por
+  `/api/bot/media/{mediaId}` con el id interno (`ma_…`). Tope por adjunto:
+  foto 10 MB, sticker 2 MB, lo demás 25 MB. Solo se bajan de un host de Meta
+  (Meta directo) o de un host público (Zernio), nunca de la red interna.
+- **Mensajes editados** en WhatsApp (coexistencia): la burbuja dice «Editado»
+  y «Ver el original» enseña lo que decía la primera vez. Llega en vivo y no
+  despierta al cerebro. **Migración `0030_que_no_se_pierda_nada`** (se aplica
+  sola al arrancar).
+- **Lo que la bandeja no sabe mostrar ya no se descarta** (tarjetas,
+  encuestas, pedidos, lo que la plataforma no entrega): queda como «Este
+  mensaje no se puede mostrar aquí. Revísalo desde el teléfono», sin guardar
+  su contenido, con un botón «Pedírselo en texto» que escribe la pregunta en
+  la caja sin enviarla.
+
 ### Arreglado
 
 - **La sesión ya no se cae a los 7 días aunque entres a diario** (spec 073).

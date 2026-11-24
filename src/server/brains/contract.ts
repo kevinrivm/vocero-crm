@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { sourceUrlOf } from "@/server/inbox/remote-media";
 
 /**
  * 021 — El contrato del despacho: lo que el CRM le manda a un cerebro externo
@@ -27,6 +28,9 @@ export type MensajeDelEvento = {
    * El id que acepta `GET /api/bot/media/{mediaId}` (el de Graph), no el id
    * interno del adjunto. En cloud es al revés porque allá la vuelta es
    * `/api/brains/media`; aquí la vuelta es `/api/bot/*` y no cambia.
+   *
+   * 074 — Un adjunto de Instagram, Messenger o TikTok no tiene id de Graph:
+   * va el id interno (`ma_…`), que la misma ruta sirve desde `MEDIA_DIR`.
    */
   mediaId: string | null;
   /** Solo con adjunto. */
@@ -92,8 +96,20 @@ export type MensajeParaEvento = {
     fileName?: string | null;
     /** 031 — `media_asset.payload`: la ubicación o las tarjetas tal como llegaron. */
     payload?: unknown;
+    /** 074 — Id interno del adjunto: el `mediaId` de los canales sociales. */
+    assetId?: string | null;
   } | null;
 };
+
+/**
+ * 074 — El `mediaId` de un mensaje: el de Graph en WhatsApp; el id interno si
+ * el adjunto se copió de una URL (Instagram, Messenger, TikTok). Pura.
+ */
+export function mediaIdDelEvento(media: MensajeParaEvento["media"]): string | null {
+  if (!media) return null;
+  if (media.waMediaId) return media.waMediaId;
+  return media.assetId && sourceUrlOf(media.payload) ? media.assetId : null;
+}
 
 /**
  * Arma el evento. Pura, y es la ÚNICA que lo arma: el orden de las claves es
@@ -150,11 +166,11 @@ function mensajeDelEvento(m: MensajeParaEvento): MensajeDelEvento {
     at: m.createdAt.toISOString(),
     type: m.type,
     text: m.text,
-    mediaId: m.media?.waMediaId ?? null,
+    mediaId: mediaIdDelEvento(m.media),
   };
   // Sin algo que descargar, `mimeType` y `caption` no dicen nada: una
   // ubicación o una tarjeta de contacto no tienen media id.
-  if (m.media?.waMediaId) {
+  if (m.media && evento.mediaId) {
     evento.mimeType = m.media.mimeType;
     evento.caption = m.media.caption;
     // 031 — Las llaves nuevas van SOLO cuando aplican, y siempre después de

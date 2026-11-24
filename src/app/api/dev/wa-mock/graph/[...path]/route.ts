@@ -207,6 +207,13 @@ export async function GET(req: Request, ctx: Params) {
     });
   }
 
+  // 074 — GET me?fields=id,username → la cuenta de Instagram del token, como
+  // `graph.instagram.com` (con IG_GRAPH_BASE_URL apuntando aquí). El IG_ID va
+  // en el propio token de prueba: `token-ig-<IG_ID>`.
+  if (path.length === 1 && path[0] === "me" && token.startsWith("token-ig-")) {
+    return Response.json({ id: token.slice("token-ig-".length), username: "negocio.ig" });
+  }
+
   // 066 — GET {wabaId}/phone_numbers → los números sembrados de esa WABA.
   if (path.length === 2 && path[1] === "phone_numbers") {
     return Response.json({ data: getWaMockState().wabaNumbers[path[0]!] ?? [] });

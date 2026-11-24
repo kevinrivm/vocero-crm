@@ -19,6 +19,15 @@ export type EventHandlers = {
     messageId: string;
     media: unknown;
   }) => void;
+  /** 074 — Se editó un mensaje (texto o pie). */
+  onMessageUpdated?: (data: {
+    conversationId: string;
+    messageId: string;
+    text: string | null;
+    caption: string | null;
+    editedAt: string;
+    originalText: string | null;
+  }) => void;
   onConversationUpdated?: (data: { conversation: unknown }) => void;
   /** 026 */
   onConversationDeleted?: (data: {
@@ -91,6 +100,7 @@ export function useEvents(handlers: EventHandlers): void {
         handlersRef.current.onMessageStatus?.(d as never)
       );
       listen(es, "message.media", (d) => handlersRef.current.onMessageMedia?.(d as never));
+      listen(es, "message.updated", (d) => handlersRef.current.onMessageUpdated?.(d as never));
       listen(es, "note.new", (d) => handlersRef.current.onNoteNew?.(d as never));
       listen(es, "note.deleted", (d) => handlersRef.current.onNoteDeleted?.(d as never));
       listen(es, "reaction.updated", (d) =>

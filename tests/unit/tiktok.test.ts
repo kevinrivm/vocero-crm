@@ -201,6 +201,7 @@ describe("022 · normalizeZernioTiktokEvent (qué entra y qué se descarta)", ()
       profileName: "Jane",
       // El conversationId es lo ÚNICO con lo que se puede responder.
       threadRef: "66c3d2ae7b4f6c8d0e1f2a3b",
+      attachments: [],
     });
   });
 

@@ -1,5 +1,6 @@
 import { IG_PREFIX } from "@/server/inbox/identity";
-import { ingestInboundMessage } from "@/server/inbox/ingest";
+import { ingerirPartes } from "@/server/inbox/partes";
+import { splitInbound, type RemoteAttachment } from "@/server/inbox/remote-media";
 import {
   getInstagramCredentialsByAccountRef,
   getInstagramCredentialsByIgUserId,
@@ -59,7 +60,10 @@ export async function processZernioEvent(payload: unknown): Promise<void> {
     return;
   }
 
-  const text = evt.message?.text ?? null;
+  const text =
+    typeof evt.message?.text === "string" && evt.message.text.length > 0
+      ? evt.message.text
+      : null;
   // Id de Zernio, no el de la plataforma (el payload trae los dos): es el
   // que se mantiene entre reentregas, que es lo que hay que colapsar.
   const zernioMessageId = evt.message?.id;
@@ -68,27 +72,33 @@ export async function processZernioEvent(payload: unknown): Promise<void> {
     return;
   }
 
-  await ingestInboundMessage({
-    organizationId: creds.organizationId,
-    identity: {
-      identity: `${IG_PREFIX}${igsid}`,
-      channel: "instagram",
-      phone: null,
-      waUserId: null,
-      profileName:
-        evt.message?.sender?.name ??
-        (evt.message?.sender?.username
-          ? `@${evt.message.sender.username}`
-          : null),
+  // 074: un mensaje por texto y uno por adjunto (todos, no solo el primero),
+  // cada adjunto copiado a MEDIA_DIR al llegar.
+  const partes = splitInbound(text, evt.message?.attachments, "zernio");
+  if (partes.length === 0) return; // ni texto ni adjuntos: nada que guardar
+
+  await ingerirPartes(
+    {
+      organizationId: creds.organizationId,
+      identity: {
+        identity: `${IG_PREFIX}${igsid}`,
+        channel: "instagram",
+        phone: null,
+        waUserId: null,
+        profileName:
+          evt.message?.sender?.name ??
+          (evt.message?.sender?.username
+            ? `@${evt.message.sender.username}`
+            : null),
+      },
+      timestamp: zernioSentAtSeconds(evt.message?.sentAt),
+      threadRef: evt.message?.conversationId ?? null,
     },
     // Prefijado para que no colisione jamas con un id de WhatsApp en el
     // indice unico de mensajes.
-    waMessageId: `ig_${zernioMessageId}`,
-    type: "text",
-    text,
-    timestamp: zernioSentAtSeconds(evt.message?.sentAt),
-    threadRef: evt.message?.conversationId ?? null,
-  });
+    `ig_${zernioMessageId}`,
+    partes
+  );
 }
 
 type MetaIgPayload = {
@@ -104,6 +114,10 @@ type MetaIgPayload = {
         mid?: string;
         text?: string;
         is_echo?: boolean;
+        /** 074: fotos, videos, audios, publicaciones compartidas… */
+        attachments?: RemoteAttachment[];
+        /** 074: Meta avisa que llegó algo que no sabe entregar por la API. */
+        is_unsupported?: boolean;
       };
     }>;
   }>;
@@ -145,27 +159,41 @@ export async function processMetaInstagramPayload(
       const igsid = m.sender?.id;
       const mid = m.message?.mid;
       if (!igsid || !mid) continue;
-      if (typeof m.message?.text !== "string") continue; // solo texto (014)
 
-      await ingestInboundMessage({
-        organizationId: creds.organizationId,
-        identity: {
-          identity: `${IG_PREFIX}${igsid}`,
-          channel: "instagram",
-          phone: null,
-          waUserId: null,
-          // Meta no manda nombre ni usuario en el webhook: queda el respaldo
-          // hasta que alguien edite el contacto.
-          profileName: null,
+      // 074: ya no solo texto. Un mensaje por texto y uno por adjunto, y lo
+      // que Meta no entrega (`is_unsupported`) se guarda con su aviso.
+      const text =
+        typeof m.message?.text === "string" && m.message.text.length > 0
+          ? m.message.text
+          : null;
+      const partes = splitInbound(
+        text,
+        m.message?.attachments,
+        "meta",
+        m.message?.is_unsupported === true
+      );
+      if (partes.length === 0) continue;
+
+      await ingerirPartes(
+        {
+          organizationId: creds.organizationId,
+          identity: {
+            identity: `${IG_PREFIX}${igsid}`,
+            channel: "instagram",
+            phone: null,
+            waUserId: null,
+            // Meta no manda nombre ni usuario en el webhook: queda el respaldo
+            // hasta que alguien edite el contacto.
+            profileName: null,
+          },
+          timestamp: String(
+            m.timestamp ? Math.floor(m.timestamp / 1000) : Math.floor(Date.now() / 1000)
+          ),
+          threadRef: null,
         },
-        waMessageId: `ig_${mid}`,
-        type: "text",
-        text: m.message.text,
-        timestamp: String(
-          m.timestamp ? Math.floor(m.timestamp / 1000) : Math.floor(Date.now() / 1000)
-        ),
-        threadRef: null,
-      });
+        `ig_${mid}`,
+        partes
+      );
     }
   }
 }

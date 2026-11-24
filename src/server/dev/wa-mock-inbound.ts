@@ -126,6 +126,12 @@ export function buildInboundPayload(input: {
   timestamp?: number;
   /** 039 — `wamid` del mensaje que el cliente cita (va en `context.id`). */
   replyTo?: string;
+  /**
+   * 074 — Campos crudos del mensaje tal cual los mandaría Meta (`edit`,
+   * `errors` de un `unsupported`, el cuerpo de una encuesta…). Se mezclan al
+   * final, encima de lo demás.
+   */
+  extra?: Record<string, unknown>;
 } & MockMediaInput &
   MockReferralInput &
   MockButtonInput) {
@@ -139,6 +145,7 @@ export function buildInboundPayload(input: {
   if (input.fromUserId) message.from_user_id = input.fromUserId;
   applyMockContent(message, type, input);
   if (input.replyTo) message.context = { from: input.from, id: input.replyTo };
+  if (input.extra) Object.assign(message, input.extra);
 
   // 016 — El referral solo viaja cuando la conversación nació de un anuncio, y
   // normalmente solo en el primer mensaje. Se arma igual que el real para que
@@ -213,6 +220,8 @@ export function buildEchoPayload(input: {
   timestamp?: number;
   /** Variante defensiva: entregar bajo la clave `messages` en vez de `message_echoes`. */
   useMessagesKey?: boolean;
+  /** 074 — Campos crudos del eco (`edit`…), tal cual los mandaría Meta. */
+  extra?: Record<string, unknown>;
 } & MockMediaInput) {
   const type = input.type ?? "text";
   const message: Record<string, unknown> = {
@@ -223,6 +232,7 @@ export function buildEchoPayload(input: {
     to: input.to,
   };
   applyMockContent(message, type, input);
+  if (input.extra) Object.assign(message, input.extra);
 
   return {
     object: "whatsapp_business_account",

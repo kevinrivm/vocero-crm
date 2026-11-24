@@ -34,7 +34,7 @@ import {
 import type { ConversationDto, MessageDto, MessageMediaDto } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AudioPlayer } from "./audio-player";
-import { formatBytes, mediaLabel } from "./helpers";
+import { esNoSoportado, formatBytes, mediaLabel, NO_SOPORTADO } from "./helpers";
 import { ForwardDialog } from "./forward-dialog";
 import { LinkedText } from "./linked-text";
 import { QuoteBlock } from "./quote-block";
@@ -386,8 +386,14 @@ export function MessageThread({
   eventos = [],
   onReact,
   reaccionBloqueada = null,
+  onAskPlainText,
 }: {
   messages: MessageDto[];
+  /**
+   * 074 — Escribe en la caja «¿Me lo puedes mandar en texto?» (sin enviarlo).
+   * Presente solo si se puede escribir texto libre (ventana abierta).
+   */
+  onAskPlainText?: () => void;
   /** 039: quién firma las citas del cliente. */
   contactName: string;
   /** 039: presente solo si el canal permite responder citando. */
@@ -606,6 +612,27 @@ export function MessageThread({
                   <span className="whitespace-pre-wrap break-words">
                     <LinkedText text={m.text} />
                   </span>
+                ) : esNoSoportado(m) ? (
+                  // 074 — Llegó, pero la plataforma no manda su contenido (o
+                  // no se guarda a propósito: puede traer datos del cliente).
+                  <span className="block" data-no-soportado>
+                    <span className="inline-flex items-start gap-1.5 text-text-2">
+                      <AlertTriangle
+                        className="mt-[2px] h-3.5 w-3.5 shrink-0 text-text-3"
+                        strokeWidth={1.7}
+                      />
+                      {NO_SOPORTADO}
+                    </span>
+                    {!out && onAskPlainText && (
+                      <button
+                        type="button"
+                        onClick={onAskPlainText}
+                        className="mt-1.5 flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-brand-ink hover:bg-subtle"
+                      >
+                        <Reply className="h-3.5 w-3.5" strokeWidth={1.7} /> Pedírselo en texto
+                      </button>
+                    )}
+                  </span>
                 ) : (
                   <span className="inline-flex items-center gap-1.5 text-text-3">
                     <Paperclip className="h-3.5 w-3.5" strokeWidth={1.7} />
@@ -630,11 +657,32 @@ export function MessageThread({
                       <Smartphone className="h-3 w-3" strokeWidth={1.7} /> Celular
                     </span>
                   )}
+                  {m.editedAt && (
+                    <span
+                      className="text-[10px] italic text-text-3"
+                      title={`Editado a las ${bubbleTime(m.editedAt)}`}
+                      data-editado
+                    >
+                      Editado
+                    </span>
+                  )}
                   <span className="font-mono text-[10px] tracking-[0.04em] text-text-3">
                     {bubbleTime(m.createdAt)}
                   </span>
                   {out && <StatusTicks status={m.status} />}
                 </span>
+                {m.editedAt && (
+                  // 074 — Lo que decía la primera vez: lo que el equipo pudo
+                  // haber leído y contestado.
+                  <details className="clear-both mt-1 text-[11.5px] leading-snug text-text-3" data-original>
+                    <summary className="cursor-pointer select-none hover:text-text-2">
+                      Ver el original
+                    </summary>
+                    <p className="mt-1 whitespace-pre-wrap break-words border-l-2 border-border pl-2">
+                      {m.originalText || "(sin texto)"}
+                    </p>
+                  </details>
+                )}
                 {out && m.status === "failed" && (
                   // El triángulo solo decía "algo falló". El motivo lo manda
                   // Meta y lo guardábamos sin enseñarlo nunca.
