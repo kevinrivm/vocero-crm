@@ -46,6 +46,8 @@ const prefixes = {
   oauthClient: "vc",
   oauthGrant: "og",
   oauthToken: "ot",
+  // 070 — chats fijados
+  conversationPin: "pin",
 } as const;
 
 export type IdKind = keyof typeof prefixes;
