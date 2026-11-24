@@ -16,6 +16,15 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
   una persona no cambia la Bandeja de las demás. **Migración
   `0028_fijar_chats`** (se aplica sola al arrancar).
 
+### Arreglado
+
+- **La simulación del MCP y el Laboratorio esperan a que el cerebro termine
+  su turno** (spec 071). Cerraban el turno 1.5 s después de la primera
+  respuesta, o en el acto si el cerebro traspasaba primero: un traspaso lento
+  se contaba en el turno siguiente y una despedida después del traspaso se
+  perdía. Ahora el turno se cierra tras 4 s sin novedades (cada mensaje,
+  traspaso, cambio de etapa o cita reinicia la espera), con tope de 20 s.
+
 ## 2.8.0 — 2026-11-23
 
 La IA ya no habla encima de una persona, y Vocero se puede configurar desde

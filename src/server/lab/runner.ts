@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
 import { scoped } from "@/lib/db/tenant";
@@ -11,6 +11,7 @@ import { iniciarWorker, programarTanda } from "@/server/dispatch/worker";
 import { computeScore, judgeCase } from "@/server/lab/judge";
 import { PERSONAS, type Persona } from "@/server/lab/personas";
 import { rolDe } from "@/lib/agent-roles";
+import { esperarCalma } from "@/server/lab/cierre-de-turno";
 
 /**
  * Runner del Laboratorio (FR-030/FR-034): corrida en segundo plano DENTRO del
@@ -33,8 +34,6 @@ const RUN_TIMEOUT_MS = 10 * 60 * 1000;
 /** 033 — Cuánto se le espera al cerebro en cada línea del guion. */
 export const TURNO_TIMEOUT_MS = 90_000;
 const SONDEO_MS = 500;
-/** Tras la primera respuesta, lo que se espera por más mensajes o un traspaso. */
-const QUIETUD_MS = 1_500;
 /**
  * Entregado el despacho, cuánto se espera la respuesta antes de leer el
  * silencio como respuesta. Un turno de Nea con el modelo tarda de 3 a 20 s.
@@ -373,12 +372,14 @@ export async function turnoPorDespacho(
         )
       )
       .limit(1);
-    if (respuesta) {
-      // Un turno puede mandar más de un mensaje, o despedirse y traspasar:
-      // se le da un momento antes de la siguiente línea.
-      await dormir(QUIETUD_MS);
+    // 071 — Un turno puede mandar varios mensajes, despedirse y traspasar, o
+    // traspasar y despedirse después, con la latencia que tenga el cerebro:
+    // se cierra cuando deja de pasar algo, no tras un margen fijo.
+    const cerrarCuandoCalme = async () => {
+      await esperarCalma(() => huellaDelTurno(organizationId, conversationId, desde));
       return null;
-    }
+    };
+    if (respuesta) return cerrarCuandoCalme();
     const [despacho] = await db
       .select({
         status: schema.dispatch.status,
@@ -391,7 +392,9 @@ export async function turnoPorDespacho(
     if (despacho?.status === "caducado_a_humano") {
       return `el cerebro no aceptó el despacho (${despacho.lastError ?? "sin detalle"})`;
     }
-    if (conv?.handoffAt) return null; // traspasó sin despedirse: es su respuesta
+    // Traspasó (antes de escribir, o sin despedirse): es su respuesta. Va
+    // después de la caída, que también deja `handoffAt` y sí es una falla.
+    if (conv?.handoffAt) return cerrarCuandoCalme();
     if (despacho?.status === "entregado") {
       entregadoEn ??= Date.now();
       // Lo recibió y no escribe: se le da su tiempo de pensar y, si sigue
@@ -400,6 +403,62 @@ export async function turnoPorDespacho(
     }
   }
   return `el cerebro no recibió el despacho en ${TURNO_TIMEOUT_MS / 1000} s`;
+}
+
+/**
+ * 071 — Lo que el cerebro hizo en este turno, resumido: cambia con cada
+ * mensaje, el traspaso, un cambio de etapa o una cita nueva.
+ */
+async function huellaDelTurno(
+  organizationId: string,
+  conversationId: string,
+  desde: Date
+): Promise<string> {
+  const db = getDb();
+  const [conv] = await db
+    .select({ handoffAt: schema.conversation.handoffAt, contactId: schema.conversation.contactId })
+    .from(schema.conversation)
+    .where(scoped(schema.conversation.organizationId, organizationId, eq(schema.conversation.id, conversationId)))
+    .limit(1);
+  const [salientes] = await db
+    .select({ n: count() })
+    .from(schema.message)
+    .where(
+      scoped(
+        schema.message.organizationId,
+        organizationId,
+        eq(schema.message.conversationId, conversationId),
+        eq(schema.message.direction, "out"),
+        gt(schema.message.createdAt, desde)
+      )
+    );
+  const contactId = conv?.contactId ?? "";
+  const [etapas] = await db
+    .select({ n: count() })
+    .from(schema.leadStageEvent)
+    .where(
+      and(
+        eq(schema.leadStageEvent.organizationId, organizationId),
+        eq(schema.leadStageEvent.contactId, contactId),
+        gt(schema.leadStageEvent.occurredAt, desde)
+      )
+    );
+  const [citas] = await db
+    .select({ n: count() })
+    .from(schema.booking)
+    .where(
+      and(
+        eq(schema.booking.organizationId, organizationId),
+        eq(schema.booking.contactId, contactId),
+        gt(schema.booking.createdAt, desde)
+      )
+    );
+  return [
+    salientes?.n ?? 0,
+    conv?.handoffAt?.toISOString() ?? "-",
+    etapas?.n ?? 0,
+    citas?.n ?? 0,
+  ].join("|");
 }
 
 /** 033 — Que el cerebro olvide la conversación de prueba al terminar el caso. */
