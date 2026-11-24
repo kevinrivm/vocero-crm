@@ -7,16 +7,16 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+## 2.8.0 — 2026-11-23
+
+La IA ya no habla encima de una persona, y Vocero se puede configurar desde
+Claude. Actualizar es redesplegar con la etiqueta `2.8.0`: la migración
+`0027_api_v1_mcp` se aplica sola al arrancar. La API v1 y el MCP quedan
+apagados hasta poner `API_V1=on`; sin esa variable todo queda como en la 2.7.
+Nea no cambia.
+
 ### Nuevo
 
-- **«Conectar con Meta» (Embedded Signup v4)** en Ajustes → WhatsApp (spec
-  066). Con `META_APP_ID`, `META_EMBEDDED_CONFIG_ID` y `META_APP_SECRET` en la
-  instancia, quien administra la cuenta autoriza su WhatsApp en la ventana
-  oficial de Meta y Vocero registra el número (con un PIN generado si no
-  escribes uno), guarda las credenciales cifradas y registra el webhook en la
-  Cuenta de WhatsApp, en la de mensajes y en el número. Sin esas variables
-  todo queda como antes. Pasos del panel de Meta en
-  [docs/embedded-signup.md](docs/embedded-signup.md). Sin migración.
 - **API pública v1, MCP y conexión con Claude** (spec 069), detrás de
   `API_V1=on` (apagada, toda la superficie responde 404). El dueño crea llaves
   en Ajustes → API y MCP para n8n o scripts, o conecta Claude (claude.ai,
@@ -38,10 +38,6 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 - **El panel del contacto ya no arrastra datos del chat anterior** al cambiar
   de conversación (antes, guardar en ese instante podía escribir las notas de
   un contacto en otro).
-- **`#100/2388339` al suscribir la app en la Cuenta de WhatsApp ya no es
-  fatal** si la Cuenta de mensajes quedó suscrita: desde el 28-oct-2026 Meta
-  lo responde en las cuentas partidas, y el registro del webhook se cortaba
-  antes de poner el override del número.
 
 ## 2.7.0 — 2026-10-29
 
