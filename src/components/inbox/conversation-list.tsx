@@ -16,6 +16,8 @@ import { EVENTO_BORRADOR, leerBorrador } from "@/lib/borradores";
 import { atajoBandeja, esCampoDeTexto, sirveEscribiendo, vecina } from "@/lib/atajos";
 import { hayDialogoAbierto } from "@/components/atajos-globales";
 import { etiquetaVence, porVencer } from "@/lib/filtros-bandeja";
+import { fijadosPrimero } from "@/lib/fijados";
+import { PinMark, PinRowButton } from "./pin-toggle";
 
 /* Puntos de etapa: los tokens del tema, no hex copiados del tema claro —
    así siguen al acento white-label y se recalculan en oscuro. */
@@ -87,6 +89,7 @@ export function ConversationList({
   selectedId,
   onSelect,
   onSeeded,
+  onTogglePin,
 }: {
   conversations: ConversationDto[] | null;
   /** Canales encendidos en esta instancia (ADR-001). */
@@ -94,6 +97,8 @@ export function ConversationList({
   selectedId: string | null;
   onSelect: (id: string) => void;
   onSeeded: () => void;
+  /** 070 — Fijar o desfijar el chat (de cada usuario). */
+  onTogglePin?: (conversation: ConversationDto) => void;
 }) {
   const [query, setQuery] = useState("");
   // 052 (enmienda) — Dos pestañas y un botón «Filtrar» con lo demás.
@@ -195,7 +200,10 @@ export function ConversationList({
     (c) => (!soloPorVencer || porVencer(c)) && (!soloAnuncios || c.anuncio !== null)
   );
   const unreadCount = filtrado.filter((c) => c.unreadCount > 0).length;
-  const visible = filter === "unread" ? filtrado.filter((c) => c.unreadCount > 0) : filtrado;
+  // 070 — Los fijados del usuario arriba, en cualquier pestaña y filtro.
+  const visible = fijadosPrimero(
+    filter === "unread" ? filtrado.filter((c) => c.unreadCount > 0) : filtrado
+  );
   visibleRef.current = visible.map((c) => c.id);
   const pestanas: { id: typeof filter; label: string; count: number }[] = [
     { id: "all", label: "Todas", count: filtrado.length },
@@ -437,7 +445,7 @@ export function ConversationList({
               const unread = c.unreadCount > 0;
               const active = selectedId === c.id;
               return (
-                <li key={c.id} className="relative border-b border-border">
+                <li key={c.id} className="group relative border-b border-border">
                   <button
                     onClick={() => onSelect(c.id)}
                     // 055 — Cuál está abierta, para Alt+J/K y los lectores de pantalla.
@@ -469,10 +477,11 @@ export function ConversationList({
                         </span>
                         <span
                           className={cn(
-                            "shrink-0 font-mono text-[10.5px] tracking-[0.02em]",
+                            "flex shrink-0 items-center gap-1 font-mono text-[10.5px] tracking-[0.02em]",
                             unread ? "font-semibold text-brand-ink" : "text-text-3"
                           )}
                         >
+                          <PinMark pinned={Boolean(c.pinnedAt)} />
                           {formatTime(c.lastMessageAt)}
                         </span>
                       </span>
@@ -545,6 +554,9 @@ export function ConversationList({
                       </span>
                     </span>
                   </button>
+                  {onTogglePin && (
+                    <PinRowButton pinned={Boolean(c.pinnedAt)} onToggle={() => onTogglePin(c)} />
+                  )}
                 </li>
               );
             })}

@@ -7,6 +7,15 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+### Nuevo
+
+- **Fijar chats arriba de la Bandeja** (spec 070). Cada persona del equipo fija
+  hasta 3 conversaciones, que quedan arriba en cualquier pestaña y filtro, como
+  en WhatsApp. En escritorio, con la chincheta que aparece al pasar el mouse
+  por la fila; en el celular, desde la cabecera del chat abierto. Lo que fija
+  una persona no cambia la Bandeja de las demás. **Migración
+  `0028_fijar_chats`** (se aplica sola al arrancar).
+
 ### Arreglado
 
 - **La simulación del MCP y el Laboratorio esperan a que el cerebro termine

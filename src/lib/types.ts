@@ -36,6 +36,8 @@ export type ConversationDto = {
     /** `post` si fue una publicación y no un anuncio. */
     sourceType: string | null;
   } | null;
+  /** 070: cuándo lo fijó el usuario de la sesión; null o ausente = no fijado. */
+  pinnedAt?: string | null;
 };
 
 /** 018 — De qué anuncio llegó un contacto, como lo ve la bandeja. */
