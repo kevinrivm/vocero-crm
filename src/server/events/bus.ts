@@ -26,6 +26,19 @@ export type SseEvent =
       type: "message.media";
       data: { conversationId: string; messageId: string; media: unknown };
     }
+  /** 074 — Un mensaje se editó (texto o pie): se pinta el nuevo y la marca. */
+  | {
+      type: "message.updated";
+      data: {
+        conversationId: string;
+        messageId: string;
+        text: string | null;
+        /** Pie nuevo si lo editado fue el de un adjunto; si no, null. */
+        caption: string | null;
+        editedAt: string;
+        originalText: string | null;
+      };
+    }
   | { type: "conversation.updated"; data: { conversation: unknown } }
   /** 026 — alguien del equipo eliminó la conversación: se quita de la bandeja. */
   | {

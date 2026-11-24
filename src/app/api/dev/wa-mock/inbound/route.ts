@@ -43,6 +43,9 @@ const schema = z
     replyTo: z.string().optional(),
     // 072 — reacción del cliente (type "reaction"); emoji "" la quita
     reaction: z.object({ messageId: z.string(), emoji: z.string() }).optional(),
+    // 074 — campos crudos del mensaje, tal cual los mandaría Meta (`edit`,
+    // `errors` de un `unsupported`…). Se mezclan en el mensaje.
+    extra: z.record(z.string(), z.unknown()).optional(),
   })
   .refine((v) => v.from || v.fromUserId, {
     message: "Se requiere from o fromUserId",

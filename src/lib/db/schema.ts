@@ -444,6 +444,13 @@ export const message = pgTable(
      * puede no estar en el CRM; se resuelve al leer (`inbox/quotes.ts`).
      */
     replyToWaMessageId: text("reply_to_wa_message_id"),
+    /**
+     * 074 — Hora (según Meta) de la última edición; NULL = nunca se editó.
+     * Hoy solo las manda WhatsApp en coexistencia (`type: "edit"`).
+     */
+    editedAt: timestamp("edited_at"),
+    /** 074 — El texto (o pie) con el que llegó, antes de la primera edición. */
+    originalText: text("original_text"),
     waTimestamp: timestamp("wa_timestamp"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

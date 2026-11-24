@@ -125,7 +125,7 @@
     "/api/bot/media/{mediaId}": {
       "get": {
         "summary": "Descargar un adjunto entrante",
-        "description": "El `mediaId` que trae el mensaje del despacho. Devuelve el binario con su `content-type`; el token de WhatsApp no sale del CRM.",
+        "description": "El `mediaId` que trae el mensaje del despacho. Devuelve el binario con su `content-type`; el token de WhatsApp no sale del CRM. Acepta el id de Graph (WhatsApp) o el id interno `ma_…` (Instagram, Messenger, TikTok), servido desde la copia del CRM.",
         "parameters": [{ "name": "mediaId", "in": "path", "required": true, "schema": { "type": "string" } }],
         "responses": {
           "200": { "description": "El archivo", "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } } },
@@ -278,7 +278,7 @@
           "at": { "type": "string", "format": "date-time" },
           "type": { "type": "string" },
           "text": { "type": ["string", "null"] },
-          "mediaId": { "type": ["string", "null"], "description": "Se descarga por `GET /api/bot/media/{mediaId}`." },
+          "mediaId": { "type": ["string", "null"], "description": "Se descarga por `GET /api/bot/media/{mediaId}`. En WhatsApp es el id de Graph; en Instagram, Messenger y TikTok, el id interno del adjunto (`ma_…`)." },
           "mimeType": { "type": ["string", "null"], "description": "Solo con adjunto." },
           "caption": { "type": ["string", "null"], "description": "Solo con adjunto." },
           "fileName": { "type": "string", "description": "031 — Solo con adjunto que trae nombre." },

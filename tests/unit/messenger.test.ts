@@ -103,6 +103,7 @@ describe("017 · normalizeMetaPagePayload (qué entra y qué se descarta)", () =
       timestamp: "1770000123",
       profileName: null,
       threadRef: null,
+      attachments: [],
     });
   });
 

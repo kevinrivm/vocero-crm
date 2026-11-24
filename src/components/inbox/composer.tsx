@@ -52,7 +52,13 @@ export function Composer({
   onReplyChange,
   children,
   onNota,
+  draft = null,
 }: {
+  /**
+   * 074 — Texto sugerido que se escribe en la caja (no se envía): la persona
+   * lo revisa y lo manda. `nonce` permite pedir el mismo texto otra vez.
+   */
+  draft?: { text: string; nonce: number } | null;
   conversation: ConversationDto;
   onSend: (text: string, replyTo: MessageDto | null) => Promise<string | null>;
   onSent: () => void;
@@ -140,6 +146,23 @@ export function Composer({
   useEffect(() => {
     if (replyTo) taRef.current?.focus();
   }, [replyTo]);
+
+  // 074: la sugerencia se escribe en la caja de responder; no sale sola.
+  useEffect(() => {
+    if (!draft) return;
+    setModo("responder");
+    setText(draft.text);
+    setError(null);
+    requestAnimationFrame(() => {
+      const el = taRef.current;
+      if (!el) return;
+      el.focus();
+      el.setSelectionRange(draft.text.length, draft.text.length);
+      autogrow();
+    });
+    // Solo cuando llega una sugerencia nueva (`nonce`), no en cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft?.nonce]);
 
   // 043 — Soltar un archivo fuera del chat abriría el archivo en la pestaña y
   // el CRM (con el borrador) se perdería. Mientras haya conversación abierta,

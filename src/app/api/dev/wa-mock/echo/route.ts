@@ -28,6 +28,8 @@ const schema = z.object({
   filename: z.string().optional(),
   location: z.record(z.string(), z.unknown()).optional(),
   useMessagesKey: z.boolean().optional(),
+  // 074 — campos crudos del eco (`edit`…), tal cual los mandaría Meta.
+  extra: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function POST(req: Request) {

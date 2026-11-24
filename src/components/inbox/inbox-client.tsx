@@ -25,7 +25,7 @@ import {
   EVENTO_ABRIR_CONVERSACION,
   setConversacionAbierta,
 } from "@/components/avisos-de-mensajes";
-import { citaDe } from "./helpers";
+import { citaDe, PEDIR_EN_TEXTO } from "./helpers";
 import { marcarBandejaMontada, publicarLista, unaALaVez } from "@/lib/lista-compartida";
 import { ContactPanel } from "./contact-panel";
 
@@ -73,6 +73,12 @@ export function InboxClient({
   const [pending, setPending] = useState<PendingOut[]>([]);
   // 039: el mensaje al que se está respondiendo citando.
   const [replyTo, setReplyTo] = useState<MessageDto | null>(null);
+  // 074: texto sugerido para la caja (pedir en texto un mensaje no soportado).
+  const [draft, setDraft] = useState<{
+    conversationId: string;
+    text: string;
+    nonce: number;
+  } | null>(null);
   // Arranca cerrado: en pantallas angostas el panel de detalles es un cajón
   // ENCIMA del hilo, así que abrirlo por defecto taparía la conversación. El
   // efecto de abajo lo abre solo si de veras hay tres columnas de ancho.
@@ -239,6 +245,24 @@ export function InboxClient({
       setMessages((prev) =>
         prev.map((m) =>
           m.id === messageId ? { ...m, reactions: reactions as ReaccionDto[] } : m
+        )
+      );
+    },
+    // 074 — El cliente (o el negocio desde el teléfono) editó un mensaje.
+    onMessageUpdated: ({ conversationId, messageId, text, caption, editedAt, originalText }) => {
+      void refetchJunta(); // la vista previa de la lista puede ser ese mensaje
+      if (selectedIdRef.current !== conversationId) return;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId
+            ? {
+                ...m,
+                text,
+                media: caption !== null && m.media ? { ...m.media, caption } : m.media,
+                editedAt,
+                originalText,
+              }
+            : m
         )
       );
     },
@@ -558,6 +582,7 @@ export function InboxClient({
               onSend={sendText}
               replyTo={replyTo?.conversationId === selected.id ? replyTo : null}
               onReplyChange={setReplyTo}
+              draft={draft?.conversationId === selected.id ? draft : null}
               onSent={() => {
                 if (selectedIdRef.current)
                   void refetchMessages(selectedIdRef.current);
@@ -602,6 +627,18 @@ export function InboxClient({
                 onReply={
                   selected.composer.quoteReply && selected.windowOpen
                     ? setReplyTo
+                    : undefined
+                }
+                // 074: pedir en texto lo que no se puede mostrar; solo donde
+                // se puede escribir texto libre (ventana abierta).
+                onAskPlainText={
+                  selected.windowOpen
+                    ? () =>
+                        setDraft({
+                          conversationId: selected.id,
+                          text: PEDIR_EN_TEXTO,
+                          nonce: Date.now(),
+                        })
                     : undefined
                 }
                 conversations={conversations ?? []}

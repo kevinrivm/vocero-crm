@@ -75,6 +75,7 @@ function paraEvento(m: {
           caption: m.caption,
           fileName: m.fileName,
           payload: m.payload,
+          assetId: m.assetId,
         }
       : null,
   };
