@@ -7,6 +7,13 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+## 2.9.0 — 2026-11-23
+
+Cada persona fija sus chats importantes arriba de la Bandeja, y la simulación
+ya no pierde los traspasos lentos del cerebro. Actualizar es redesplegar con
+la etiqueta `2.9.0`: la migración `0028_fijar_chats` se aplica sola al
+arrancar. No hay variables nuevas y Nea no cambia.
+
 ### Nuevo
 
 - **Fijar chats arriba de la Bandeja** (spec 070). Cada persona del equipo fija
