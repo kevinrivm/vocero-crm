@@ -14,7 +14,9 @@ import {
   storedZernioSecrets,
 } from "@/server/zernio/conexiones";
 import type { ZernioChannel } from "@/server/zernio/cuentas";
+import { registrarReaccionZernio } from "@/server/inbox/reacciones";
 import {
+  ZERNIO_REACTION_EVENT,
   WEBHOOKS_RECHECK_MS,
   webhookSecretsFromZernio,
 } from "@/server/zernio/webhooks";
@@ -105,6 +107,15 @@ export async function processZernioPayload(payload: unknown): Promise<void> {
   // 023: una conexión guardada con el id del perfil se corrige aquí, ya con
   // la firma verificada, y el canal la encuentra por el id de la cuenta.
   await healZernioAccountRef(channel, (payload as ZernioEvent).account);
+
+  // 072: una reacción del cliente se pega al mensaje, no es uno nuevo. TikTok
+  // no reacciona aquí (D4): se descarta.
+  if ((payload as ZernioEvent).event === ZERNIO_REACTION_EVENT) {
+    if (channel === "instagram" || channel === "messenger") {
+      await registrarReaccionZernio(channel, payload);
+    }
+    return;
+  }
 
   if (channel === "messenger") await processZernioMessengerEvent(payload);
   else if (channel === "tiktok") await processZernioTiktokEvent(payload);

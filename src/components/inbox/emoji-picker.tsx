@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Search, Smile, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EMOJI_CATEGORIES, filterEmojis, type EmojiCategory } from "@/lib/emojis";
@@ -14,10 +14,25 @@ export function EmojiPicker({
   disabled,
   onSelect,
   onOpen,
+  triggerContent,
+  triggerLabel = "Emojis",
+  triggerTitle = "Insertar emoji",
+  triggerClassName,
+  panelClassName,
+  optionLabel = "Insertar emoji",
 }: {
   disabled: boolean;
   onSelect: (emoji: string) => void;
   onOpen?: () => void;
+  /** 072 — Lo que se pinta en el botón (el compositor usa la carita). */
+  triggerContent?: ReactNode;
+  triggerLabel?: string;
+  triggerTitle?: string;
+  triggerClassName?: string;
+  /** 072 — Dónde se abre el panel; por defecto, encima del compositor. */
+  panelClassName?: string;
+  /** 072 — «Insertar emoji» en el compositor, «Reaccionar con» al reaccionar. */
+  optionLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -61,13 +76,14 @@ export function EmojiPicker({
         ref={trigger}
         type="button"
         disabled={disabled}
-        aria-label="Emojis"
-        title="Insertar emoji"
+        aria-label={triggerLabel}
+        title={triggerTitle}
         aria-expanded={visible}
         aria-controls={visible ? id : undefined}
         aria-haspopup="dialog"
         className={cn(
-          "shrink-0 rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-40",
+          triggerClassName ??
+            "shrink-0 rounded p-1.5 text-text-3 transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-40",
           visible && "bg-brand-tint text-brand-ink"
         )}
         onClick={() => {
@@ -79,14 +95,17 @@ export function EmojiPicker({
           setOpen(!open);
         }}
       >
-        <Smile className="h-[18px] w-[18px]" strokeWidth={1.7} />
+        {triggerContent ?? <Smile className="h-[18px] w-[18px]" strokeWidth={1.7} />}
       </button>
       {visible && (
         <div
           id={id}
           role="dialog"
           aria-label="Selector de emojis"
-          className="absolute bottom-full left-2 right-2 z-30 mb-2 flex h-[min(360px,55dvh)] max-w-[360px] flex-col rounded-xl border border-border-strong bg-popover p-3 text-popover-foreground shadow-xl"
+          className={cn(
+            panelClassName ?? "absolute bottom-full left-2 right-2 z-30 mb-2 max-w-[360px]",
+            "flex h-[min(360px,55dvh)] flex-col rounded-xl border border-border-strong bg-popover p-3 text-popover-foreground shadow-xl"
+          )}
         >
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-semibold">Emojis</p>
@@ -157,7 +176,7 @@ export function EmojiPicker({
                     key={emoji.value}
                     type="button"
                     title={emoji.label}
-                    aria-label={`Insertar emoji: ${emoji.label}`}
+                    aria-label={`${optionLabel}: ${emoji.label}`}
                     onClick={() => onSelect(emoji.value)}
                     className="flex h-9 min-w-0 items-center justify-center rounded-md text-2xl hover:bg-brand-tint focus-visible:bg-brand-tint focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
                   >

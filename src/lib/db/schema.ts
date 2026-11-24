@@ -1560,3 +1560,36 @@ export const conversationPin = pgTable(
     index("conversation_pin_org_user_idx").on(t.organizationId, t.userId),
   ]
 );
+
+/**
+ * 072 — Reacciones a un mensaje (👍 ❤️ …), del cliente o del equipo.
+ *
+ * Una por actor y mensaje: WhatsApp, Instagram y Messenger guardan UNA sola
+ * reacción del negocio por mensaje, así que el equipo es un solo actor
+ * (`user_id` dice quién la puso). Quitar la reacción borra la fila.
+ */
+export const messageReaction = pgTable(
+  "message_reaction",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversation.id, { onDelete: "cascade" }),
+    messageId: text("message_id")
+      .notNull()
+      .references(() => message.id, { onDelete: "cascade" }),
+    actor: text("actor", { enum: ["cliente", "equipo"] }).notNull(),
+    /** Quién del equipo la puso; null en las del cliente. */
+    userId: text("user_id").references(() => user.id, { onDelete: "set null" }),
+    emoji: text("emoji").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("message_reaction_message_actor_uq").on(t.messageId, t.actor),
+    index("message_reaction_conv_idx").on(t.organizationId, t.conversationId),
+  ]
+);

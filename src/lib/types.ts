@@ -1,5 +1,6 @@
 /** DTOs que viajan por la API interna (lado cliente). */
 
+import type { ReaccionDto } from "@/lib/reacciones";
 import type { Channel } from "@/lib/channels";
 
 export type ConversationDto = {
@@ -93,6 +94,10 @@ export type MessageDto = {
   quotable: boolean;
   /** 039 — El mensaje que cita, o null si no cita ninguno. */
   replyTo: QuotedMessageDto | null;
+  /** 072 — Tiene id en la plataforma: se le puede reaccionar. */
+  reactable?: boolean;
+  /** 072 — Reacciones del cliente y del equipo. */
+  reactions?: ReaccionDto[];
   createdAt: string;
 };
 
