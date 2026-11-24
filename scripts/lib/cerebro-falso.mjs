@@ -27,6 +27,16 @@
  *         y luego contesta como siempre.
  *     Los avisos `conversation.deleted` solo se acusan.
  *
+ * 075 — Tres perillas más, por despacho, para la red de seguridad y el turno
+ * superado (todas apagadas por defecto: los demás guiones no cambian):
+ *   · `estado.conDispatchId` (o una función del evento): si el despacho
+ *     anuncia `dispatch_superado`, responde con `dispatchId` y
+ *     `dropIfSuperseded: true`, como Nea en Cloud. Ante el 409 calla.
+ *   · `estado.callar(evento)`: si devuelve true, acusa recibo y no contesta
+ *     nada (el turno que se cuelga).
+ *   · `estado.demora(evento)`: cuánto «piensa» ese despacho (ms); sin ella,
+ *     `demoraMs`. Sirve para responder tarde.
+ *
  * Todo lo recibido queda en `estado.recibidos` (con `firmaOk`, cabeceras y la
  * hora) y lo que contestó el CRM a cada respuesta, en `estado.respuestas`.
  *
@@ -153,6 +163,12 @@ export async function levantarCerebroFalso({
     /** 038 — Lo que el contexto le dijo antes de mover la etapa. */
     contextos: [],
     saludPedidos: 0,
+    /** 075 — boolean o `(evento) => boolean`. */
+    conDispatchId: false,
+    /** 075 — `(evento) => boolean`: acusa y no contesta. */
+    callar: null,
+    /** 075 — `(evento) => ms`: cuánto piensa ese despacho. */
+    demora: null,
   };
   /** Respuestas en vuelo: `esperar()` las deja terminar antes de cerrar. */
   const enVuelo = new Set();
@@ -165,7 +181,15 @@ export async function levantarCerebroFalso({
         body: JSON.stringify(cuerpo),
       });
       const json = await r.json().catch(() => null);
-      estado.respuestas.push({ convId, tipo, ruta, status: r.status, json, texto: cuerpo.text ?? null });
+      estado.respuestas.push({
+        convId,
+        tipo,
+        ruta,
+        status: r.status,
+        json,
+        texto: cuerpo.text ?? null,
+        dispatchId: cuerpo.dispatchId ?? null,
+      });
       return { status: r.status, json };
     } catch (err) {
       estado.respuestas.push({ convId, tipo, ruta, status: 0, error: String(err) });
@@ -215,8 +239,17 @@ export async function levantarCerebroFalso({
     await alCrm("/api/bot/stage", { conversationId: convId, stage: etapa }, convId, "etapa");
   }
 
+  /** 075 — Lo que Nea agrega a su respuesta si el CRM anuncia el turno superado. */
+  function sobreDelTurno(evento) {
+    const quiere =
+      typeof estado.conDispatchId === "function" ? estado.conDispatchId(evento) : estado.conDispatchId;
+    if (!quiere || !evento.capabilities?.includes("dispatch_superado")) return {};
+    return { dispatchId: evento.dispatchId, dropIfSuperseded: true };
+  }
+
   async function contestar(evento) {
     const convId = evento.conversation.id;
+    if (typeof estado.callar === "function" && estado.callar(evento)) return;
     const ultimo = evento.messages.at(-1) ?? {};
     const texto = ultimo.text ?? ultimo.caption ?? "";
     // Como Nea con el candado de cierre: ante el relleno final, calla.
@@ -228,7 +261,12 @@ export async function levantarCerebroFalso({
     }
     if (/califica/i.test(texto)) await moverEtapa(convId, texto);
     const respuesta = await pensar(texto);
-    await alCrm("/api/bot/messages", { conversationId: convId, text: respuesta }, convId, "mensaje");
+    await alCrm(
+      "/api/bot/messages",
+      { conversationId: convId, text: respuesta, ...sobreDelTurno(evento) },
+      convId,
+      "mensaje"
+    );
   }
 
   const debeContestar = (evento) =>
@@ -279,7 +317,8 @@ export async function levantarCerebroFalso({
         res.writeHead(status, { "content-type": "application/json" });
         res.end(JSON.stringify(status < 300 ? { status: "ok" } : { error: "simulado" }));
         if (status >= 300 || !debeContestar(evento)) return;
-        const p = new Promise((r) => setTimeout(r, estado.demoraMs))
+        const demora = typeof estado.demora === "function" ? estado.demora(evento) : estado.demoraMs;
+        const p = new Promise((r) => setTimeout(r, demora ?? estado.demoraMs))
           .then(() => contestar(evento))
           .finally(() => enVuelo.delete(p));
         enVuelo.add(p);

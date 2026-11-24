@@ -80,7 +80,33 @@ export type EventoDespacho = {
   messages: MensajeDelEvento[];
   firstMessageAt: string;
   lastMessageAt: string;
+  /**
+   * 075 — Lo que este CRM sabe hacer además del contrato base. Hoy, solo
+   * `dispatch_superado`. Va al final para que el cuerpo fijado en las pruebas
+   * gemelas (que no la lleva) siga siendo el mismo.
+   */
+  capabilities?: string[];
+  /**
+   * 075 — Solo cuando la red de seguridad vuelve a mandar un turno que quedó
+   * sin contestar: 1 la primera vez, 2 la segunda. Son mensajes que el
+   * cerebro ya recibió; no debe descartarlos por repetidos.
+   */
+  relaunch?: number;
 };
+
+/**
+ * 075 — El CRM sabe callar la respuesta a un turno que el cliente ya dejó
+ * atrás: si el cerebro manda `dispatchId` y `dropIfSuperseded: true` en
+ * `POST /api/bot/messages` y ya hay un despacho posterior en esa conversación,
+ * contesta `409 dispatch_superado` y no envía nada. Es la misma cadena que
+ * anuncia Vocero Cloud, para que un cerebro sirva a las dos ediciones.
+ */
+export const CAPACIDAD_SUPERADO = "dispatch_superado";
+
+/** 075 — Lo que viaja en `capabilities` de cada despacho. */
+export function capacidadesDelCrm(): string[] {
+  return [CAPACIDAD_SUPERADO];
+}
 
 /** Lo que hace falta saber de un mensaje para meterlo al evento. */
 export type MensajeParaEvento = {
@@ -133,6 +159,10 @@ export function armarEvento(datos: {
   messages: MensajeParaEvento[];
   firstMessageAt: Date;
   lastMessageAt: Date;
+  /** 075 */
+  capabilities?: string[];
+  /** 075 — 0 o ausente en un despacho normal. */
+  relaunch?: number;
 }): EventoDespacho {
   return {
     dispatchId: datos.dispatchId,
@@ -157,6 +187,10 @@ export function armarEvento(datos: {
     messages: datos.messages.map(mensajeDelEvento),
     firstMessageAt: datos.firstMessageAt.toISOString(),
     lastMessageAt: datos.lastMessageAt.toISOString(),
+    // 075 — Las llaves nuevas, al final y solo cuando vienen: el cuerpo
+    // gemelo no cambia.
+    ...(datos.capabilities?.length ? { capabilities: [...datos.capabilities] } : {}),
+    ...(datos.relaunch && datos.relaunch > 0 ? { relaunch: datos.relaunch } : {}),
   };
 }
 

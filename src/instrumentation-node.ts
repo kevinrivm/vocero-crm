@@ -3,6 +3,7 @@ import { getDb, schema } from "@/lib/db";
 import { mediaDirStatus } from "@/server/media-dir";
 import { leerConfigDespacho } from "@/server/brains/config";
 import { iniciarWorker, tanda } from "@/server/dispatch/worker";
+import { iniciarRedDeSeguridad } from "@/server/dispatch/red-de-seguridad";
 import { cifrarSecretosEnClaro } from "@/server/zernio/secreto-guardado";
 import { barrido, iniciarBarrido } from "@/server/webhooks/worker";
 
@@ -99,6 +100,9 @@ export function resumeDispatch(): void {
   const config = leerConfigDespacho();
   if (config.active) {
     iniciarWorker();
+    // 075: lo que el cerebro recibió y nunca contestó se relanza, y al final
+    // pasa a una persona.
+    iniciarRedDeSeguridad();
     void tanda();
     console.log(`[boot] despacho al cerebro activo → ${config.host}`);
     return;

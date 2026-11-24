@@ -3,6 +3,7 @@ import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
 import {
   armarEvento,
+  capacidadesDelCrm,
   clasificarRespuesta,
   firmarCuerpo,
   CABECERA_DISPATCH,
@@ -271,6 +272,8 @@ export async function construirEvento(
     messages,
     firstMessageAt: fila.firstMessageAt,
     lastMessageAt: fila.lastMessageAt,
+    capabilities: capacidadesDelCrm(),
+    relaunch: fila.relaunchCount,
   });
 }
 

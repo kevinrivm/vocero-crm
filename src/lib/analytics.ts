@@ -277,4 +277,5 @@ export const HANDOFF_LABEL: Record<string, string> = {
   ventana: "Ventana de 24 h cerrada",
   hostilidad: "El cliente se puso agresivo",
   manual_reply: "Respondió una persona del equipo",
+  sin_respuesta: "El agente no logró contestar",
 };
