@@ -1,7 +1,7 @@
 # 072 — Tareas
 
 - [x] T1 Spec (puerto de la 150 de Megaparty, adaptado al raíz).
-- [x] T2 Tabla `message_reaction` + prefijo `rx` + migración `0028_reacciones`.
+- [x] T2 Tabla `message_reaction` + prefijo `rx` + migración `0029_reacciones`.
 - [x] T3 `src/lib/reacciones.ts` (puro): agrupar, alternar, validar emoji
       (también teclas 1️⃣ #️⃣, que la 150 rechazaba), id de Zernio, canales.
 - [x] T4 `src/server/inbox/reacciones.ts`: guardar/leer, entrantes de WhatsApp
