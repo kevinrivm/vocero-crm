@@ -63,7 +63,8 @@ ok("las 3 personas de prueba están en la bandeja",
    JSON.stringify(convs.map((c) => c.contact.name)));
 
 const page = await ctx.newPage();
-const rows = () => page.locator("ul > li button").allInnerTexts();
+// Cada fila trae además el botón de fijar (070), sin texto: solo cuentan las filas.
+const rows = async () => (await page.locator("ul > li button").allInnerTexts()).filter((t) => t.trim());
 
 console.log("\n== Bandeja: teclear mientras la página aún carga (el bug) ==");
 await page.goto(`${BASE}/inbox`, { waitUntil: "commit" });
