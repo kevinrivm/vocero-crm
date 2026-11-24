@@ -7,6 +7,69 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+## 2.10.0 — 2026-11-24
+
+Las reacciones a los mensajes, todo lo que llega por Instagram, Messenger y
+TikTok, una sola respuesta del agente por ráfaga y una sesión que ya no se
+cae a la semana. Actualizar es redesplegar con la etiqueta `2.10.0`: las
+migraciones `0029_reacciones`, `0030_que_no_se_pierda_nada` y
+`0031_una_respuesta` se aplican solas al arrancar. La única variable nueva,
+`RED_DE_SEGURIDAD_MS`, es opcional. Nea no tiene que cambiar: un cerebro que
+no manda `dispatchId` funciona igual que antes.
+
+### Nuevo
+
+- **Reacciones a los mensajes** (spec 072). Las reacciones del cliente ya no
+  se descartan: se ven debajo de la burbuja, agrupadas por emoji, dicen quién
+  reaccionó y se actualizan en vivo. El equipo reacciona desde la Bandeja (la
+  carita junto a ↩ con el ratón, o el menú de mantener presionado en el
+  teléfono) y el cliente la ve en su app; otro emoji la reemplaza y tocar la
+  propia la quita. Funciona en WhatsApp y en Instagram y Messenger por
+  Zernio; con app propia de Meta y en TikTok no se puede reaccionar.
+  **Migración `0029_reacciones`** (se aplica sola al arrancar).
+- **Que no se pierda nada** (spec 074). Las fotos, videos, audios y archivos
+  de **Instagram, Messenger y TikTok** entran todos (antes, solo el texto o el
+  primer adjunto), por Meta directo y por Zernio, y se copian a `MEDIA_DIR` al
+  llegar: la URL que mandan caduca en horas. Un grupo de fotos despierta al
+  cerebro una sola vez, con todo en la ráfaga; el cerebro las baja por
+  `/api/bot/media/{mediaId}` con el id interno (`ma_…`). Tope por adjunto:
+  foto 10 MB, sticker 2 MB, lo demás 25 MB. Solo se bajan de un host de Meta
+  (Meta directo) o de un host público (Zernio), nunca de la red interna.
+- **Mensajes editados** en WhatsApp (coexistencia): la burbuja dice «Editado»
+  y «Ver el original» enseña lo que decía la primera vez. Llega en vivo y no
+  despierta al cerebro. **Migración `0030_que_no_se_pierda_nada`** (se aplica
+  sola al arrancar).
+- **Lo que la bandeja no sabe mostrar ya no se descarta** (tarjetas,
+  encuestas, pedidos, lo que la plataforma no entrega): queda como «Este
+  mensaje no se puede mostrar aquí. Revísalo desde el teléfono», sin guardar
+  su contenido, con un botón «Pedírselo en texto» que escribe la pregunta en
+  la caja sin enviarla.
+- **Una sola respuesta por ráfaga** (spec 075). Si el cliente vuelve a
+  escribir mientras el agente piensa, el agente contesta una sola vez, con
+  todo lo que el cliente dijo, en vez de mandar dos respuestas que se pisan.
+  El despacho anuncia `dispatch_superado` en `capabilities`, y un cerebro que
+  manda `dispatchId` y `dropIfSuperseded: true` en `POST /api/bot/messages`
+  recibe `409 dispatch_superado` cuando su turno ya quedó atrás. Es opcional:
+  un cerebro que no manda esos campos se comporta igual que antes.
+- **Nadie se queda sin respuesta** (spec 075). Una red de seguridad revisa
+  cada minuto los turnos que el cerebro recibió y nunca contestó: a los 10
+  minutos se los vuelve a mandar (con `relaunch: 1`, luego `2`) y, si siguen
+  sin respuesta, pasa la conversación a una persona con el motivo «El agente
+  no logró contestar», visible en la Bandeja y en el hilo. No relanza un
+  «gracias» o un 👍, ni con la IA en pausa, el agente apagado, fuera de la
+  ventana del canal o en el Laboratorio. **Migración `0031_una_respuesta`**
+  (se aplica sola al arrancar; lo entregado antes de actualizar no se
+  relanza). Variable opcional `RED_DE_SEGURIDAD_MS` (60000; `0` la apaga).
+
+### Arreglado
+
+- **La sesión ya no se cae a los 7 días aunque entres a diario** (spec 073).
+  El servidor alargaba la sesión en la base sin poder entregar la cookie
+  nueva, así que el navegador se quedaba con la caducidad del login y te
+  sacaba a la semana. Ahora el servidor la lee sin alargarla y la renueva el
+  navegador, con base y cookie juntas: al abrir la app, al volver a la
+  pestaña y cada hora. Sin migración ni variables nuevas.
+
 ## 2.9.0 — 2026-11-23
 
 Cada persona fija sus chats importantes arriba de la Bandeja, y la simulación

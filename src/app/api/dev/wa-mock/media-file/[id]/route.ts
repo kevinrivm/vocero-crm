@@ -65,6 +65,38 @@ export async function GET(
     });
   }
 
+  // 074 — El CDN de los adjuntos de Instagram, Messenger y TikTok: la URL
+  // firmada que trae el webhook apunta aquí. `adjunto-caducado…` responde como
+  // una firma vencida (403), `adjunto-enorme…` pasa del tope de una foto y
+  // `adjunto-redirige…` salta a este mismo servidor por otro nombre
+  // (localhost ↔ 127.0.0.1): la descarga debe revalidar el salto y negarse.
+  if (id.startsWith("adjunto")) {
+    if (id.startsWith("adjunto-caducado")) return new Response(null, { status: 403 });
+    if (id.startsWith("adjunto-enorme")) {
+      return new Response(new Uint8Array(11 * 1024 * 1024), {
+        headers: { "content-type": "image/jpeg" },
+      });
+    }
+    if (id.startsWith("adjunto-redirige")) {
+      const aqui = new URL(req.url);
+      const otro = aqui.hostname === "127.0.0.1" ? "localhost" : "127.0.0.1";
+      return new Response(null, {
+        status: 302,
+        headers: {
+          location: `${aqui.protocol}//${otro}:${aqui.port}/api/dev/wa-mock/media-file/adjunto-destino-del-salto`,
+        },
+      });
+    }
+    if (id.startsWith("adjunto-pdf")) {
+      return new Response(Buffer.from("%PDF-1.4\n% adjunto de prueba\n"), {
+        headers: { "content-type": "application/pdf" },
+      });
+    }
+    return new Response(new Uint8Array(pngDePrueba(id)), {
+      headers: { "content-type": "image/png" },
+    });
+  }
+
   // 044 — Una nota de voz de verdad (Ogg/Opus, 3 s de silencio) para que el
   // reproductor la pueda decodificar.
   if (id.includes("audio")) {

@@ -29,6 +29,8 @@ import { despacharAlCerebro } from "@/server/dispatch/encolar";
 import { pausarIaPorRespuestaManual } from "@/server/inbox/pausa-manual";
 import { registrarReaccionWhatsApp } from "@/server/inbox/reacciones";
 import { esReaccionable, type ReaccionDto } from "@/lib/reacciones";
+import { registrarEdicionWhatsApp } from "@/server/inbox/ediciones";
+import { payloadPublico, type RemoteMedia } from "@/server/inbox/remote-media";
 import {
   aCitaDto,
   citaDelWebhook,
@@ -36,7 +38,10 @@ import {
   type CitaEncontrada,
 } from "@/server/inbox/quotes";
 
-/** Tipos de contenido soportados; el resto se ignora sin error. */
+/**
+ * Tipos que la bandeja sabe dibujar y el cerebro sabe leer. 074: el resto ya
+ * no se descarta (ver `tipoDeEntrante`).
+ */
 const SUPPORTED_TYPES = new Set([
   "text",
   "image",
@@ -50,6 +55,34 @@ const SUPPORTED_TYPES = new Set([
 
 /** #78 — Respuestas de botón: entran como texto (ver `contenidoEntrante`). */
 const BUTTON_REPLY_TYPES = new Set(["button", "interactive"]);
+
+/**
+ * 074 — Lo único que se ignora: eventos que no son un mensaje para el hilo
+ * (avisos del sistema, el saludo de bienvenida, borrados, temporales).
+ */
+const IGNORED_TYPES = new Set(["system", "request_welcome", "revoke", "ephemeral"]);
+
+/**
+ * 074 — Qué hacer con un mensaje del webhook de WhatsApp según su tipo.
+ *
+ * - `normal`: se guarda y despierta al cerebro, como siempre.
+ * - `sin_vista`: llegó, pero ni la bandeja lo sabe dibujar ni el cerebro leer
+ *   (`unsupported`, encuestas, pedidos del catálogo…). Se guarda SIN su
+ *   contenido —puede traer datos que nadie pidió guardar— para que el equipo
+ *   sepa que llegó y lo abra en el teléfono. No despierta al cerebro.
+ * - `edicion`: cambia un mensaje que ya existe (`ediciones.ts`).
+ * - `reaccion`: tampoco es un mensaje; tiene su propio camino.
+ * - `ignorar`: no es un mensaje.
+ */
+export function tipoDeEntrante(
+  type: string
+): "normal" | "sin_vista" | "edicion" | "reaccion" | "ignorar" {
+  if (SUPPORTED_TYPES.has(type) || BUTTON_REPLY_TYPES.has(type)) return "normal";
+  if (type === "edit") return "edicion";
+  if (type === "reaction") return "reaccion";
+  if (IGNORED_TYPES.has(type)) return "ignorar";
+  return "sin_vista";
+}
 
 /**
  * #78 — Lo que escribió el cliente, también cuando lo hizo tocando un botón.
@@ -93,7 +126,7 @@ const BINARY_MEDIA_TYPES = new Set([
   "sticker",
 ] as const);
 
-type MediaInput = {
+export type MediaInput = {
   kind: (typeof schema.mediaAsset.$inferSelect)["kind"];
   waMediaId: string | null;
   mimeType: string | null;
@@ -102,6 +135,22 @@ type MediaInput = {
   payload: unknown;
   fetchStatus: "available" | "pending";
 };
+
+/**
+ * 074 — El adjunto de Instagram, Messenger o TikTok: sin id de Graph, con la
+ * URL firmada y su origen en el payload. Se baja en segundo plano al llegar.
+ */
+export function mediaRemota(m: RemoteMedia): MediaInput {
+  return {
+    kind: m.kind,
+    waMediaId: null,
+    mimeType: null,
+    fileName: null,
+    caption: null,
+    payload: { sourceUrl: m.sourceUrl, origen: m.origen },
+    fetchStatus: "pending",
+  };
+}
 
 /**
  * 008 — Extrae el adjunto de un mensaje del webhook (entrante o echo).
@@ -290,14 +339,42 @@ export async function processMessagesValue(value: WebhookValue): Promise<void> {
   }
 
   for (const msg of value.messages ?? []) {
+    const clase = tipoDeEntrante(msg.type);
     // 072: la reacción no es un mensaje nuevo: se pega al que reacciona. No
     // abre la ventana ni despierta al cerebro.
-    if (msg.type === "reaction") {
+    if (clase === "reaccion") {
       await registrarReaccionWhatsApp(organizationId, msg, value.contacts);
       continue;
     }
-    if (!SUPPORTED_TYPES.has(msg.type) && !BUTTON_REPLY_TYPES.has(msg.type)) {
-      continue; // sistema, no soportados, etc.: ignorar
+    if (clase === "ignorar") continue;
+    if (clase === "edicion") {
+      await registrarEdicionWhatsApp(organizationId, msg, {
+        tipo: "cliente",
+        contacts: value.contacts,
+      });
+      continue;
+    }
+    if (clase === "sin_vista") {
+      const quien = resolveIdentity(msg, value.contacts);
+      if (!quien) {
+        console.warn(`[webhook] mensaje ${msg.id} sin identidad utilizable: descartado`);
+        continue;
+      }
+      // Solo el tipo al log: el contenido puede traer datos del cliente.
+      console.log(`[webhook] mensaje ${msg.id} de tipo «${msg.type}»: se guarda sin vista propia`);
+      await ingestInboundMessage({
+        organizationId,
+        identity: quien,
+        waMessageId: msg.id,
+        type: msg.type,
+        text: null,
+        timestamp: msg.timestamp,
+        media: null,
+        replyToWaMessageId: citaDelWebhook(msg),
+        anuncio: anuncioDeWhatsapp(msg.referral),
+        despertar: false,
+      });
+      continue;
     }
     const contenido = contenidoEntrante(msg);
     if (!contenido) {
@@ -352,7 +429,13 @@ export async function processEchoesValue(value: WebhookValue): Promise<void> {
   // Meta documenta `message_echoes`; parser tolerante a `messages` (R1).
   const echoes = value.message_echoes ?? value.messages ?? [];
   for (const echo of echoes) {
-    if (!SUPPORTED_TYPES.has(echo.type)) continue;
+    const clase = tipoDeEntrante(echo.type);
+    // 074: alguien del negocio editó desde el teléfono un mensaje suyo.
+    if (clase === "edicion") {
+      await registrarEdicionWhatsApp(credentials.organizationId, echo, { tipo: "negocio" });
+      continue;
+    }
+    if (clase !== "normal" && clase !== "sin_vista") continue;
     if (!echo.to) {
       console.warn(`[webhook] echo ${echo.id} sin destinatario: descartado`);
       continue;
@@ -382,6 +465,9 @@ async function ingestManualEcho(
   const conversation = await getOrCreateConversation(organizationId, contact.id);
 
   const waTimestamp = toDate(echo.timestamp);
+  // 074: una tarjeta o encuesta que el negocio mandó desde el teléfono se
+  // guarda sin su contenido, como la del cliente.
+  const sinVista = tipoDeEntrante(echo.type) === "sin_vista";
 
   // Idempotencia dura: los mensajes ya registrados (o echoes repetidos) no
   // duplican efectos — mismo wa_message_id → sin inserción ni handoff extra.
@@ -394,7 +480,7 @@ async function ingestManualEcho(
       waMessageId: echo.id,
       direction: "out",
       type: echo.type,
-      text: echo.text?.body ?? null,
+      text: sinVista ? null : (echo.text?.body ?? null),
       status: "sent",
       origin: "manual",
       // 039: el dueño también cita desde el teléfono.
@@ -406,7 +492,7 @@ async function ingestManualEcho(
   const message = inserted[0];
   if (!message) return; // duplicado
 
-  const mediaInput = mediaInputFrom(echo);
+  const mediaInput = sinVista ? null : mediaInputFrom(echo);
   const asset = mediaInput
     ? await attachMediaAsset(organizationId, message.id, mediaInput)
     : null;
@@ -452,6 +538,13 @@ export async function ingestInboundMessage(input: {
   threadRef?: string | null;
   /** 016/018: el anuncio que abrió la conversación, ya normalizado por el canal. */
   anuncio?: AnuncioDeOrigen | null;
+  /**
+   * 074 — `false` guarda el mensaje sin despertar al cerebro: lo usan las
+   * partes de un grupo de adjuntos que no son la última (nueve fotos juntas
+   * son UN turno, con las nueve en la ráfaga) y lo que el cerebro no sabe
+   * leer. Por defecto, true.
+   */
+  despertar?: boolean;
 }): Promise<void> {
   const db = getDb();
   const { organizationId } = input;
@@ -544,6 +637,10 @@ export async function ingestInboundMessage(input: {
     data: { conversation: { id: conversation.id } },
   });
 
+  // 074: las partes de un grupo que no son la última, y lo que el cerebro no
+  // sabe leer, se quedan en la bandeja sin abrir un turno.
+  if (input.despertar === false) return;
+
   // 036 — Quien contesta es el cerebro conectado; sin él, una persona. El
   // 025: `message.id` es lo que el despacho le debe al cerebro.
   if (despachoActivo()) await despacharAlCerebro(conversation.id, organizationId, message.id);
@@ -610,7 +707,8 @@ export function serializeMessage(
           fileSize: media.fileSize,
           caption: media.caption,
           fetchStatus: media.fetchStatus,
-          payload: media.payload,
+          // 074: sin la URL firmada de origen de los canales sociales.
+          payload: payloadPublico(media.payload),
         }
       : null,
     /** 039: se le puede responder citando (tiene id en la plataforma). */
@@ -619,6 +717,10 @@ export function serializeMessage(
     /** 072: tiene id en la plataforma con el que se puede reaccionar. */
     reactable: esReaccionable(m),
     reactions,
+    /** 074: hora de la última edición, o null si nunca se editó. */
+    editedAt: m.editedAt ? m.editedAt.toISOString() : null,
+    /** 074: lo que decía antes de la primera edición. */
+    originalText: m.editedAt ? m.originalText : null,
     createdAt: (m.waTimestamp ?? m.createdAt).toISOString(),
   };
 }

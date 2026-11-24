@@ -1,5 +1,6 @@
 import { TT_PREFIX } from "@/server/inbox/identity";
-import { ingestInboundMessage } from "@/server/inbox/ingest";
+import { ingerirPartes } from "@/server/inbox/partes";
+import { splitInbound, type RemoteAttachment } from "@/server/inbox/remote-media";
 import { getTiktokCredentialsByAccountRef } from "@/server/tiktok/credentials";
 import { zernioSentAtSeconds, type ZernioEvent } from "@/server/zernio";
 
@@ -31,12 +32,17 @@ export type TiktokInbound = {
   profileName: string | null;
   /** `conversationId` opaco de Zernio: hace falta para responder. */
   threadRef: string | null;
+  /**
+   * 074 — Todos los adjuntos, con su URL temporal. `type` resume el evento;
+   * al guardarlo, cada adjunto entra como su propio mensaje (`splitInbound`).
+   */
+  attachments: RemoteAttachment[];
 };
 
 /**
- * Tipos de adjunto → tipo de mensaje del CRM. El adjunto no se descarga
- * (Zernio lo entrega como URL temporal): el mensaje entra con su tipo para que
- * la bandeja enseñe qué llegó en vez de perderlo.
+ * Tipos de adjunto → tipo que resume el evento. 074: al guardarlo, cada
+ * adjunto entra además como su propio mensaje y se copia de la URL temporal
+ * que manda Zernio.
  */
 const ATTACHMENT_TYPE: Record<string, string> = {
   image: "image",
@@ -97,6 +103,7 @@ export function normalizeZernioTiktokEvent(payload: unknown): TiktokInbound[] {
         (sender?.username ? `@${sender.username.replace(/^@/, "")}` : null),
       // Opaco por contrato: se guarda tal cual y no se parsea.
       threadRef: evt.message?.conversationId ?? evt.conversation?.id ?? null,
+      attachments: Array.isArray(evt.message?.attachments) ? evt.message.attachments : [],
     },
   ];
 }
@@ -112,22 +119,28 @@ export async function processZernioTiktokEvent(payload: unknown): Promise<void> 
       continue;
     }
 
-    await ingestInboundMessage({
-      organizationId: creds.organizationId,
-      identity: {
-        identity: `${TT_PREFIX}${evt.senderId}`,
-        channel: "tiktok",
-        phone: null,
-        waUserId: null,
-        profileName: evt.profileName,
+    // 074: un mensaje por texto y uno por adjunto, cada uno copiado a
+    // MEDIA_DIR al llegar. Solo el último despierta al cerebro.
+    const partes = splitInbound(evt.text, evt.attachments, "zernio");
+    if (partes.length === 0) continue;
+
+    await ingerirPartes(
+      {
+        organizationId: creds.organizationId,
+        identity: {
+          identity: `${TT_PREFIX}${evt.senderId}`,
+          channel: "tiktok",
+          phone: null,
+          waUserId: null,
+          profileName: evt.profileName,
+        },
+        timestamp: evt.timestamp,
+        threadRef: evt.threadRef,
       },
       // Prefijado para que no colisione jamás con un id de otro canal en el
       // índice único de mensajes.
-      waMessageId: `tt_${evt.messageId}`,
-      type: evt.type,
-      text: evt.text,
-      timestamp: evt.timestamp,
-      threadRef: evt.threadRef,
-    });
+      `tt_${evt.messageId}`,
+      partes
+    );
   }
 }

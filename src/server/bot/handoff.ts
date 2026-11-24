@@ -14,6 +14,13 @@ export const HANDOFF_REASONS = [
   "error",
   "ventana",
   "hostilidad",
+  /**
+   * 075 — El cliente se quedó sin respuesta: el CRM volvió a mandar el turno
+   * dos veces y nadie contestó, o el cerebro no logró escribir una respuesta
+   * que se pudiera enviar. No es una caída del proveedor (`error`) ni una
+   * decisión del agente (`modelo`).
+   */
+  "sin_respuesta",
 ] as const;
 
 export type HandoffReason = (typeof HANDOFF_REASONS)[number];

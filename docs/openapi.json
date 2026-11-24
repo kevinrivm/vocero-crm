@@ -3,7 +3,7 @@
   "info": {
     "title": "Vocero CRM — API de servicio del cerebro",
     "version": "2.0.0",
-    "description": "El contrato entre Vocero CRM y su cerebro (Nea u otro). Dos mitades: el CRM le DESPACHA a tu cerebro cada ráfaga del cliente (sección `webhooks`), y tu cerebro contesta por `/api/bot/*` (sección `paths`).\n\nRegla de versión: agregar una llave o una ruta cabe en cualquier versión; quitar o renombrar una es una versión mayor. Ignora las llaves que no conozcas.\n\nCambios de contrato de la 2.0: `POST /api/bot/llm/{ruta}` y `llm` en el perfil (036); `adOrigen` en el contexto (031); `fileName`, `location` y `contacts` en los mensajes del despacho (031); `conversation.test` en el despacho y `/api/bot/messages` guardando las respuestas de prueba (033); `role` y `tools` en el perfil (034); `POST /api/bot/stage`, `lead.nextStages` en el contexto y la herramienta `etapa` (038).\n\nLa forma exacta del despacho y del aviso de olvido está fijada byte a byte en pruebas gemelas de los dos repositorios: `tests/unit/despacho-contrato.test.ts` y `tests/unit/olvido-contrato.test.ts` aquí, `tests/test_despacho_raiz.py` y `tests/test_olvido.py` en nea-agent. Guía de migración: `docs/migrar-a-2.0.md`.",
+    "description": "El contrato entre Vocero CRM y su cerebro (Nea u otro). Dos mitades: el CRM le DESPACHA a tu cerebro cada ráfaga del cliente (sección `webhooks`), y tu cerebro contesta por `/api/bot/*` (sección `paths`).\n\nRegla de versión: agregar una llave o una ruta cabe en cualquier versión; quitar o renombrar una es una versión mayor. Ignora las llaves que no conozcas.\n\nCambios de contrato de la 2.0: `POST /api/bot/llm/{ruta}` y `llm` en el perfil (036); `adOrigen` en el contexto (031); `fileName`, `location` y `contacts` en los mensajes del despacho (031); `conversation.test` en el despacho y `/api/bot/messages` guardando las respuestas de prueba (033); `role` y `tools` en el perfil (034); `POST /api/bot/stage`, `lead.nextStages` en el contexto y la herramienta `etapa` (038).\n\nCambios de la 2.10 (075, todos opcionales para el cerebro): `capabilities` y `relaunch` al final del despacho; `dispatchId` y `dropIfSuperseded` en `POST /api/bot/messages`, con el 409 `dispatch_superado`; el motivo de traspaso `sin_respuesta`.\n\nLa forma exacta del despacho y del aviso de olvido está fijada byte a byte en pruebas gemelas de los dos repositorios: `tests/unit/despacho-contrato.test.ts` y `tests/unit/olvido-contrato.test.ts` aquí, `tests/test_despacho_raiz.py` y `tests/test_olvido.py` en nea-agent. Guía de migración: `docs/migrar-a-2.0.md`.",
     "license": { "name": "MIT" }
   },
   "servers": [{ "url": "https://tu-crm.example.com" }],
@@ -29,16 +29,16 @@
     "/api/bot/messages": {
       "post": {
         "summary": "Contestarle al cliente",
-        "description": "Sale por el mismo camino que la bandeja y queda marcado como IA. El CRM adapta el texto al canal (en Instagram, Messenger y TikTok le quita el formato). En una conversación de prueba del Laboratorio (`conversation.test` del despacho) la respuesta se GUARDA en el hilo y no se envía.",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["conversationId", "text"], "properties": { "conversationId": { "type": "string" }, "text": { "type": "string", "minLength": 1 } } } } } },
+        "description": "Sale por el mismo camino que la bandeja y queda marcado como IA. El CRM adapta el texto al canal (en Instagram, Messenger y TikTok le quita el formato). En una conversación de prueba del Laboratorio (`conversation.test` del despacho) la respuesta se GUARDA en el hilo y no se envía.\n\n075 — Una sola respuesta por ráfaga (opcional). Si el despacho trae `dispatch_superado` en `capabilities`, manda su `dispatchId` y `\"dropIfSuperseded\": true`. Si el cliente volvió a escribir mientras pensabas, ya hay un despacho posterior con TODA la ráfaga: el CRM contesta `409 dispatch_superado` y no envía nada. Calla, no traspases y contesta ese otro despacho. Sin esos dos campos nada cambia: un cerebro que no los manda nunca recibe este 409.",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["conversationId", "text"], "properties": { "conversationId": { "type": "string" }, "text": { "type": "string", "minLength": 1 }, "dispatchId": { "type": "string", "description": "075 — Opcional. El `dispatchId` del despacho que contestas. Si lo mandas, tiene que ser de esta misma conversación (si no: 404 `dispatch_desconocido` o 422 `conversacion_no_corresponde`)." }, "dropIfSuperseded": { "type": "boolean", "description": "075 — Opcional, solo vale con `dispatchId`. `true`: si el cliente ya escribió otra vez, el CRM no envía esta respuesta y contesta `409 dispatch_superado`." } } }, "examples": { "gemelo": { "summary": "075 — El cuerpo fijado en la prueba gemela de nea-agent (`tests/test_despacho_superado.py`)", "value": { "dispatchId": "dsp_gemelo1", "conversationId": "cv_gemela1", "text": "¡Hola! Sí tenemos.", "dropIfSuperseded": true } } } } } },
         "responses": {
           "200": { "description": "Enviado (o guardado, en una de prueba)", "content": { "application/json": { "schema": { "type": "object", "properties": { "messageId": { "type": "string" }, "status": { "type": "string", "enum": ["sent"] } }, "required": ["messageId"] } } } },
           "404": { "$ref": "#/components/responses/NoEncontrada" },
-          "409": { "description": "`ai_paused`: una persona tomó la conversación (no insistas). `window_closed`: la ventana del canal cerró. `message_limit`: el canal no admite más hasta que el cliente escriba (TikTok). `sandbox_violation`: reservado. `no_org`.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": { "description": "`ai_paused`: una persona tomó la conversación (no insistas). `window_closed`: la ventana del canal cerró. `message_limit`: el canal no admite más hasta que el cliente escriba (TikTok). `sandbox_violation`: reservado. `no_org`. `dispatch_superado` (075): solo si mandaste `dispatchId` y `dropIfSuperseded`; el cliente volvió a escribir, calla y contesta el despacho siguiente.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
           "422": { "$ref": "#/components/responses/Invalido" },
           "502": { "description": "El canal (Meta o Zernio) rechazó el envío.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         },
-        "x-codigos-409": ["ai_paused", "window_closed", "sandbox_violation", "message_limit", "no_org"]
+        "x-codigos-409": ["ai_paused", "window_closed", "sandbox_violation", "message_limit", "no_org", "dispatch_superado"]
       }
     },
     "/api/bot/profile": {
@@ -101,7 +101,7 @@
       "post": {
         "summary": "Pasar la conversación a una persona",
         "description": "Pausa la IA en esa conversación. Despídete ANTES: después, `/api/bot/messages` responde 409 `ai_paused`.",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["conversationId"], "properties": { "conversationId": { "type": "string" }, "reason": { "type": "string", "enum": ["cliente", "modelo", "error", "ventana", "hostilidad"] } } } } } },
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["conversationId"], "properties": { "conversationId": { "type": "string" }, "reason": { "type": "string", "enum": ["cliente", "modelo", "error", "ventana", "hostilidad", "sin_respuesta"] } } } } } },
         "responses": {
           "200": { "description": "Hecho", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Ok" } } } },
           "404": { "$ref": "#/components/responses/NoEncontrada" },
@@ -113,7 +113,7 @@
     "/api/bot/typing": {
       "post": {
         "summary": "Marcar leído y «escribiendo…»",
-        "description": "Best-effort: responde 200 aunque no se pudo (`ok: false` con el motivo).",
+        "description": "Best-effort: responde 200 aunque no se pudo (`ok: false` con el motivo). WhatsApp apaga el indicador a los ~25 s: si tu turno tarda más, vuelve a llamarla (Nea la renueva cada 20 s) y deja de hacerlo antes de enviar.",
         "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["conversationId"], "properties": { "conversationId": { "type": "string" } } } } } },
         "responses": {
           "200": { "description": "Resultado", "content": { "application/json": { "schema": { "type": "object", "properties": { "ok": { "type": "boolean" }, "reason": { "type": "string", "enum": ["sandbox", "ai_paused", "no_inbound", "meta_error"] } }, "required": ["ok"] } } } },
@@ -125,7 +125,7 @@
     "/api/bot/media/{mediaId}": {
       "get": {
         "summary": "Descargar un adjunto entrante",
-        "description": "El `mediaId` que trae el mensaje del despacho. Devuelve el binario con su `content-type`; el token de WhatsApp no sale del CRM.",
+        "description": "El `mediaId` que trae el mensaje del despacho. Devuelve el binario con su `content-type`; el token de WhatsApp no sale del CRM. Acepta el id de Graph (WhatsApp) o el id interno `ma_…` (Instagram, Messenger, TikTok), servido desde la copia del CRM.",
         "parameters": [{ "name": "mediaId", "in": "path", "required": true, "schema": { "type": "string" } }],
         "responses": {
           "200": { "description": "El archivo", "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } } },
@@ -200,7 +200,7 @@
     "despacho": {
       "post": {
         "summary": "El CRM le despacha una ráfaga al cerebro",
-        "description": "A `BRAIN_DISPATCH_URL`, firmado. Una ráfaga = lo que el cliente dijo desde la última respuesta (hasta 20 mensajes). Contesta 2xx en cuanto lo guardes y piensa después: el CRM espera 20 s. Deduplica por `dispatchId` (reintentos del mismo despacho) y por `messages[].id` (el mismo mensaje puede venir en dos despachos). Un cuerpo con `type` no es un turno: ver `olvido`.",
+        "description": "A `BRAIN_DISPATCH_URL`, firmado. Una ráfaga = lo que el cliente dijo desde la última respuesta (hasta 20 mensajes). Contesta 2xx en cuanto lo guardes y piensa después: el CRM espera 20 s. Deduplica por `dispatchId` (reintentos del mismo despacho) y por `messages[].id` (el mismo mensaje puede venir en dos despachos). Un cuerpo con `type` no es un turno: ver `olvido`.\n\n075 — La red de seguridad: si acusas recibo de un despacho y en 10 minutos no sale ninguna respuesta en esa conversación, el CRM te lo vuelve a mandar con `\"relaunch\": 1`, y luego con `2`. Son los mismos mensajes: contéstalos aunque ya los hayas leído. Si tras el segundo sigue sin respuesta, la conversación pasa a una persona con motivo `sin_respuesta`. No relanza un turno que solo trae cierres («gracias», «ok», 👍), ni con la IA en pausa, el agente apagado, fuera de la ventana del canal o en una conversación de prueba.",
         "parameters": [
           { "name": "x-vocero-signature", "in": "header", "required": true, "description": "`sha256=` + HMAC-SHA256 hex del cuerpo CRUDO con `BOT_API_KEY`. Verifica antes de parsear.", "schema": { "type": "string" } },
           { "name": "x-vocero-dispatch-id", "in": "header", "required": true, "schema": { "type": "string" } },
@@ -278,7 +278,7 @@
           "at": { "type": "string", "format": "date-time" },
           "type": { "type": "string" },
           "text": { "type": ["string", "null"] },
-          "mediaId": { "type": ["string", "null"], "description": "Se descarga por `GET /api/bot/media/{mediaId}`." },
+          "mediaId": { "type": ["string", "null"], "description": "Se descarga por `GET /api/bot/media/{mediaId}`. En WhatsApp es el id de Graph; en Instagram, Messenger y TikTok, el id interno del adjunto (`ma_…`)." },
           "mimeType": { "type": ["string", "null"], "description": "Solo con adjunto." },
           "caption": { "type": ["string", "null"], "description": "Solo con adjunto." },
           "fileName": { "type": "string", "description": "031 — Solo con adjunto que trae nombre." },
@@ -296,7 +296,9 @@
           "contact": { "type": "object", "properties": { "id": { "type": "string" }, "displayName": { "type": "string" }, "identity": { "type": "string" } } },
           "messages": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "$ref": "#/components/schemas/Mensaje" } },
           "firstMessageAt": { "type": "string" },
-          "lastMessageAt": { "type": "string" }
+          "lastMessageAt": { "type": "string" },
+          "capabilities": { "type": "array", "items": { "type": "string" }, "description": "075 — Lo que este CRM sabe hacer además del contrato base. Hoy: `dispatch_superado` (ver `POST /api/bot/messages`). Ignora las que no conozcas." },
+          "relaunch": { "type": "integer", "minimum": 1, "maximum": 2, "description": "075 — Solo en un relanzamiento de la red de seguridad: estos mensajes ya te llegaron y nadie los contestó. No los descartes por repetidos." }
         }
       },
       "Olvido": {

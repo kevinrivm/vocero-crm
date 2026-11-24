@@ -8,6 +8,13 @@ import {
   type Credentials,
 } from "@/server/whatsapp/credentials";
 import { isForbiddenUploadMime } from "@/server/whatsapp/media-headers";
+import { descargarAdjuntoRemoto } from "@/server/inbox/descarga-remota";
+import {
+  origenOf,
+  sourceUrlOf,
+  TOPE_ADJUNTO_REMOTO,
+  type KindRemoto,
+} from "@/server/inbox/remote-media";
 
 /**
  * 008 — Única frontera de media con la Graph API (constitución II: todo el
@@ -218,16 +225,26 @@ export async function ensureAssetAvailable(
   const asset = rows[0];
   if (!asset || asset.organizationId !== organizationId) return null;
   if (asset.fetchStatus === "available" && !opts.forzar) return asset;
-  if (!asset.waMediaId) return null; // location/contacts no tienen binario
 
-  const creds = await getCredentialsByOrg(organizationId);
-  if (!creds) return null;
+  // 074: Instagram, Messenger y TikTok traen una URL firmada en vez de un id
+  // de Graph. location/contacts no tienen ninguna de las dos: no hay binario.
+  const sourceUrl = sourceUrlOf(asset.payload);
+  if (!asset.waMediaId && !sourceUrl) return null;
+
+  let descargar: () => Promise<{ data: Buffer; mimeType: string | null; fileSize: number }>;
+  if (asset.waMediaId) {
+    const creds = await getCredentialsByOrg(organizationId);
+    if (!creds) return null;
+    const waMediaId = asset.waMediaId;
+    descargar = () => downloadGraphMedia(creds.token, waMediaId);
+  } else {
+    const tope = TOPE_ADJUNTO_REMOTO[asset.kind as KindRemoto] ?? TOPE_ADJUNTO_REMOTO.document;
+    const origen = origenOf(asset.payload);
+    descargar = () => descargarAdjuntoRemoto(sourceUrl!, origen, tope);
+  }
 
   try {
-    const { data, mimeType, fileSize } = await downloadGraphMedia(
-      creds.token,
-      asset.waMediaId
-    );
+    const { data, mimeType, fileSize } = await descargar();
     const storagePath = await saveMediaFile(organizationId, assetId, data, mimeType ?? undefined);
     const updated = await db
       .update(schema.mediaAsset)

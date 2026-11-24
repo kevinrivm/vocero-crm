@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { sourceUrlOf } from "@/server/inbox/remote-media";
 
 /**
  * 021 — El contrato del despacho: lo que el CRM le manda a un cerebro externo
@@ -27,6 +28,9 @@ export type MensajeDelEvento = {
    * El id que acepta `GET /api/bot/media/{mediaId}` (el de Graph), no el id
    * interno del adjunto. En cloud es al revés porque allá la vuelta es
    * `/api/brains/media`; aquí la vuelta es `/api/bot/*` y no cambia.
+   *
+   * 074 — Un adjunto de Instagram, Messenger o TikTok no tiene id de Graph:
+   * va el id interno (`ma_…`), que la misma ruta sirve desde `MEDIA_DIR`.
    */
   mediaId: string | null;
   /** Solo con adjunto. */
@@ -76,7 +80,33 @@ export type EventoDespacho = {
   messages: MensajeDelEvento[];
   firstMessageAt: string;
   lastMessageAt: string;
+  /**
+   * 075 — Lo que este CRM sabe hacer además del contrato base. Hoy, solo
+   * `dispatch_superado`. Va al final para que el cuerpo fijado en las pruebas
+   * gemelas (que no la lleva) siga siendo el mismo.
+   */
+  capabilities?: string[];
+  /**
+   * 075 — Solo cuando la red de seguridad vuelve a mandar un turno que quedó
+   * sin contestar: 1 la primera vez, 2 la segunda. Son mensajes que el
+   * cerebro ya recibió; no debe descartarlos por repetidos.
+   */
+  relaunch?: number;
 };
+
+/**
+ * 075 — El CRM sabe callar la respuesta a un turno que el cliente ya dejó
+ * atrás: si el cerebro manda `dispatchId` y `dropIfSuperseded: true` en
+ * `POST /api/bot/messages` y ya hay un despacho posterior en esa conversación,
+ * contesta `409 dispatch_superado` y no envía nada. Es la misma cadena que
+ * anuncia Vocero Cloud, para que un cerebro sirva a las dos ediciones.
+ */
+export const CAPACIDAD_SUPERADO = "dispatch_superado";
+
+/** 075 — Lo que viaja en `capabilities` de cada despacho. */
+export function capacidadesDelCrm(): string[] {
+  return [CAPACIDAD_SUPERADO];
+}
 
 /** Lo que hace falta saber de un mensaje para meterlo al evento. */
 export type MensajeParaEvento = {
@@ -92,8 +122,20 @@ export type MensajeParaEvento = {
     fileName?: string | null;
     /** 031 — `media_asset.payload`: la ubicación o las tarjetas tal como llegaron. */
     payload?: unknown;
+    /** 074 — Id interno del adjunto: el `mediaId` de los canales sociales. */
+    assetId?: string | null;
   } | null;
 };
+
+/**
+ * 074 — El `mediaId` de un mensaje: el de Graph en WhatsApp; el id interno si
+ * el adjunto se copió de una URL (Instagram, Messenger, TikTok). Pura.
+ */
+export function mediaIdDelEvento(media: MensajeParaEvento["media"]): string | null {
+  if (!media) return null;
+  if (media.waMediaId) return media.waMediaId;
+  return media.assetId && sourceUrlOf(media.payload) ? media.assetId : null;
+}
 
 /**
  * Arma el evento. Pura, y es la ÚNICA que lo arma: el orden de las claves es
@@ -117,6 +159,10 @@ export function armarEvento(datos: {
   messages: MensajeParaEvento[];
   firstMessageAt: Date;
   lastMessageAt: Date;
+  /** 075 */
+  capabilities?: string[];
+  /** 075 — 0 o ausente en un despacho normal. */
+  relaunch?: number;
 }): EventoDespacho {
   return {
     dispatchId: datos.dispatchId,
@@ -141,6 +187,10 @@ export function armarEvento(datos: {
     messages: datos.messages.map(mensajeDelEvento),
     firstMessageAt: datos.firstMessageAt.toISOString(),
     lastMessageAt: datos.lastMessageAt.toISOString(),
+    // 075 — Las llaves nuevas, al final y solo cuando vienen: el cuerpo
+    // gemelo no cambia.
+    ...(datos.capabilities?.length ? { capabilities: [...datos.capabilities] } : {}),
+    ...(datos.relaunch && datos.relaunch > 0 ? { relaunch: datos.relaunch } : {}),
   };
 }
 
@@ -150,11 +200,11 @@ function mensajeDelEvento(m: MensajeParaEvento): MensajeDelEvento {
     at: m.createdAt.toISOString(),
     type: m.type,
     text: m.text,
-    mediaId: m.media?.waMediaId ?? null,
+    mediaId: mediaIdDelEvento(m.media),
   };
   // Sin algo que descargar, `mimeType` y `caption` no dicen nada: una
   // ubicación o una tarjeta de contacto no tienen media id.
-  if (m.media?.waMediaId) {
+  if (m.media && evento.mediaId) {
     evento.mimeType = m.media.mimeType;
     evento.caption = m.media.caption;
     // 031 — Las llaves nuevas van SOLO cuando aplican, y siempre después de

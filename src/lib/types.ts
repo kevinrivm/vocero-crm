@@ -98,6 +98,10 @@ export type MessageDto = {
   reactable?: boolean;
   /** 072 — Reacciones del cliente y del equipo. */
   reactions?: ReaccionDto[];
+  /** 074 — Hora de la última edición (WhatsApp), o null si nunca se editó. */
+  editedAt?: string | null;
+  /** 074 — Lo que decía antes de la primera edición. */
+  originalText?: string | null;
   createdAt: string;
 };
 

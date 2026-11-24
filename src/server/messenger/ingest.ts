@@ -1,7 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { FB_PREFIX } from "@/server/inbox/identity";
-import { ingestInboundMessage } from "@/server/inbox/ingest";
+import { ingerirPartes } from "@/server/inbox/partes";
+import {
+  splitInbound,
+  type OrigenRemoto,
+  type RemoteAttachment,
+} from "@/server/inbox/remote-media";
 import {
   getMessengerCredentialsByAccountRef,
   getMessengerCredentialsByPageId,
@@ -41,6 +46,11 @@ export type MessengerInbound = {
   profileName: string | null;
   /** Hilo en la plataforma de origen: hace falta para responder por Zernio. */
   threadRef: string | null;
+  /**
+   * 074 — Todos los adjuntos, con su URL firmada. `type` resume el evento;
+   * al guardarlo, cada adjunto entra como su propio mensaje (`splitInbound`).
+   */
+  attachments: RemoteAttachment[];
 };
 
 type MetaPagePayload = {
@@ -56,10 +66,7 @@ type MetaPagePayload = {
         mid?: string;
         text?: string;
         is_echo?: boolean;
-        attachments?: Array<{
-          type?: string;
-          payload?: { url?: string; sticker_id?: number };
-        }>;
+        attachments?: RemoteAttachment[];
       };
       postback?: unknown;
       delivery?: unknown;
@@ -69,10 +76,9 @@ type MetaPagePayload = {
 };
 
 /**
- * Tipos de adjunto → tipo de mensaje del CRM. En la v1 el adjunto no se
- * descarga (ambas fuentes lo entregan como URL temporal, no como id de media):
- * el mensaje entra con su tipo para que la bandeja enseñe "📎 Imagen" en vez
- * de perder el mensaje, y el operador sepa que hay algo que ver.
+ * Tipos de adjunto → tipo que resume el evento. 074: al guardarlo, cada
+ * adjunto entra además como su propio mensaje y se copia de la URL temporal
+ * que mandan las dos fuentes (`splitInbound` y `ensureAssetAvailable`).
  */
 const ATTACHMENT_TYPE: Record<string, string> = {
   image: "image",
@@ -124,6 +130,7 @@ export function normalizeMetaPagePayload(payload: unknown): MessengerInbound[] {
         // Meta no manda nombre ni usuario en el webhook: se consulta aparte.
         profileName: null,
         threadRef: null,
+        attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
       });
     }
   }
@@ -171,13 +178,14 @@ export function normalizeZernioEvent(payload: unknown): MessengerInbound[] {
       // Opaco por contrato: se guarda tal cual y no se parsea. Es lo que hace
       // falta para responder por Zernio.
       threadRef: evt.message?.conversationId ?? null,
+      attachments: Array.isArray(evt.message?.attachments) ? evt.message.attachments : [],
     },
   ];
 }
 
 function resolveType(
   text: string | null,
-  attachment: { type?: string; payload?: { sticker_id?: number } } | undefined
+  attachment: RemoteAttachment | undefined
 ): string | null {
   if (text) return "text";
   if (!attachment) return null;
@@ -252,22 +260,29 @@ async function ingestAll(
         ? null
         : await fetchMessengerProfileName(creds, evt.psid));
 
-    await ingestInboundMessage({
-      organizationId: creds.organizationId,
-      identity: {
-        identity,
-        channel: "messenger",
-        phone: null,
-        waUserId: null,
-        profileName,
+    // 074: un mensaje por texto y uno por adjunto (todos, no solo el
+    // primero). Solo el último despierta al cerebro.
+    const origen: OrigenRemoto = source;
+    const partes = splitInbound(evt.text, evt.attachments, origen);
+    if (partes.length === 0) continue;
+
+    await ingerirPartes(
+      {
+        organizationId: creds.organizationId,
+        identity: {
+          identity,
+          channel: "messenger",
+          phone: null,
+          waUserId: null,
+          profileName,
+        },
+        timestamp: evt.timestamp,
+        threadRef: evt.threadRef,
       },
       // Prefijado para que no colisione jamás con un id de WhatsApp ni de
       // Instagram en el índice único de mensajes.
-      waMessageId: `fb_${evt.messageId}`,
-      type: evt.type,
-      text: evt.text,
-      timestamp: evt.timestamp,
-      threadRef: evt.threadRef,
-    });
+      `fb_${evt.messageId}`,
+      partes
+    );
   }
 }

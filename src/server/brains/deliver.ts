@@ -3,6 +3,7 @@ import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
 import {
   armarEvento,
+  capacidadesDelCrm,
   clasificarRespuesta,
   firmarCuerpo,
   CABECERA_DISPATCH,
@@ -75,6 +76,7 @@ function paraEvento(m: {
           caption: m.caption,
           fileName: m.fileName,
           payload: m.payload,
+          assetId: m.assetId,
         }
       : null,
   };
@@ -270,6 +272,8 @@ export async function construirEvento(
     messages,
     firstMessageAt: fila.firstMessageAt,
     lastMessageAt: fila.lastMessageAt,
+    capabilities: capacidadesDelCrm(),
+    relaunch: fila.relaunchCount,
   });
 }
 
