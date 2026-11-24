@@ -7,6 +7,15 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+### Arreglado
+
+- **La sesión ya no se cae a los 7 días aunque entres a diario** (spec 073).
+  El servidor alargaba la sesión en la base sin poder entregar la cookie
+  nueva, así que el navegador se quedaba con la caducidad del login y te
+  sacaba a la semana. Ahora el servidor la lee sin alargarla y la renueva el
+  navegador, con base y cookie juntas: al abrir la app, al volver a la
+  pestaña y cada hora. Sin migración ni variables nuevas.
+
 ## 2.9.0 — 2026-11-23
 
 Cada persona fija sus chats importantes arriba de la Bandeja, y la simulación

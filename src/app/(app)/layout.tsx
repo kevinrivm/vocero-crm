@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { getAuth } from "@/lib/auth";
 import { getSessionOrNull } from "@/lib/auth/session";
+import { leerSesion } from "@/lib/auth/leer-sesion";
 import { aparienciaActual } from "@/server/apariencia";
 import { getBranding } from "@/server/branding";
 import { AppShell } from "@/components/app-shell";
+import { SessionKeepalive } from "@/components/session-keepalive";
 import { resolveCommit } from "@/lib/version";
 import { agendaEnabled } from "@/server/agenda/flag";
 import { enabledChannels } from "@/server/channels/enabled";
@@ -18,9 +19,7 @@ export default async function AppLayout({
   const session = await getSessionOrNull();
   if (!session) redirect("/login");
   const branding = await getBranding(session.organizationId);
-  const authSession = await getAuth().api.getSession({
-    headers: await headers(),
-  });
+  const authSession = await leerSesion(await headers());
   // 062 — Para el botón de sol y luna: salta a la pareja del tema actual.
   const { apariencia } = await aparienciaActual(session.organizationId);
   // El agente encendido y sin con qué pensar se ve desde fuera igual que un
@@ -45,6 +44,8 @@ export default async function AppLayout({
       kicker={navKicker([...enabledChannels()])}
       aviso={<AvisoIaBanner aviso={aviso} />}
     >
+      {/* 073 — La sesión la renueva el navegador: ver `leerSesion`. */}
+      <SessionKeepalive />
       {children}
     </AppShell>
   );

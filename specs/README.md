@@ -43,6 +43,7 @@ producto** — y saberlo antes de leerla ahorra una confusión.
 | `069-api-mcp` | Ciclo completo | spec (puerto de la API v1, el MCP y su OAuth de Vocero Cloud tras `API_V1=on`; migración `0027`; simulación por el camino del Laboratorio; sin versiones, recordatorios ni plantillas por API) |
 | `070-fijar-chats` | Ciclo completo | spec (fijar hasta 3 chats arriba de la Bandeja, de cada usuario; tabla `conversation_pin`, migración `0028`; chincheta en la fila y en la cabecera del celular; la API v1 no los trae) |
 | `071-simulacion-traspaso-tardio` | Ligero | spec (la simulación del MCP y el Laboratorio cierran el turno tras 4 s sin novedades, con tope de 20 s, en vez de un margen fijo de 1.5 s; un traspaso lento o una despedida después del traspaso quedan en su turno) |
+| `073-sesion-siete-dias` | Ligero | spec (la sesión ya no se cae a los 7 días del login: el servidor la lee sin renovar y el navegador la renueva con base y cookie juntas; guardián unitario contra lecturas que renuevan; sin migración) |
 | `055-atajos-de-teclado` | Ligero | spec (Ctrl+K para ir a una pantalla o conversación, «?» para la ayuda; Alt+J/K, «/», Alt+R y Alt+N en la Bandeja) |
 | `054-eventos-en-el-hilo` | Ligero | spec (cambios de etapa y traspaso a una persona pintados en el hilo, con lo que ya se guarda; `GET …/eventos`) |
 | `056-avisos-y-sin-conexion` | Ligero | spec (avisos del sistema con Vocero oculto, sin push; banda «sin conexión» y reconexión del SSE con espera creciente) |

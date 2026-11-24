@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { getAuth } from "@/lib/auth";
 import { getSessionOrNull } from "@/lib/auth/session";
+import { leerSesion } from "@/lib/auth/leer-sesion";
 import { rolPuede } from "@/server/api-v1/acceso";
 import { destinoVisible, validarAutorizacion } from "@/server/oauth/autorizar";
 import { OAUTH_SCOPES, PERMISOS_OAUTH } from "@/server/oauth/nucleo";
@@ -55,7 +55,7 @@ export default async function AutorizarPage({ searchParams }: Props) {
   if (!session || session.organizationId !== negocio.id) {
     // ¿Hay sesión pero de alguien sin acceso a este negocio? Mandarlo al login
     // sería un ciclo: se le explica.
-    const cruda = await getAuth().api.getSession({ headers: await headers() }).catch(() => null);
+    const cruda = await leerSesion(await headers()).catch(() => null);
     if (cruda) {
       return (
         <Aviso
@@ -70,8 +70,7 @@ export default async function AutorizarPage({ searchParams }: Props) {
     redirect(`/login?next=${encodeURIComponent(aqui)}`);
   }
 
-  const usuario = await getAuth()
-    .api.getSession({ headers: await headers() })
+  const usuario = await leerSesion(await headers())
     .then((s) => s?.user ?? null)
     .catch(() => null);
   const permisos = OAUTH_SCOPES.filter((s) => peticion.scopes.includes(s));
