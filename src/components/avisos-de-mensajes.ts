@@ -94,6 +94,32 @@ export function reproducirAviso(): void {
 }
 
 /**
+ * 077 — El aviso de «un cliente lleva 15 min esperando a una persona». Tiene
+ * que distinguirse del de mensaje nuevo sin verlo: tres notas graves que
+ * bajan (≈ 0.7 s), más largas y más fuertes que las dos agudas de aquel. Sin
+ * audio disponible (nadie ha tocado la página todavía), no suena: el aviso
+ * se ve igual.
+ */
+export function reproducirAvisoEspera(): void {
+  const ctx = obtenerContexto();
+  if (!ctx || ctx.state !== "running") return;
+  const t0 = ctx.currentTime;
+  for (const [i, frecuencia] of [659, 523, 392].entries()) {
+    const inicio = t0 + i * 0.22;
+    const osc = ctx.createOscillator();
+    const vol = ctx.createGain();
+    osc.type = "triangle";
+    osc.frequency.value = frecuencia;
+    vol.gain.setValueAtTime(0.0001, inicio);
+    vol.gain.exponentialRampToValueAtTime(0.3, inicio + 0.02);
+    vol.gain.exponentialRampToValueAtTime(0.0001, inicio + 0.32);
+    osc.connect(vol).connect(ctx.destination);
+    osc.start(inicio);
+    osc.stop(inicio + 0.34);
+  }
+}
+
+/**
  * ¿Suena este mensaje? Solo los que escribe el cliente, con el sonido
  * encendido, y no si el operador ya está mirando esa conversación.
  */

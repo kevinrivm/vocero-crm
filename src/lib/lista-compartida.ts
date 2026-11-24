@@ -13,10 +13,14 @@
  * en una sola.
  */
 
+import type { EsperaDto } from "@/lib/esperando";
+
 export type ConversacionDeLista = {
   id: string;
   unreadCount: number;
   contact: { name: string; phone: string | null };
+  /** 077 — Si espera a una persona (`lib/esperando.ts`). */
+  espera?: EsperaDto | null;
 };
 
 const EVENTO_LISTA = "crm:lista-conversaciones";

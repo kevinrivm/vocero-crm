@@ -76,10 +76,16 @@ try {
   const filtrar = page.getByRole("button", { name: /^Filtrar/ });
   await page.getByRole("button").filter({ hasText: VENCE }).first().waitFor({ timeout: 20000 });
   const enLista = async (nombre) => (await page.getByRole("button").filter({ hasText: nombre }).count()) > 0;
+  // 077 — «Filtrar» quedó en su icono: lo que dice vive en su nombre accesible.
+  const nombreFiltrar = async () => ((await filtrar.getAttribute("aria-label")) ?? "").trim();
 
   console.log("\n== AC-E1 · la barra ==");
   const tabs = await page.getByRole("tab").allInnerTexts();
-  ok("solo dos pestañas: Todas y No leídas", tabs.length === 2 && /^Todas/.test(tabs[0]) && /^No leídas/.test(tabs[1]), JSON.stringify(tabs));
+  ok(
+    "tres pestañas: Todas, No leídas y Esperando (077)",
+    tabs.length === 3 && /^Todas/.test(tabs[0]) && /^No leídas/.test(tabs[1]) && /^Esperando/.test(tabs[2]),
+    JSON.stringify(tabs)
+  );
   ok("y un botón «Filtrar»", (await filtrar.count()) === 1);
   ok("ya no hay «Sin responder»", (await page.getByText("Sin responder").count()) === 0);
   await page.screenshot({ path: ".tmp/e2e-052b-barra.png" });
@@ -97,7 +103,7 @@ try {
   await hasta(async () => !(await enLista(RECIEN)), 5000);
   ok("deja la de hace 22 h 30 min", await enLista(VENCE));
   ok("quita la de recién y la cerrada", !(await enLista(RECIEN)) && !(await enLista(CERRADA)));
-  ok("el botón dice «Filtrar · 1»", (await filtrar.innerText()).trim() === "Filtrar · 1", await filtrar.innerText());
+  ok("el botón dice «Filtrar · 1»", (await nombreFiltrar()) === "Filtrar · 1", await nombreFiltrar());
   await page.keyboard.press("Escape");
   ok("Escape cierra el menú", (await menu.count()) === 0);
   ok("y abajo queda la etiqueta «Por vencer ✕»", (await page.getByRole("button", { name: "Quitar filtro Por vencer" }).count()) === 1);
@@ -110,7 +116,7 @@ try {
   ok("el selector de etapa vive en el menú", opciones[0] === "Toda etapa" && opciones.length > 1, JSON.stringify(opciones));
   const etapa = convs[VENCE].stageName;
   await sel.selectOption(etapa);
-  ok("«Filtrar · 2» con etapa y por vencer", (await filtrar.innerText()).trim() === "Filtrar · 2");
+  ok("«Filtrar · 2» con etapa y por vencer", (await nombreFiltrar()) === "Filtrar · 2", await nombreFiltrar());
   ok(`la etiqueta «Etapa: ${etapa} ✕» aparece`, (await page.getByRole("button", { name: `Quitar filtro Etapa: ${etapa}` }).count()) === 1);
   ok("se combinan: sigue la que vence (es de esa etapa)", await enLista(VENCE));
 
@@ -127,10 +133,10 @@ try {
 
   console.log("\n== AC-E4 · quitar ==");
   await page.getByRole("button", { name: "Quitar filtro Por vencer" }).click();
-  ok("con ✕ se quita uno: queda «Filtrar · 1»", (await filtrar.innerText()).trim() === "Filtrar · 1");
+  ok("con ✕ se quita uno: queda «Filtrar · 1»", (await nombreFiltrar()) === "Filtrar · 1", await nombreFiltrar());
   await filtrar.click();
   await menu.getByRole("button", { name: "Limpiar filtros" }).click();
-  ok("«Limpiar filtros» los quita todos", (await filtrar.innerText()).trim() === "Filtrar");
+  ok("«Limpiar filtros» los quita todos", (await nombreFiltrar()) === "Filtrar", await nombreFiltrar());
   await page.keyboard.press("Escape");
   ok("y vuelve toda la lista", (await enLista(RECIEN)) && (await enLista(VENCE)) && (await enLista(CERRADA)));
 

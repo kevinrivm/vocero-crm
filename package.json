@@ -29,6 +29,7 @@
     "test:e2e:no-se-pierda": "node --env-file=.env scripts/e2e-que-no-se-pierda-nada.mjs",
     "test:e2e:una-respuesta": "node --env-file=.env scripts/e2e-una-respuesta.mjs",
     "test:e2e:la-ia-vuelve": "node --env-file=.env scripts/e2e-la-ia-vuelve.mjs",
+    "test:e2e:esperando": "node --env-file=.env scripts/e2e-esperando.mjs",
     "eval:silencios": "esbuild scripts/eval-silencios.ts --bundle --platform=node --format=esm --outfile=.tmp-eval-silencios.mjs --alias:@=./src --log-level=warning && node --env-file=.env .tmp-eval-silencios.mjs",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",

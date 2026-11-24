@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Clock3, Inbox, Megaphone, SlidersHorizontal, Search, Sparkles, UserRound, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Clock3, Hourglass, Inbox, Megaphone, SlidersHorizontal, Search, Sparkles, UserRound, X } from "lucide-react";
 import type { ConversationDto } from "@/lib/types";
 import { etiquetaDeOrigen, titularDeOrigen } from "@/lib/anuncios";
 import { CHANNEL_LABEL, type Channel } from "@/lib/channels";
@@ -18,6 +19,15 @@ import { hayDialogoAbierto } from "@/components/atajos-globales";
 import { etiquetaVence, porVencer } from "@/lib/filtros-bandeja";
 import { fijadosPrimero } from "@/lib/fijados";
 import { PinMark, PinRowButton } from "./pin-toggle";
+import {
+  EVENTO_VER_ESPERANDO,
+  estaEsperando,
+  minutosDeEspera,
+  nivelDeEspera,
+  textoMinutos,
+} from "@/lib/esperando";
+import { useReloj } from "@/components/esperando/estado";
+import { COLOR_NIVEL } from "@/components/esperando/aviso-esperando";
 
 /* Puntos de etapa: los tokens del tema, no hex copiados del tema claro —
    así siguen al acento white-label y se recalculan en oscuro. */
@@ -102,7 +112,10 @@ export function ConversationList({
 }) {
   const [query, setQuery] = useState("");
   // 052 (enmienda) — Dos pestañas y un botón «Filtrar» con lo demás.
-  const [filter, setFilter] = useState<"all" | "unread">("all");
+  // 077 — Y «Esperando»: los clientes que esperan a una persona.
+  const [filter, setFilter] = useState<"all" | "unread" | "esperando">("all");
+  // Los minutos de espera avanzan solos; no se pide nada al servidor.
+  const ahora = useReloj();
   const [soloPorVencer, setSoloPorVencer] = useState(false);
   const [soloAnuncios, setSoloAnuncios] = useState(false);
   const [menuFiltros, setMenuFiltros] = useState(false);
@@ -126,6 +139,24 @@ export function ConversationList({
   const [stage, setStage] = useState<string>("all");
   const [inbox, setInbox] = useState<Channel | "all">("all");
   const inputRef = useRef<HTMLInputElement>(null);
+  // 077 — El cintillo y el aviso abren «Esperando» con `?vista=esperando` o,
+  // si la Bandeja ya está abierta, con un evento. Se quitan los filtros: lo
+  // que se ve tiene que ser lo mismo que contó el cintillo.
+  const vista = useSearchParams().get("vista");
+  useEffect(() => {
+    const verEsperando = () => {
+      setFilter("esperando");
+      setStage("all");
+      setSoloPorVencer(false);
+      setSoloAnuncios(false);
+      setInbox("all");
+      if (inputRef.current) inputRef.current.value = "";
+      setQuery("");
+    };
+    if (vista === "esperando") verEsperando();
+    window.addEventListener(EVENTO_VER_ESPERANDO, verEsperando);
+    return () => window.removeEventListener(EVENTO_VER_ESPERANDO, verEsperando);
+  }, [vista]);
   // 055 · D3 — Alt+J / Alt+K recorren la lista en el orden que se ve (con los
   // filtros puestos) y «/» lleva al buscador. Se lee lo visible por ref: el
   // oyente se pone una vez.
@@ -201,13 +232,20 @@ export function ConversationList({
   );
   const unreadCount = filtrado.filter((c) => c.unreadCount > 0).length;
   // 070 — Los fijados del usuario arriba, en cualquier pestaña y filtro.
-  const visible = fijadosPrimero(
-    filter === "unread" ? filtrado.filter((c) => c.unreadCount > 0) : filtrado
-  );
+  // 077 — La misma regla que el cintillo, de la que más lleva a la que menos
+  // (aquí los fijados no suben: manda quién lleva más esperando).
+  const esperando = filtrado
+    .filter((c) => estaEsperando(c, ahora))
+    .sort((a, b) => Date.parse(a.espera!.desde) - Date.parse(b.espera!.desde));
+  const visible =
+    filter === "esperando"
+      ? esperando
+      : fijadosPrimero(filter === "unread" ? filtrado.filter((c) => c.unreadCount > 0) : filtrado);
   visibleRef.current = visible.map((c) => c.id);
   const pestanas: { id: typeof filter; label: string; count: number }[] = [
     { id: "all", label: "Todas", count: filtrado.length },
     { id: "unread", label: "No leídas", count: unreadCount },
+    { id: "esperando", label: "Esperando", count: esperando.length },
   ];
   const nFiltros = (stage !== "all" ? 1 : 0) + (soloPorVencer ? 1 : 0) + (soloAnuncios ? 1 : 0);
   function limpiarFiltros() {
@@ -302,8 +340,10 @@ export function ConversationList({
           etapa, «Por vencer» y «De anuncios» viven en su menú, y lo elegido
           se ve abajo como etiquetas que se quitan con ✕. */}
       <div className="border-b px-4">
-        <div className="flex items-center gap-4">
-          <div role="tablist" aria-label="Qué conversaciones ver" className="flex items-center gap-4">
+        {/* 077 — Con «Esperando» son tres pestañas: más juntas, y «Filtrar»
+            queda en su icono para que quepa en el celular. */}
+        <div className="flex items-center gap-2">
+          <div role="tablist" aria-label="Qué conversaciones ver" className="flex min-w-0 items-center gap-3">
             {pestanas.map((f) => (
               <button
                 key={f.id}
@@ -319,17 +359,27 @@ export function ConversationList({
                 )}
               >
                 {f.label}
-                <span className="font-mono text-[11px] font-medium text-text-3">{f.count}</span>
+                <span
+                  data-pestana-count={f.id}
+                  className={cn(
+                    "font-mono text-[11px] font-medium",
+                    f.id === "esperando" && f.count > 0 ? "font-bold text-danger-text" : "text-text-3"
+                  )}
+                >
+                  {f.count}
+                </span>
               </button>
             ))}
           </div>
 
-          <div ref={menuRef} className="relative ml-auto">
+          <div ref={menuRef} className="relative ml-auto shrink-0">
             <button
               type="button"
               onClick={() => setMenuFiltros((v) => !v)}
               aria-expanded={menuFiltros}
               aria-haspopup="dialog"
+              aria-label={nFiltros > 0 ? `Filtrar · ${nFiltros}` : "Filtrar"}
+              title="Filtrar"
               className={cn(
                 "flex items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-[12.5px] font-semibold transition-colors",
                 FOCO_SEPARADO,
@@ -337,7 +387,7 @@ export function ConversationList({
               )}
             >
               <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={1.9} />
-              {nFiltros > 0 ? `Filtrar · ${nFiltros}` : "Filtrar"}
+              {nFiltros > 0 && `· ${nFiltros}`}
             </button>
             {menuFiltros && (
               <div
@@ -437,13 +487,16 @@ export function ConversationList({
             nFiltros === 0 &&
             !conversations.some((c) => c.channel === inbox)
               ? `Nadie ha escrito por ${CHANNEL_LABEL[inbox]} todavía.`
-              : "Sin resultados para este filtro."}
+              : filter === "esperando"
+                ? "Nadie espera a una persona ahora mismo."
+                : "Sin resultados para este filtro."}
           </p>
         ) : (
           <ul>
             {visible.map((c) => {
               const unread = c.unreadCount > 0;
               const active = selectedId === c.id;
+              const minutos = estaEsperando(c, ahora) ? minutosDeEspera(c.espera!.desde, ahora) : null;
               return (
                 <li key={c.id} className="group relative border-b border-border">
                   <button
@@ -533,11 +586,26 @@ export function ConversationList({
                             {etiquetaVence(c.windowRemainingMs)}
                           </span>
                         )}
-                        {c.handoffAt && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-warning-soft bg-warning-tint px-2 py-0.5 text-[11px] text-warning-text">
-                            <UserRound className="h-3 w-3" strokeWidth={1.7} />
-                            Atención humana
+                        {minutos !== null ? (
+                          // 077 — Espera a una persona: cuánto lleva, con color.
+                          <span
+                            data-espera={minutos}
+                            title="Espera a una persona desde su primer mensaje sin respuesta"
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                              COLOR_NIVEL[nivelDeEspera(minutos)]
+                            )}
+                          >
+                            <Hourglass className="h-3 w-3" strokeWidth={1.8} />
+                            Espera · {textoMinutos(minutos)}
                           </span>
+                        ) : (
+                          c.handoffAt && (
+                            <span className="inline-flex items-center gap-1 rounded-full border border-warning-soft bg-warning-tint px-2 py-0.5 text-[11px] text-warning-text">
+                              <UserRound className="h-3 w-3" strokeWidth={1.7} />
+                              Atención humana
+                            </span>
+                          )
                         )}
                         {c.anuncio && (
                           <span

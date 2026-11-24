@@ -255,7 +255,7 @@
     "/conversations": {
       "get": {
         "summary": "Listar conversaciones",
-        "description": "Permiso: read. Con `since` (ISO 8601) solo las que cambiaron después.",
+        "description": "Permiso: read. Con `since` (ISO 8601) solo las que cambiaron después. Cada conversación trae `espera`: `{ desde, hasta }` si el cliente espera a una persona (desde su primer mensaje sin respuesta; `hasta` = hasta cuándo se le puede contestar con texto libre), o null. Con `filter=esperando`, solo esas, de la que más lleva a la que menos, con `minutosEsperando`.",
         "parameters": [
           {
             "name": "since",
@@ -263,6 +263,15 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "`esperando`: solo los clientes que esperan a una persona. Otro valor responde 422.",
+            "schema": {
+              "type": "string",
+              "enum": ["esperando"]
             }
           }
         ],

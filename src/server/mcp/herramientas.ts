@@ -168,12 +168,13 @@ const OPERATIVAS: Herramienta[] = [
     name: "list_conversations",
     title: "Listar conversaciones",
     description:
-      "Conversaciones del negocio, la más reciente primero, con el contacto, la etapa, si la ventana de 24 h está abierta y si la IA está activa. Filtra por contacto con contactId.",
+      "Conversaciones del negocio, la más reciente primero, con el contacto, la etapa, si la ventana de 24 h está abierta y si la IA está activa. Filtra por contacto con contactId. Con esperando=true, solo los clientes que esperan a una persona (la IA pasó la conversación al equipo o está en pausa, el último mensaje es del cliente y nadie del equipo le ha contestado), del que más lleva al que menos, con espera.desde y minutosEsperando.",
     scope: "read",
     inputSchema: {
       type: "object",
       properties: {
         contactId: id("Solo las de este contacto"),
+        esperando: { type: "boolean", description: "true: solo las que esperan a una persona, la que más lleva primero" },
         since: { type: "string", format: "date-time", description: "Solo las que cambiaron después de esta fecha-hora ISO" },
         limit: { type: "integer", minimum: 1, maximum: 200, description: "Máximo de resultados (por defecto 30)" },
       },
@@ -186,7 +187,7 @@ const OPERATIVAS: Herramienta[] = [
         handler: h(conversations.GET),
         method: "GET",
         path: "/api/v1/conversations",
-        query: { since: str(a.since) },
+        query: { since: str(a.since), filter: a.esperando === true ? "esperando" : undefined },
         recortar: recortarLista("conversations", limite(a.limit, 30, 200), (c) =>
           !contactId || (c as { contact?: { id?: string } }).contact?.id === contactId
         ),

@@ -53,7 +53,7 @@ export function urlDeConversacion(conversationId: string): string {
  * manipulado no puede sacar al operador a otro sitio.
  */
 export function urlDeAvisoSegura(url: unknown): string | null {
-  return typeof url === "string" && /^\/inbox(\?conversation=[\w%-]+)?$/.test(url) ? url : null;
+  return typeof url === "string" && /^\/inbox(\?(conversation=[\w%-]+(&vista=esperando)?|vista=esperando))?$/.test(url) ? url : null;
 }
 
 /** D6 — 1 s, 2 s, 4 s… hasta 30 s. */

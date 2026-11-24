@@ -26,6 +26,16 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
   estaba en pausa, y anuncia `atencion_humana` en `capabilities`. Es opcional:
   un cerebro que no lo lee funciona igual. **Migración
   `0032_la_ia_vuelve_sola`** (se aplica sola al arrancar).
+- **Esperando a una persona** (spec 077). Nueva pestaña «Esperando» en la
+  Bandeja con los clientes que esperan a una persona (traspaso o IA en pausa,
+  su último mensaje sin respuesta y la ventana abierta), de quien más lleva a
+  quien menos, con «Espera · 12 min» en gris, ámbar (5 min) o rojo (15 min).
+  Arriba de cualquier pantalla, un cintillo dice cuántos esperan, y a los 15
+  minutos sale un aviso con sonido, una vez por espera. Cada persona elige en
+  Ajustes → Apariencia si ve el cintillo y el aviso, solo el aviso o nada, y
+  si suena. La API v1 trae `espera` en cada conversación y acepta
+  `?filter=esperando`; el MCP, `list_conversations` con `esperando: true`.
+  Sin migración.
 
 ## 2.10.0 — 2026-11-24
 
