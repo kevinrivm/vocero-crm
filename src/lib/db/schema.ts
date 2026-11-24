@@ -1533,3 +1533,30 @@ export const oauthToken = pgTable(
     index("oauth_token_grant_idx").on(t.grantId),
   ]
 );
+
+/**
+ * 070 — Chats fijados arriba de la Bandeja, de CADA usuario: lo que fija una
+ * persona del equipo no cambia la Bandeja de las demás. Máximo 3 por usuario
+ * (lo impone `src/server/inbox/pins.ts`). Se borra con la conversación y con
+ * el usuario.
+ */
+export const conversationPin = pgTable(
+  "conversation_pin",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversation.id, { onDelete: "cascade" }),
+    pinnedAt: timestamp("pinned_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("conversation_pin_user_conv_uq").on(t.userId, t.conversationId),
+    index("conversation_pin_org_user_idx").on(t.organizationId, t.userId),
+  ]
+);
