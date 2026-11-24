@@ -2,8 +2,8 @@
 
 **Rama**: `feat/072-reacciones` · **Creada**: lun 23-nov-2026 · **Base**: `main` (2.8.0)
 
-**Origen**: puerto de la spec 150 de Megaparty (`megaparty-crm`, en
-producción desde mega-v1.4.0), adaptado al raíz. Cierra el punto E2
+**Origen**: puerto de una función que ya corría en producción en un fork de
+cliente, adaptado al raíz. Cierra el punto E2
 («reacciones se descartan») del inventario de lo que falta portar de los
 forks.
 
@@ -108,9 +108,9 @@ El listado de mensajes suma `reactable` y `reactions` a cada mensaje.
 
 ## Fuera de alcance
 
-- La «nota interna más clara» (H5 de la 150 de Megaparty): no es de
+- La «nota interna más clara» (otra historia de esa misma función en el fork): no es de
   reacciones; va en su propia spec si se pide.
-- El menú con flechita dentro de la burbuja de Megaparty: el raíz ya tiene
+- El menú con flechita dentro de la burbuja que usaba el fork: el raíz ya tiene
   su forma de acciones (059) y aquí se respeta.
 - Reacciones desde el cerebro o la API v1.
 

@@ -91,7 +91,7 @@ try {
     req.post(`${BASE}/api/dev/wa-mock/inbound`, {
       data: { phoneNumberId: PN, from, name: NOMBRES[k], type: "reaction", reaction: { messageId, emoji } },
     });
-  await inbound("ana", { text: `Hola, ¿tienen globos? ${S}`, waMessageId: WAMID.ana1 });
+  await inbound("ana", { text: `Hola, ¿tienen envíos? ${S}`, waMessageId: WAMID.ana1 });
   await inbound("ana", { text: `¿Y de qué colores? ${S}`, waMessageId: WAMID.ana2 });
   await inbound("cerrada", {
     text: `Hola de ayer ${S}`,
@@ -110,7 +110,7 @@ try {
     (await (await req.get(`${BASE}/api/conversations/${convs[k].id}/messages`)).json()).messages ?? [];
   const delAna = await hasta(async () => {
     const l = await mensajes("ana");
-    const m1 = l.find((x) => x.text?.startsWith("Hola, ¿tienen globos?"));
+    const m1 = l.find((x) => x.text?.startsWith("Hola, ¿tienen envíos?"));
     const m2 = l.find((x) => x.text?.startsWith("¿Y de qué colores?"));
     return m1 && m2 ? { m1, m2 } : null;
   });

@@ -7,8 +7,26 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+## 2.10.0 — 2026-11-24
+
+Las reacciones a los mensajes, todo lo que llega por Instagram, Messenger y
+TikTok, una sola respuesta del agente por ráfaga y una sesión que ya no se
+cae a la semana. Actualizar es redesplegar con la etiqueta `2.10.0`: las
+migraciones `0029_reacciones`, `0030_que_no_se_pierda_nada` y
+`0031_una_respuesta` se aplican solas al arrancar. La única variable nueva,
+`RED_DE_SEGURIDAD_MS`, es opcional. Nea no tiene que cambiar: un cerebro que
+no manda `dispatchId` funciona igual que antes.
+
 ### Nuevo
 
+- **Reacciones a los mensajes** (spec 072). Las reacciones del cliente ya no
+  se descartan: se ven debajo de la burbuja, agrupadas por emoji, dicen quién
+  reaccionó y se actualizan en vivo. El equipo reacciona desde la Bandeja (la
+  carita junto a ↩ con el ratón, o el menú de mantener presionado en el
+  teléfono) y el cliente la ve en su app; otro emoji la reemplaza y tocar la
+  propia la quita. Funciona en WhatsApp y en Instagram y Messenger por
+  Zernio; con app propia de Meta y en TikTok no se puede reaccionar.
+  **Migración `0029_reacciones`** (se aplica sola al arrancar).
 - **Que no se pierda nada** (spec 074). Las fotos, videos, audios y archivos
   de **Instagram, Messenger y TikTok** entran todos (antes, solo el texto o el
   primer adjunto), por Meta directo y por Zernio, y se copian a `MEDIA_DIR` al

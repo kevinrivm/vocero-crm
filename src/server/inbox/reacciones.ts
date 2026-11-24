@@ -32,7 +32,7 @@ import { findZernioConnection } from "@/server/zernio/conexiones";
 
 /**
  * 072 — Reacciones a mensajes: las del cliente que llegan por webhook y las
- * del equipo que salen desde la bandeja (puerto de la 150 de Megaparty).
+ * del equipo que salen desde la bandeja (puerto desde un fork de cliente).
  *
  * Reglas: una reacción por actor y mensaje (el equipo es UN actor, como lo ve
  * el cliente); emoji vacío = quitar; una reacción a un mensaje que no está en
