@@ -122,6 +122,8 @@ export type WebhookMessage = {
   interactive?: WebhookInteractiveReply;
   /** El mensaje al que responde (botones, citas): `id` es su wa_message_id. */
   context?: { from?: string; id?: string };
+  /** 072: reacción del cliente; `emoji` vacío = la quitó. */
+  reaction?: { message_id?: string; emoji?: string };
   /** 016: origen del anuncio, cuando la conversación nació de uno. */
   referral?: WebhookReferral;
 };

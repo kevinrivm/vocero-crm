@@ -95,6 +95,19 @@ export type ZernioEvent = {
   /** 022: el hilo también viene aparte; su `id` es el `conversationId`. */
   conversation?: { id?: string };
   /**
+   * 072 — Evento `reaction.received`: el cliente puso o quitó una reacción.
+   * `messageId` (id de Zernio) puede faltar; `platformMessageId` siempre viene.
+   * Al quitar, `action` = `removed` y `emoji` = "".
+   */
+  reaction?: {
+    emoji?: string;
+    action?: string;
+    messageId?: string;
+    platformMessageId?: string;
+    sender?: { id?: string; name?: string | null };
+    reactedAt?: string;
+  };
+  /**
    * 023: `profileId` es el del perfil que agrupa las cuentas. Sirve para
    * corregir una conexión guardada con ese id en vez del de la cuenta.
    */
@@ -199,6 +212,47 @@ export async function sendZernioMessage(input: {
   return { platformMessageId: String(id) };
 }
 
+/**
+ * 072 — Pone (`emoji` con valor) o quita (`emoji` = "") la reacción del
+ * negocio a un mensaje de una conversación de Zernio.
+ *
+ * API: `POST /inbox/conversations/{conversationId}/messages/{messageId}/reactions`
+ * `{ accountId, emoji }` y `DELETE` en el mismo path con `?accountId=`
+ * (docs.zernio.com, «Add/Remove message reaction»). `messageId` acepta el id
+ * de Zernio o el de la plataforma.
+ */
+export async function reactZernioMessage(input: {
+  token: string;
+  accountId: string | null;
+  conversationId: string | null;
+  messageId: string;
+  emoji: string;
+}): Promise<void> {
+  if (!input.conversationId) {
+    throw new MetaApiError(
+      "La conversación no tiene referencia de hilo en Zernio",
+      { status: 400 }
+    );
+  }
+  const path =
+    `/inbox/conversations/${encodeURIComponent(input.conversationId)}` +
+    `/messages/${encodeURIComponent(input.messageId)}/reactions`;
+  if (input.emoji) {
+    await zernioFetch(path, {
+      method: "POST",
+      token: input.token,
+      body: { accountId: input.accountId, emoji: input.emoji },
+      timeoutMs: 15_000,
+    });
+  } else {
+    await zernioFetch(`${path}?accountId=${encodeURIComponent(input.accountId ?? "")}`, {
+      method: "DELETE",
+      token: input.token,
+      timeoutMs: 15_000,
+    });
+  }
+}
+
 /** Comprueba que la llave sirve (se usa antes de guardar una conexión). */
 export async function verifyZernioToken(token: string): Promise<void> {
   await zernioFetch("/inbox/conversations?limit=1", { token });
@@ -212,7 +266,7 @@ export async function verifyZernioToken(token: string): Promise<void> {
 export async function zernioFetch(
   path: string,
   opts: {
-    method?: "GET" | "POST" | "PUT";
+    method?: "GET" | "POST" | "PUT" | "DELETE";
     /** 023: corta la espera; sin él, la del runtime. */
     timeoutMs?: number;
     token: string;

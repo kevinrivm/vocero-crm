@@ -38,6 +38,13 @@ import { formatBytes, mediaLabel } from "./helpers";
 import { ForwardDialog } from "./forward-dialog";
 import { LinkedText } from "./linked-text";
 import { QuoteBlock } from "./quote-block";
+import { emojiAlElegir, reaccionDelEquipo } from "@/lib/reacciones";
+import {
+  BotonReaccionar,
+  FilaReacciones,
+  ReaccionesBurbuja,
+  type AccionReaccion,
+} from "./reacciones";
 
 function StatusTicks({ status }: { status: MessageDto["status"] }) {
   const cls = "h-[13px] w-[13px]";
@@ -377,6 +384,8 @@ export function MessageThread({
   notas = [],
   onBorrarNota,
   eventos = [],
+  onReact,
+  reaccionBloqueada = null,
 }: {
   messages: MessageDto[];
   /** 039: quién firma las citas del cliente. */
@@ -391,6 +400,13 @@ export function MessageThread({
   onBorrarNota?: (n: NotaDto) => void;
   /** 054 — Cambios de etapa y traspaso, intercalados por hora. */
   eventos?: EventoHiloDto[];
+  /**
+   * 072 — Reaccionar como equipo (`""` quita). Devuelve el motivo si falló.
+   * Ausente si el canal no permite reaccionar desde aquí.
+   */
+  onReact?: (m: MessageDto, emoji: string) => Promise<string | null>;
+  /** 072 — Por qué no se puede reaccionar ahora (ventana cerrada), o null. */
+  reaccionBloqueada?: string | null;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   // 045 — El hilo se queda abajo mientras crece (una foto o un audio que
@@ -403,6 +419,23 @@ export function MessageThread({
   const [notice, setNotice] = useState<string | null>(null);
   const [resaltado, setResaltado] = useState<string | null>(null);
   const resaltadoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 072 — Si la reacción no sale (Meta, ventana), el motivo va en el aviso.
+  const reaccionar = (m: MessageDto, emoji: string) => {
+    void onReact?.(m, emoji).then((error) => {
+      if (error) setNotice(error);
+    });
+  };
+  /** 072 — La reacción de un mensaje, o undefined si no se le puede reaccionar. */
+  const accionReaccion = (m: MessageDto): AccionReaccion | undefined => {
+    if (!onReact || !m.reactable) return undefined;
+    const actual = reaccionDelEquipo(m.reactions);
+    return {
+      actual,
+      bloqueo: reaccionBloqueada,
+      onReact: (emoji) => reaccionar(m, emojiAlElegir(actual, emoji)),
+    };
+  };
 
   // 039: el clic en una cita lleva al original y lo resalta un momento.
   const irAlCitado = useCallback((id: string) => {
@@ -480,6 +513,7 @@ export function MessageThread({
               : undefined
           }
           onCopied={(ok) => setNotice(ok ? "Texto copiado" : "No se pudo copiar el texto")}
+          reaccion={accionReaccion(menuDe)}
         />
       )}
       {(() => {
@@ -510,7 +544,9 @@ export function MessageThread({
         const puedeCitar = Boolean(onReply && m.quotable);
         const puedeReenviar = Boolean(onForwarded && claseReenvio(m));
         const textoCopiable = m.media ? m.media.caption : m.text;
-        const tieneMenu = puedeCitar || puedeReenviar || Boolean(textoCopiable);
+        const reaccion = accionReaccion(m);
+        const tieneMenu =
+          puedeCitar || puedeReenviar || Boolean(textoCopiable) || Boolean(reaccion);
 
         return (
           <div key={m.id}>
@@ -614,17 +650,36 @@ export function MessageThread({
                   </p>
                 )}
               </div>
+              {/* 072 — Las reacciones, pegadas bajo la burbuja. */}
+              <ReaccionesBurbuja
+                messageId={m.id}
+                reacciones={m.reactions ?? []}
+                out={out}
+                onQuitar={
+                  reaccion && !reaccionBloqueada && reaccion.actual
+                    ? () => reaccionar(m, "")
+                    : undefined
+                }
+              />
               </GestosBurbuja>
               {/* 059 · D5 — Con ratón, dos iconos al pasar por la burbuja. En
                   una pantalla táctil no se pintan: ahí se desliza o se
                   mantiene presionado (D6). */}
-              {(puedeCitar || puedeReenviar) && (
+              {(puedeCitar || puedeReenviar || reaccion) && (
                 <span
                   className={cn(
                     "hidden shrink-0 items-center [@media(hover:hover)]:flex",
                     out ? "flex-row-reverse" : "flex-row"
                   )}
                 >
+                  {reaccion && (
+                    <BotonReaccionar
+                      messageId={m.id}
+                      out={out}
+                      reaccion={reaccion}
+                      className={ICONO_ACCION}
+                    />
+                  )}
                   {puedeCitar && (
                     <button
                       type="button"
@@ -679,7 +734,8 @@ const ICONO_ACCION =
 
 /**
  * 059 · D6 — El menú de una burbuja al mantenerla presionada, abajo de la
- * pantalla: responder, reenviar y copiar el texto, según aplique.
+ * pantalla: responder, reenviar y copiar el texto, según aplique. 072: arriba,
+ * la fila de reacciones, como en WhatsApp.
  */
 function MenuMensaje({
   message,
@@ -687,12 +743,14 @@ function MenuMensaje({
   onReply,
   onForward,
   onCopied,
+  reaccion,
 }: {
   message: MessageDto;
   onClose: () => void;
   onReply?: () => void;
   onForward?: () => void;
   onCopied: (ok: boolean) => void;
+  reaccion?: AccionReaccion;
 }) {
   const texto = message.media ? message.media.caption : message.text;
   useEffect(() => {
@@ -735,6 +793,11 @@ function MenuMensaje({
         className="fixed inset-x-0 bottom-0 rounded-t-2xl border-t bg-card p-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] text-card-foreground shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {reaccion && (
+          <div className="border-b border-border px-1 pb-2 pt-1">
+            <FilaReacciones reaccion={reaccion} onElegido={onClose} />
+          </div>
+        )}
         {onReply && item("Responder", Reply, onReply)}
         {onForward && item("Reenviar", Forward, onForward)}
         {texto && item("Copiar texto", Copy, () => void copiar(texto))}

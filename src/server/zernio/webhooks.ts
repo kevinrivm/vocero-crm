@@ -16,6 +16,8 @@ import type { Health } from "@/server/zernio/cuentas";
 
 /** El evento con el que llega un mensaje de un cliente. */
 export const ZERNIO_MESSAGE_EVENT = "message.received";
+/** 072 — Las reacciones del cliente llegan en su propio evento. */
+export const ZERNIO_REACTION_EVENT = "reaction.received";
 
 /** Un webhook de `GET /webhooks/settings`, en lo que a Vocero le importa. */
 export type ZernioWebhook = {
@@ -212,7 +214,8 @@ export async function ensureZernioWebhook(input: {
   const body = {
     name: previo?.name || input.name,
     url,
-    events: [ZERNIO_MESSAGE_EVENT],
+    // 072: también las reacciones del cliente (D9).
+    events: [ZERNIO_MESSAGE_EVENT, ZERNIO_REACTION_EVENT],
     secret: input.secret,
     isActive: true,
     accountIds: [...new Set(input.accountIds)],

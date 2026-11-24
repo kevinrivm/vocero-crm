@@ -35,6 +35,12 @@ export type EventHandlers = {
   /** 050 — Una nota interna nueva o borrada en una conversación. */
   onNoteNew?: (data: { conversationId: string; note: unknown }) => void;
   onNoteDeleted?: (data: { conversationId: string; noteId: string }) => void;
+  /** 072 — Cambiaron las reacciones de un mensaje. */
+  onReactionUpdated?: (data: {
+    conversationId: string;
+    messageId: string;
+    reactions: unknown;
+  }) => void;
   /** 015 — Algo cambió en la agenda (también cuando agenda la IA). */
   onBookingUpdated?: (data: { bookingId: string }) => void;
   /** Se llama tras RECONECTAR (no en la conexión inicial): catch-up con refetch. */
@@ -87,6 +93,9 @@ export function useEvents(handlers: EventHandlers): void {
       listen(es, "message.media", (d) => handlersRef.current.onMessageMedia?.(d as never));
       listen(es, "note.new", (d) => handlersRef.current.onNoteNew?.(d as never));
       listen(es, "note.deleted", (d) => handlersRef.current.onNoteDeleted?.(d as never));
+      listen(es, "reaction.updated", (d) =>
+        handlersRef.current.onReactionUpdated?.(d as never)
+      );
       listen(es, "conversation.updated", (d) =>
         handlersRef.current.onConversationUpdated?.(d as never)
       );

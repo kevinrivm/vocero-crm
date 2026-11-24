@@ -458,10 +458,10 @@ async function elWebhook() {
   let aqui = await webhooksAqui();
   const w = aqui[0];
   ok(
-    "Zernio tiene UN webhook hacia esta instancia: activo, con message.received y solo las cuentas conectadas",
+    "Zernio tiene UN webhook hacia esta instancia: activo, con message.received y reaction.received (072) y solo las cuentas conectadas",
     aqui.length === 1 &&
       w.isActive === true &&
-      JSON.stringify(w.events) === '["message.received"]' &&
+      JSON.stringify(w.events) === '["message.received","reaction.received"]' &&
       w.accountIds.includes(IG) &&
       mismas(w.accountIds, await cuentasConectadas()) &&
       w.url === `${BASE}/api/webhooks/ig/${VERIFY_TOKEN}`,

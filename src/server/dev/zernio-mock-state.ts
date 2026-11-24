@@ -17,6 +17,15 @@ export type ZernioSentMessage = {
   at: string;
 };
 
+/** 072 — Una reacción que el CRM puso (`emoji`) o quitó (`emoji` = ""). */
+export type ZernioSentReaction = {
+  conversationId: string;
+  messageId: string;
+  accountId: string | null;
+  emoji: string;
+  at: string;
+};
+
 /** 023: una cuenta de `GET /accounts`, con la forma real de esa API. */
 export type ZernioMockAccount = {
   _id: string;
@@ -48,6 +57,8 @@ export type ZernioMockWebhook = {
 type ZernioMockState = {
   seq: number;
   sent: ZernioSentMessage[];
+  /** 072 */
+  reactions: ZernioSentReaction[];
   /** 023 */
   accounts: ZernioMockAccount[];
   webhooks: ZernioMockWebhook[];
@@ -61,10 +72,11 @@ const g = globalThis as unknown as { __voceroZernioMock?: ZernioMockState };
 
 export function zernioMockState(): ZernioMockState {
   if (!g.__voceroZernioMock) {
-    g.__voceroZernioMock = { seq: 0, sent: [], accounts: [], webhooks: [], down: [], hits: {} };
+    g.__voceroZernioMock = { seq: 0, sent: [], reactions: [], accounts: [], webhooks: [], down: [], hits: {} };
   }
   // Un proceso que venía de antes de la 023 (recarga en caliente).
   const s = g.__voceroZernioMock;
+  s.reactions ??= [];
   s.accounts ??= [];
   s.webhooks ??= [];
   s.down ??= [];
@@ -78,6 +90,7 @@ export function resetZernioMock(): void {
   // cambia con `_accounts` y `_webhooks` cuando quiere otro.
   const s = zernioMockState();
   s.sent = [];
+  s.reactions = [];
   s.down = [];
   s.hits = {};
 }

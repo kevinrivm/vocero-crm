@@ -44,6 +44,8 @@ type MockMediaInput = {
  * para poder probar `button_reply`, `list_reply` y las formas rotas.
  */
 type MockButtonInput = {
+  /** 072 — reacción del cliente: el wamid al que reacciona y el emoji ("" = quitar). */
+  reaction?: { messageId: string; emoji: string };
   button?: { text: string; payload?: string };
   interactive?: Record<string, unknown>;
 };
@@ -57,6 +59,11 @@ function applyMockContent(
 ): void {
   if (type === "text") {
     message.text = { body: input.text ?? "hola" };
+  } else if (type === "reaction") {
+    message.reaction = {
+      message_id: input.reaction?.messageId ?? "wamid.mock.desconocido",
+      emoji: input.reaction?.emoji ?? "",
+    };
   } else if (type === "button") {
     // Como lo manda Meta: `context` apunta a la plantilla que traía el botón.
     const text = input.button?.text ?? input.text ?? "Sí";

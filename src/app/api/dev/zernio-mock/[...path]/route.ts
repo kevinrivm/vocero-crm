@@ -57,7 +57,7 @@ export async function GET(req: Request, ctx: Ctx) {
 
   const state = zernioMockState();
   if (route === "_sent") {
-    return Response.json({ sent: state.sent });
+    return Response.json({ sent: state.sent, reactions: state.reactions });
   }
   if (route === "_state") {
     return Response.json({
@@ -131,6 +131,12 @@ export async function POST(req: Request, ctx: Ctx) {
     return Response.json({ success: true, webhook });
   }
 
+  // 072 — POST /inbox/conversations/{id}/messages/{messageId}/reactions
+  if (esRutaDeReaccion(path)) {
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    return registrarReaccion(path, body.accountId ? String(body.accountId) : null, String(body.emoji ?? ""));
+  }
+
   // POST /inbox/conversations/{id}/messages
   if (
     path.length === 4 &&
@@ -178,4 +184,40 @@ export async function PUT(req: Request, ctx: Ctx) {
     return Response.json({ success: true, webhook });
   }
   return Response.json({});
+}
+
+/** 072 — DELETE /inbox/conversations/{id}/messages/{messageId}/reactions?accountId= */
+export async function DELETE(req: Request, ctx: Ctx) {
+  const denied = mockGuard();
+  if (denied) return denied;
+  const { path } = await ctx.params;
+  if (zernioTokenIsBad(req.headers.get("authorization"))) return unauthorized();
+  if (!esRutaDeReaccion(path)) return Response.json({});
+  return registrarReaccion(path, new URL(req.url).searchParams.get("accountId"), "");
+}
+
+function esRutaDeReaccion(path: string[]): boolean {
+  return (
+    path.length === 6 &&
+    path[0] === "inbox" &&
+    path[1] === "conversations" &&
+    path[3] === "messages" &&
+    path[5] === "reactions"
+  );
+}
+
+/** Un `messageId` que empieza con `no-existe` contesta 404 como la API real. */
+function registrarReaccion(path: string[], accountId: string | null, emoji: string): Response {
+  const messageId = decodeURIComponent(path[4]!);
+  if (messageId.startsWith("no-existe")) {
+    return Response.json({ error: "Message not found", code: "message_not_found" }, { status: 404 });
+  }
+  zernioMockState().reactions.push({
+    conversationId: decodeURIComponent(path[2]!),
+    messageId,
+    accountId,
+    emoji,
+    at: new Date().toISOString(),
+  });
+  return Response.json({ success: true, messageId, platformMessageId: `pm_${messageId}` });
 }

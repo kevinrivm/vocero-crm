@@ -41,6 +41,8 @@ const schema = z
     interactive: z.record(z.string(), z.unknown()).optional(),
     // 039 — el wamid que el cliente cita (llega en `context.id`)
     replyTo: z.string().optional(),
+    // 072 — reacción del cliente (type "reaction"); emoji "" la quita
+    reaction: z.object({ messageId: z.string(), emoji: z.string() }).optional(),
   })
   .refine((v) => v.from || v.fromUserId, {
     message: "Se requiere from o fromUserId",

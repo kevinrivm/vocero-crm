@@ -8,6 +8,7 @@ import { apiError, parseBody } from "@/lib/api";
 import { getConversation, listMessages } from "@/server/inbox/queries";
 import { serializeMessage } from "@/server/inbox/ingest";
 import { resolverCitas } from "@/server/inbox/quotes";
+import { reaccionesDe } from "@/server/inbox/reacciones";
 import { SendError, sendStructured, sendText } from "@/server/inbox/send";
 import { pausarIaTrasEnvioDeLaBandeja } from "@/server/inbox/pausa-manual";
 
@@ -32,6 +33,11 @@ export const GET = conSesion(async (session, req: Request, ctx: Params) => {
     session.organizationId,
     messages.map((r) => r.message)
   );
+  // 072: y sus reacciones, también en uno.
+  const reacciones = await reaccionesDe(
+    session.organizationId,
+    messages.map((r) => r.message.id)
+  );
   return Response.json({
     messages: messages.map((r) =>
       serializeMessage(
@@ -39,7 +45,8 @@ export const GET = conSesion(async (session, req: Request, ctx: Params) => {
         r.media,
         r.message.replyToWaMessageId
           ? citas.get(r.message.replyToWaMessageId) ?? null
-          : null
+          : null,
+        reacciones.get(r.message.id) ?? []
       )
     ),
   });
