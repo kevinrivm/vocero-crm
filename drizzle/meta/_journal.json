@@ -211,6 +211,13 @@
       "when": 1795523513693,
       "tag": "0029_reacciones",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1795526146953,
+      "tag": "0031_una_respuesta",
+      "breakpoints": true
     }
   ]
 }

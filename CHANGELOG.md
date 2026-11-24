@@ -7,6 +7,25 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+### Nuevo
+
+- **Una sola respuesta por ráfaga** (spec 075). Si el cliente vuelve a
+  escribir mientras el agente piensa, el agente contesta una sola vez, con
+  todo lo que el cliente dijo, en vez de mandar dos respuestas que se pisan.
+  El despacho anuncia `dispatch_superado` en `capabilities`, y un cerebro que
+  manda `dispatchId` y `dropIfSuperseded: true` en `POST /api/bot/messages`
+  recibe `409 dispatch_superado` cuando su turno ya quedó atrás. Es opcional:
+  un cerebro que no manda esos campos se comporta igual que antes.
+- **Nadie se queda sin respuesta** (spec 075). Una red de seguridad revisa
+  cada minuto los turnos que el cerebro recibió y nunca contestó: a los 10
+  minutos se los vuelve a mandar (con `relaunch: 1`, luego `2`) y, si siguen
+  sin respuesta, pasa la conversación a una persona con el motivo «El agente
+  no logró contestar», visible en la Bandeja y en el hilo. No relanza un
+  «gracias» o un 👍, ni con la IA en pausa, el agente apagado, fuera de la
+  ventana del canal o en el Laboratorio. **Migración `0031_una_respuesta`**
+  (se aplica sola al arrancar; lo entregado antes de actualizar no se
+  relanza). Variable opcional `RED_DE_SEGURIDAD_MS` (60000; `0` la apaga).
+
 ## 2.9.0 — 2026-11-23
 
 Cada persona fija sus chats importantes arriba de la Bandeja, y la simulación

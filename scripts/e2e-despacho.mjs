@@ -60,6 +60,8 @@ const CLAVES_DEL_EVENTO = [
   "messages",
   "firstMessageAt",
   "lastMessageAt",
+  // 075: lo que el CRM sabe hacer, al final (el cuerpo gemelo no la lleva).
+  "capabilities",
 ];
 
 let cookie = "";

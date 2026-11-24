@@ -1,6 +1,7 @@
-import { and, eq, inArray, isNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, eq, inArray, isNull, lte, ne, or, sql, type SQL } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
+import { scoped } from "@/lib/db/tenant";
 import { getEnv } from "@/lib/env";
 import { publish } from "@/server/events/bus";
 
@@ -70,6 +71,12 @@ export async function encolarDespacho(params: {
    * del guion a la vez y no tiene a nadie más escribiendo detrás.
    */
   inmediato?: boolean;
+  /**
+   * 075 — Lo encola la red de seguridad: qué vuelta es (1 o 2). Solo cuenta
+   * si abre una fila nueva. Si ya hay una viva, la abrió el cliente al volver
+   * a escribir, y esa no es un relanzamiento.
+   */
+  relanzamiento?: number;
 }): Promise<{ id: string; notBefore: Date }> {
   const db = getDb();
   const ahora = params.ahora ?? new Date();
@@ -143,6 +150,7 @@ export async function encolarDespacho(params: {
         firstMessageAt: ahora,
         lastMessageAt: ahora,
         messageIds: messageIds.length ? messageIds : null,
+        relaunchCount: params.relanzamiento ?? 0,
       });
       return { id, notBefore };
     } catch (err) {
@@ -153,6 +161,67 @@ export async function encolarDespacho(params: {
       if (vuelta >= 2 || !messageIds.length) return { id, notBefore };
     }
   }
+}
+
+/**
+ * 075 — El despacho que el cerebro dice estar contestando, si es de esa
+ * organización. `null` si no existe o es de otra: las dos cosas se ven igual
+ * desde fuera.
+ */
+export async function despachoDe(
+  organizationId: string,
+  dispatchId: string
+): Promise<FilaDespacho | null> {
+  const [fila] = await getDb()
+    .select()
+    .from(schema.dispatch)
+    .where(
+      scoped(
+        schema.dispatch.organizationId,
+        organizationId,
+        eq(schema.dispatch.id, dispatchId)
+      )
+    )
+    .limit(1);
+  return fila ?? null;
+}
+
+/**
+ * 075 — ¿El cliente volvió a escribir después de este despacho?
+ *
+ * Un despacho queda `entregado` en cuanto el cerebro acusa recibo, pero el
+ * cerebro tarda en pensar. Si el cliente escribe en ese rato, se abre un
+ * despacho nuevo, y su ráfaga lleva TODO lo que el cliente dijo desde la
+ * última respuesta: también lo de este. Contestar los dos produce dos
+ * mensajes seguidos que se pisan; basta con contestar el último.
+ *
+ * Cuenta el posterior que sigue pendiente, en vuelo o ya entregado: alguien
+ * lo va a contestar. No cuentan el descartado ni el caducado a una persona:
+ * si este también callara, el cliente se quedaría sin ninguna respuesta. La
+ * hora se compara dentro de Postgres (microsegundos) y no en JS.
+ */
+export async function despachoSuperado(despacho: {
+  id: string;
+  organizationId: string;
+  conversationId: string;
+}): Promise<boolean> {
+  const posteriores = await getDb()
+    .select({ id: schema.dispatch.id })
+    .from(schema.dispatch)
+    .where(
+      scoped(
+        schema.dispatch.organizationId,
+        despacho.organizationId,
+        and(
+          eq(schema.dispatch.conversationId, despacho.conversationId),
+          ne(schema.dispatch.id, despacho.id),
+          inArray(schema.dispatch.status, ["pendiente", "en_vuelo", "entregado"]),
+          sql`${schema.dispatch.createdAt} > (select d.created_at from dispatch d where d.id = ${despacho.id} and d.organization_id = ${despacho.organizationId})`
+        )
+      )
+    )
+    .limit(1);
+  return posteriores.length > 0;
 }
 
 /**

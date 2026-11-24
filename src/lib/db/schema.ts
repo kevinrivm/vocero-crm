@@ -386,6 +386,8 @@ export const conversation = pgTable(
         "ventana",
         "hostilidad",
         "manual_reply",
+        // 075: el turno quedó sin contestar aunque se relanzó dos veces.
+        "sin_respuesta",
       ],
     }),
     lastInboundAt: timestamp("last_inbound_at"),
@@ -1255,6 +1257,18 @@ export const dispatch = pgTable(
      * anteriores a esta columna, que se comportan como antes.
      */
     messageIds: jsonb("message_ids").$type<string[]>(),
+    /**
+     * 075 — Qué vuelta de la red de seguridad es este despacho: 0 si lo
+     * provocó el cliente, 1 o 2 si lo volvió a mandar la red porque el
+     * anterior quedó sin contestar. Viaja al cerebro como `relaunch`.
+     */
+    relaunchCount: integer("relaunch_count").notNull().default(0),
+    /**
+     * 075 — Cuándo la red de seguridad revisó este despacho entregado. Se
+     * escribe UNA vez, con un UPDATE condicionado a que siga vacío: así dos
+     * barridos (o dos procesos) no lo relanzan dos veces.
+     */
+    safetyNetAt: timestamp("safety_net_at"),
     /** Motivo del último fallo. Nunca el cuerpo firmado ni la llave. */
     lastError: text("last_error"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -1284,6 +1298,13 @@ export const dispatch = pgTable(
     ),
     // La consulta del worker: pendientes cuya ventana ya venció.
     index("dispatch_status_notbefore_idx").on(t.status, t.notBefore),
+    /**
+     * 075 — La consulta de la red de seguridad: entregados que todavía no
+     * revisó, por hora de entrega. Parcial: el histórico ya revisado no pesa.
+     */
+    index("dispatch_red_seguridad_idx")
+      .on(t.updatedAt)
+      .where(sql`${t.status} = 'entregado' and ${t.safetyNetAt} is null`),
   ]
 );
 
