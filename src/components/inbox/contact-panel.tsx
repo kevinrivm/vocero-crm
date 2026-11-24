@@ -34,6 +34,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { FichaPanel } from "@/components/ficha-panel";
 import { DeleteConversationDialog } from "./delete-conversation-dialog";
 
+type DuracionPausa = "1h" | "manana" | "indefinida";
+
+/** 076 — Las tres duraciones de la pausa manual. */
+const OPCIONES_PAUSA: { valor: DuracionPausa; etiqueta: string }[] = [
+  { valor: "1h", etiqueta: "1 hora" },
+  { valor: "manana", etiqueta: "Hasta mañana" },
+  { valor: "indefinida", etiqueta: "Indefinida" },
+];
+
+/** «En pausa hasta las 15:30», «… hasta mañana, 09:00» o «En pausa». */
+function textoPausaHasta(iso: string | null): string {
+  if (!iso) return "En pausa";
+  const fin = new Date(iso);
+  if (fin.getTime() <= Date.now()) return "En pausa · vuelve cuando el cliente escriba";
+  const hora = fin.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const mismoDia = fin.toDateString() === new Date().toDateString();
+  return mismoDia ? `En pausa hasta las ${hora}` : `En pausa hasta mañana, ${hora}`;
+}
 
 export function ContactPanel({
   conversation,
@@ -48,12 +66,16 @@ export function ContactPanel({
   onPatchConversation: (patch: {
     aiEnabled?: boolean;
     reactivate?: boolean;
+    /** 076 — Cuánto dura la pausa al apagar la IA. */
+    pauseFor?: DuracionPausa;
   }) => Promise<void>;
   /** 026 — Ausente = quien mira no puede eliminar: no se le ofrece. */
   onDeleteConversation?: (alsoContact: boolean) => Promise<string | null>;
   onClose: () => void;
 }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  // 076 — Al apagar la IA se pregunta por cuánto tiempo.
+  const [eligiendoPausa, setEligiendoPausa] = useState(false);
   const [notes, setNotes] = useState("");
   const [ficha, setFicha] = useState<FichaDto>({});
   const [notesLoaded, setNotesLoaded] = useState(false);
@@ -240,7 +262,7 @@ export function ContactPanel({
                   {conversation.handoffAt
                     ? "En pausa · atención humana"
                     : !conversation.aiEnabled
-                      ? "En pausa"
+                      ? textoPausaHasta(conversation.aiPausedUntil)
                       : externalActive
                         ? "Respondiendo"
                         : "Activada"}
@@ -251,12 +273,54 @@ export function ContactPanel({
                 checked={aiActive}
                 label="IA en esta conversación"
                 onCheckedChange={() => {
-                  void onPatchConversation({
-                    aiEnabled: !conversation.aiEnabled,
-                  });
+                  if (aiActive) {
+                    // 076: apagar pregunta por cuánto; encender es inmediato.
+                    setEligiendoPausa((v) => !v);
+                    return;
+                  }
+                  // Encender saca también del traspaso: el interruptor dice
+                  // «en pausa» y encenderlo es «que vuelva la IA».
+                  void onPatchConversation(
+                    conversation.handoffAt ? { reactivate: true } : { aiEnabled: true }
+                  );
                 }}
               />
             </div>
+
+            {eligiendoPausa && aiActive && (
+              <div
+                role="group"
+                aria-label="Pausar la IA"
+                className="mt-2.5 rounded-md border bg-background p-2.5"
+              >
+                <p className="text-[12px] font-medium">¿Por cuánto tiempo pausas la IA?</p>
+                <p className="mt-0.5 text-[11px] text-text-3">
+                  Al terminar, vuelve a contestar cuando el cliente escriba.
+                </p>
+                <div className="mt-2 grid grid-cols-3 gap-1.5">
+                  {OPCIONES_PAUSA.map((o) => (
+                    <Button
+                      key={o.valor}
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setEligiendoPausa(false);
+                        void onPatchConversation({ aiEnabled: false, pauseFor: o.valor });
+                      }}
+                    >
+                      {o.etiqueta}
+                    </Button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  className="mt-2 text-[11px] text-text-3 underline underline-offset-2 hover:text-foreground"
+                  onClick={() => setEligiendoPausa(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
 
             {brain && externalActive ? (
               <p className="mt-2 flex items-center gap-1.5 text-[11px] text-text-3">

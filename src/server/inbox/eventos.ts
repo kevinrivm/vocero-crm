@@ -1,7 +1,8 @@
 import { and, asc, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
-import { textoEventoEtapa, textoTraspaso, type EventoHiloDto } from "@/lib/eventos-hilo";
+import { textoEventoEtapa, textoTraspaso, textoVuelta, type EventoHiloDto } from "@/lib/eventos-hilo";
+import { vueltasDeConversacion } from "@/server/inbox/reactivacion";
 
 /**
  * 054 — Los eventos del hilo de una conversación, por hora: los cambios de
@@ -69,6 +70,25 @@ export async function eventosDeConversacion(
         createdAt: f.occurredAt.toISOString(),
       });
     }
+  }
+
+  // 076: cada vez que la IA volvió sola, con la pausa que terminó. Al volver
+  // se borra `handoff_at`: sin esto el hilo ya no diría que hubo una persona.
+  for (const v of await vueltasDeConversacion(organizationId, conversationId)) {
+    if (v.pausadaDesde) {
+      eventos.push({
+        id: `traspaso-${v.id}`,
+        tipo: "traspaso",
+        texto: textoTraspaso(v.motivoPausa),
+        createdAt: v.pausadaDesde.toISOString(),
+      });
+    }
+    eventos.push({
+      id: v.id,
+      tipo: "vuelta",
+      texto: textoVuelta(v.motivo, v.horas),
+      createdAt: v.occurredAt.toISOString(),
+    });
   }
 
   if (conv.handoffAt) {

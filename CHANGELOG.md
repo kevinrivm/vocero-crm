@@ -7,6 +7,26 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
 ## Sin publicar
 
+### Nuevo
+
+- **La IA vuelve sola** (spec 076). Cuando una persona contesta o el agente
+  pasa la conversación a una persona, la IA ya no queda en pausa para
+  siempre: si el cliente vuelve a escribir y el equipo lleva N horas sin
+  escribirle, la IA retoma y el hilo dice «La IA volvió a atender (24 h sin
+  respuesta del equipo)». N se fija en la pantalla Agente («Cuándo vuelve la
+  IA»), en la API v1 y en el MCP (`reactivateAfterHours`, de 1 a 720; vacío =
+  nunca). Un negocio nuevo nace con 24 h; una instalación que actualiza queda
+  en «nunca» hasta que lo cambies. Nunca vuelve tras hostilidad, con el agente
+  apagado ni en el Laboratorio.
+- **Pausa con duración.** Al apagar la IA en el panel de la conversación
+  eliges 1 hora, hasta mañana (9:00 en la zona del negocio) o indefinida; al
+  vencer, la IA vuelve cuando el cliente escribe.
+- **El cerebro sabe que hubo una persona.** Al volver, el despacho trae
+  `humanAttention` con lo que el equipo y el cliente se dijeron mientras la IA
+  estaba en pausa, y anuncia `atencion_humana` en `capabilities`. Es opcional:
+  un cerebro que no lo lee funciona igual. **Migración
+  `0032_la_ia_vuelve_sola`** (se aplica sola al arrancar).
+
 ## 2.10.0 — 2026-11-24
 
 Las reacciones a los mensajes, todo lo que llega por Instagram, Messenger y

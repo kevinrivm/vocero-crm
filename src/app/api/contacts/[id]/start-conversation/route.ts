@@ -5,6 +5,7 @@ import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
 import { getContactById } from "@/server/contacts";
 import { getOrCreateConversation } from "@/server/inbox/ingest";
+import { anotarSalidaDelEquipo } from "@/server/inbox/reactivacion";
 import { SendError } from "@/server/inbox/send";
 import { isWindowOpen } from "@/server/inbox/window";
 import {
@@ -75,6 +76,8 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
       templateId: body.data.templateId,
       variables: body.data.variables,
     });
+    // 076: la escribió una persona del equipo, aunque sea plantilla.
+    await anotarSalidaDelEquipo(session.organizationId, conversation.id);
     return Response.json({
       messageId: result.messageId,
       conversationId: conversation.id,

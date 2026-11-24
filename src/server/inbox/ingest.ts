@@ -27,6 +27,7 @@ import { onLeadActivity } from "@/server/inbox/lead-activity";
 import { despachoActivo } from "@/server/brains/config";
 import { despacharAlCerebro } from "@/server/dispatch/encolar";
 import { pausarIaPorRespuestaManual } from "@/server/inbox/pausa-manual";
+import { devolverALaIaSiToca } from "@/server/inbox/reactivacion";
 import { registrarReaccionWhatsApp } from "@/server/inbox/reacciones";
 import { esReaccionable, type ReaccionDto } from "@/lib/reacciones";
 import { registrarEdicionWhatsApp } from "@/server/inbox/ediciones";
@@ -504,8 +505,9 @@ async function ingestManualEcho(
     .where(eq(schema.conversation.id, conversation.id));
 
   // Pausa automática de la IA, idempotente y atómica (solo si no hay handoff).
-  // 068: la misma que usa la Bandeja (`pausa-manual.ts`).
-  await pausarIaPorRespuestaManual(organizationId, conversation.id);
+  // 068: la misma que usa la Bandeja (`pausa-manual.ts`). 076: anota la hora
+  // en que escribió la persona, la de Meta.
+  await pausarIaPorRespuestaManual(organizationId, conversation.id, waTimestamp);
 
   publish(organizationId, {
     type: "message.new",
@@ -640,6 +642,19 @@ export async function ingestInboundMessage(input: {
   // 074: las partes de un grupo que no son la última, y lo que el cerebro no
   // sabe leer, se quedan en la bandeja sin abrir un turno.
   if (input.despertar === false) return;
+
+  // 076: una pausa vencida, o un traspaso que el equipo dejó de atender, se
+  // levanta con este mensaje del cliente, que es el que abre la ventana. Antes
+  // del despacho, que lee la conversación ya sin pausa.
+  if (!conversation.aiEnabled || conversation.handoffAt) {
+    const vuelta = await devolverALaIaSiToca(organizationId, conversation.id);
+    if (vuelta) {
+      publish(organizationId, {
+        type: "conversation.updated",
+        data: { conversation: { id: conversation.id } },
+      });
+    }
+  }
 
   // 036 — Quien contesta es el cerebro conectado; sin él, una persona. El
   // 025: `message.id` es lo que el despacho le debe al cerebro.

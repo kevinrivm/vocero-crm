@@ -14,6 +14,8 @@ const patchSchema = z.object({
   aiEnabled: z.boolean().optional(),
   reactivate: z.boolean().optional(),
   markRead: z.boolean().optional(),
+  /** 076 — Duración de la pausa al apagar la IA de esta conversación. */
+  pauseFor: z.enum(["1h", "manana", "indefinida"]).optional(),
 });
 
 type Params = { params: Promise<{ id: string }> };

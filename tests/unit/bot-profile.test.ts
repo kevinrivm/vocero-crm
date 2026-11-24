@@ -35,6 +35,7 @@ function profileRow(overrides: Partial<AgentProfile> = {}): AgentProfile {
   return {
     id: "ap_1",
     organizationId: "org_1",
+    reactivateAfterHours: null,
     enabled: false,
     name: "Sofi",
     tone: "cálido y directo",

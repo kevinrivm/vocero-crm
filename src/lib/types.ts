@@ -11,6 +11,8 @@ export type ConversationDto = {
   stageName: string | null;
   aiEnabled: boolean;
   handoffAt: string | null;
+  /** 076 — Fin de la pausa manual con duración; null = indefinida (o sin pausa). */
+  aiPausedUntil: string | null;
   handoffReason: string | null;
   lastInboundAt: string | null;
   lastMessageAt: string | null;
