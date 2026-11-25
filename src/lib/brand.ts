@@ -21,11 +21,11 @@ export const BRAND_MARK_TAIL = "M16.5 11.5c.8-3 2-5.5 4-6.1";
 
 export const BRAND_MARK_STROKE = 3.4;
 
-/** Cian sobre fondos claros (texto azul al lado). */
-export const BRAND_CYAN = "#00c6f5";
+/** Remate teal sobre fondos claros. */
+export const BRAND_CYAN = "#00afb9";
 
-/** Cian sobre el mosaico azul: un punto más claro para que no se hunda. */
-export const BRAND_CYAN_ON_TILE = "#3fdcff";
+/** Remate claro sobre el mosaico de marca. */
+export const BRAND_CYAN_ON_TILE = "#8ce5e7";
 
 /**
  * ¿Esta instancia se llama Vocero? Solo entonces se dibuja el logo: una

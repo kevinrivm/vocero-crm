@@ -46,19 +46,21 @@ export type Branding = {
 
 export const DEFAULT_BRANDING: Branding = {
   name: "Vocero",
-  // El azul eléctrico de vocerocrm.com: la instancia recién instalada se ve
-  // igual que la landing. Una agencia lo cambia en Configuración → Marca.
-  accent: "#0d5bff",
+  // Turquesa de U-Topic; una organización puede cambiarlo en Configuración → Marca.
+  accent: "#00afb9",
   currency: DEFAULT_CURRENCY,
   favicon: null,
 };
 
 /**
- * Presets. El primero es la marca Vocero (valores exactos de la landing); los
- * demás son los tonos sobrios del handoff Atlas, que siguen disponibles para
- * quien quiera un CRM más discreto.
+ * Presets de color del CRM. Azul Vocero se conserva para las organizaciones
+ * que ya lo usan; U-Topic es el color inicial de esta instancia.
  */
 export const ACCENT_PRESETS: Record<string, { label: string; set: AccentSet }> = {
+  "#00afb9": {
+    label: "Turquesa U-Topic",
+    set: { accent: "#00afb9", hover: "#008d96", soft: "#cceff0", tint: "#e9f8f8", text: "#006d73", fg: "#0d181c" },
+  },
   "#0d5bff": {
     label: "Azul Vocero",
     set: { accent: "#0d5bff", hover: "#0a4de6", soft: "#d3e2ff", tint: "#ebf1ff", text: "#0038d8", fg: "#ffffff" },
@@ -132,18 +134,18 @@ function contrast(a: Rgb, b: Rgb): number {
 }
 
 /** Fondo de referencia del tema oscuro (debe seguir a `--bg` de globals.css). */
-const DARK_BG: Rgb = { r: 0x1a, g: 0x23, b: 0x20 };
+const DARK_BG: Rgb = { r: 0x17, g: 0x22, b: 0x26 };
 
 /**
  * Fondo de referencia de la barra lateral (debe seguir a `--bg` de `.nav-dark`).
- * La barra es azul marino fijo en los dos temas, así que su acento se calcula
+ * La barra es tinta fija en los dos temas, así que su acento se calcula
  * contra ella y no contra la página: si siguiera a DARK_BG, cambiar el tema
  * oscuro repintaría también la barra del tema claro.
  */
-const NAV_BG: Rgb = { r: 0x0b, g: 0x13, b: 0x27 };
+const NAV_BG: Rgb = { r: 0x0d, g: 0x18, b: 0x1c };
 
 /** Tinta ENCIMA del acento: blanco solo si pasa AA (4.5:1), si no, casi negro. */
-const INK_ON_LIGHT = "#0f1419";
+const INK_ON_LIGHT = "#0d181c";
 const INK: Rgb = hexToRgb(INK_ON_LIGHT);
 function inkOn(base: Rgb): string {
   return contrast(base, WHITE) >= 4.5 ? "#ffffff" : INK_ON_LIGHT;
@@ -166,8 +168,8 @@ function inkPasses(base: Rgb): boolean {
  */
 type DarkRecipe = { bg: Rgb; minContrast: number; soft: number; tint: number; text: number };
 
-// Página oscura: con 3:1 el azul Vocero conserva la tinta blanca (4.5:1); el
-// tint más denso (0.78) hace que la fila seleccionada se vea sin leer el color
+// Página oscura: el acento conserva contraste legible y no fuerza tinta blanca; el
+// tint más denso (0.72) hace que la fila seleccionada se vea sin leer el color
 // del texto (≥ 1.25:1 contra el fondo).
 const PAGE_DARK: DarkRecipe = { bg: DARK_BG, minContrast: 3, soft: 0.56, tint: 0.72, text: 0.34 };
 // Barra lateral: la receta de siempre, para que se vea igual que antes.
@@ -238,7 +240,7 @@ export function resolveAccentSet(
   };
 }
 
-/** El acento de la barra lateral azul marino (`.nav-dark`), en cualquier tema. */
+/** El acento de la barra de tinta (`.nav-dark`), en cualquier tema. */
 export function resolveNavAccentSet(accentHex: string): AccentSet {
   return darkAccentSet(accentHex, NAV_DARK);
 }
@@ -256,7 +258,7 @@ function accentBlock(selector: string, s: AccentSet): string {
  * El selector va duplicado (`:root:root`) a propósito: así gana en
  * especificidad a los bloques de globals.css sin depender del orden de carga.
  *
- * El tercer bloque (`.nav-dark`) es el sidebar: azul marino sin importar
+ * El tercer bloque (`.nav-dark`) es el sidebar: tinta sin importar
  * `data-theme`, así que su acento se calcula SIEMPRE contra su propio fondo
  * (`NAV_BG`, ver `resolveNavAccentSet`), no con el que esté activo en el resto
  * de la página. Al declararse directamente sobre el `<aside>` (no sobre

@@ -9,12 +9,12 @@ import type { Branding } from "./branding";
  */
 
 /**
- * El azul marino de la barra lateral (`--bg-subtle` de `.nav-dark` en
+ * La tinta de la barra lateral (`--bg` de `.nav-dark` en
  * `globals.css`), igual en los dos temas. Es el color de la barra de estado y
  * de la pantalla de arranque de la app instalada: así se ve como la barra
  * lateral, no como un parche blanco antes de pintar.
  */
-export const NAV_INK = "#070e20";
+export const NAV_INK = "#0d181c";
 
 /** 180 para el iPhone (`apple-touch-icon`); 192 y 512 los pide Chrome para instalar. */
 export const APP_ICON_SIZES = [180, 192, 512] as const;

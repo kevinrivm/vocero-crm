@@ -94,7 +94,7 @@ export default async function RootLayout({
   // 062 · D6 — La apariencia (tema, letra, tamaño y densidad) se resuelve en
   // el servidor: el primer pintado ya la trae, sin parpadeo.
   const { apariencia } = await aparienciaActual().catch(() => ({
-    apariencia: { tema: "menta", letra: "urbanist", tamano: "normal", densidad: "normal" } as const,
+    apariencia: { tema: "menta", letra: "plex", tamano: "normal", densidad: "compacta" } as const,
   }));
   return (
     <html

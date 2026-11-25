@@ -6,9 +6,7 @@ import { productName } from "@/lib/channels";
 import { BrandLogo } from "@/components/brand-mark";
 
 /**
- * Pantalla de entrada con la escenografía del hero de vocerocrm.com: papel
- * frío, rejilla difuminada y dos resplandores (azul y cian) detrás del
- * formulario. Con la marca Vocero se remata con el titular de la landing; una
+ * Pantalla de entrada del CRM: papel frío y rejilla técnica discreta. Una
  * instancia white-label ve su nombre y una descripción neutra.
  */
 export default async function AuthLayout({
@@ -26,13 +24,13 @@ export default async function AuthLayout({
         <div className="mb-8 flex flex-col items-center gap-4 text-center">
           <BrandLogo branding={branding} size="lg" />
           {vocero ? (
-            <h1 className="text-[24px] font-bold leading-tight tracking-[-0.03em]">
+            <h1 className="text-[21px] font-bold leading-tight tracking-[-0.025em]">
               El CRM{" "}
               <span
-                className="bg-clip-text font-serif text-[1.18em] font-normal italic tracking-[-0.01em] text-transparent"
+                className="bg-clip-text font-semibold text-transparent"
                 style={{
                   backgroundImage:
-                    "linear-gradient(92deg, var(--accent) 12%, #00b4f0 88%)",
+                    "linear-gradient(92deg, var(--accent) 12%, #008d96 88%)",
                 }}
               >
                 que es tuyo.
