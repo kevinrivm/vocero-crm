@@ -1,6 +1,7 @@
 /** DTOs que viajan por la API interna (lado cliente). */
 
 import type { Channel } from "@/lib/channels";
+import type { EsperaDto } from "@/lib/esperando";
 
 export type ConversationDto = {
   id: string;
@@ -10,6 +11,7 @@ export type ConversationDto = {
   stageName: string | null;
   aiEnabled: boolean;
   aiPausedUntil: string | null;
+  espera: EsperaDto | null;
   handoffAt: string | null;
   handoffReason: string | null;
   lastInboundAt: string | null;
