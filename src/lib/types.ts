@@ -9,6 +9,7 @@ export type ConversationDto = {
   contact: { id: string; name: string; phone: string | null };
   stageName: string | null;
   aiEnabled: boolean;
+  aiPausedUntil: string | null;
   handoffAt: string | null;
   handoffReason: string | null;
   lastInboundAt: string | null;
