@@ -5,7 +5,14 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
-## Sin publicar
+## 2.11.0 — 2026-11-24
+
+La IA vuelve sola cuando el equipo deja de atender, y nadie se queda
+esperando a una persona sin que el equipo lo vea. Actualizar es redesplegar
+con la etiqueta `2.11.0`: la migración `0032_la_ia_vuelve_sola` se aplica
+sola al arrancar. Sin variables nuevas. En una instalación que actualiza,
+«Cuándo vuelve la IA» queda en «nunca» hasta que lo cambies en la pantalla
+Agente. Nea no tiene que cambiar: la nota `humanAttention` es opcional.
 
 ### Nuevo
 
