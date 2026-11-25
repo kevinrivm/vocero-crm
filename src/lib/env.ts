@@ -58,6 +58,9 @@ export const envSchema = z.object({
   GOOGLE_OAUTH_BASE_URL: z.string().url().default("https://oauth2.googleapis.com"),
   ALLOW_SIGNUP: z.string().optional(),
   AGENT_COALESCE_MS: z.coerce.number().int().min(0).default(6000),
+  // 078: la espera cuando el último mensaje deja la ráfaga abierta («Hola»,
+  // «Ok», el texto del anuncio, una foto). Nunca es menor que la de arriba.
+  AGENT_COALESCE_LARGO_MS: z.coerce.number().int().min(0).default(8000),
   // 075: cada cuánto la red de seguridad busca turnos entregados al cerebro
   // que nadie contestó. Intervalo interno, no ajuste del negocio; 0 la apaga
   // (los guiones locales la conducen a mano por /api/dev/red-de-seguridad).

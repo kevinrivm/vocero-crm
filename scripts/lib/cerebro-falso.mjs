@@ -56,6 +56,8 @@
  *   ZOOM_OAUTH_BASE_URL=http://localhost:3260/api/dev/zoom-mock
  *   CHANNELS=whatsapp,instagram,messenger,tiktok
  *   AGENT_COALESCE_MS=1500                     AGENDA=on
+ *   AGENT_COALESCE_LARGO_MS=1500   (078: igual a la normal, así un «hola»
+ *                                   espera lo mismo que lo demás)
  *   MEDIA_DIR=./.dev-media
  *   BOT_API_KEY=<16+ caracteres>
  *   BRAIN_DISPATCH_URL=http://127.0.0.1:3261/vocero/dispatch
@@ -106,6 +108,15 @@ export function urlDelDespacho(env = process.env) {
   if (!["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)) {
     console.error(
       `BRAIN_DISPATCH_URL apunta a ${url.host}: el cerebro de prueba se levanta en esta máquina.`
+    );
+    process.exit(1);
+  }
+  // 078 — Sin esto, un «hola» del guion esperaría la espera larga (8 s por
+  // defecto) y los guiones, que esperan AGENT_COALESCE_MS, irían a destiempo.
+  if (env.AGENT_COALESCE_LARGO_MS === undefined) {
+    console.error(
+      "Falta AGENT_COALESCE_LARGO_MS en el entorno (de la app y del guion). En la\n" +
+        "configuración estándar va igual a AGENT_COALESCE_MS, p. ej. AGENT_COALESCE_LARGO_MS=1500."
     );
     process.exit(1);
   }
