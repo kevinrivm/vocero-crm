@@ -5,7 +5,14 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
-## Sin publicar
+## 2.12.0 — 2026-11-24
+
+El agente contesta una vez por ráfaga y el cliente ve «escribiendo…» desde
+el inicio, y el buscador de la Bandeja encuentra también lo que se dijo en
+los mensajes. Actualizar es redesplegar con la etiqueta `2.12.0`: sin
+migración. La única variable nueva, `AGENT_COALESCE_LARGO_MS`, es opcional
+(8 s por defecto). Recomendado: bajar `AGENT_COALESCE_MS` a 3–4 s. Nea no
+tiene que cambiar.
 
 ### Nuevo
 
