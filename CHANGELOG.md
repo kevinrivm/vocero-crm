@@ -21,6 +21,12 @@ imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 - **«Escribiendo…» desde el inicio.** El cliente ve «escribiendo…» en cuanto
   su mensaje llega a la cola del agente, no hasta que el agente empieza a
   pensar: la espera ya no parece silencio. Solo en WhatsApp.
+- **Buscar dentro de los mensajes, como en WhatsApp** (spec 079). Desde 3
+  letras, el buscador de la Bandeja enseña debajo de «Chats» una sección
+  «Mensajes» con los que contienen lo buscado (texto o pie de foto, sin
+  importar acentos ni mayúsculas, los 30 más recientes) y la coincidencia
+  resaltada. Tocar uno abre la conversación centrada en ese mensaje. Sin
+  migración.
 
 ## 2.11.0 — 2026-11-24
 

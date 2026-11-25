@@ -31,6 +31,7 @@
     "test:e2e:la-ia-vuelve": "node --env-file=.env scripts/e2e-la-ia-vuelve.mjs",
     "test:e2e:esperando": "node --env-file=.env scripts/e2e-esperando.mjs",
     "test:e2e:rafaga": "node --env-file=.env scripts/e2e-rafaga.mjs",
+    "test:e2e:buscar-mensajes": "node --env-file=.env scripts/e2e-buscar-mensajes.mjs",
     "eval:silencios": "esbuild scripts/eval-silencios.ts --bundle --platform=node --format=esm --outfile=.tmp-eval-silencios.mjs --alias:@=./src --log-level=warning && node --env-file=.env .tmp-eval-silencios.mjs",
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",

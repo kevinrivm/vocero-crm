@@ -176,6 +176,23 @@ export function InboxClient({
     [refetchMessages, refetchNotas, refetchEventos]
   );
 
+  // 079 — Mensaje al que saltar, elegido en el buscador de la Bandeja.
+  const [salto, setSalto] = useState<{ conversationId: string; messageId: string; nonce: number } | null>(null);
+  const abrirMensaje = useCallback(
+    (r: { conversationId: string; messageId: string }) => {
+      setSalto({ conversationId: r.conversationId, messageId: r.messageId, nonce: Date.now() });
+      if (selectedIdRef.current !== r.conversationId) select(r.conversationId);
+    },
+    [select]
+  );
+  const elegirConversacion = useCallback(
+    (id: string) => {
+      setSalto(null);
+      select(id);
+    },
+    [select]
+  );
+
   /** 026 — Saca una conversación eliminada de todo lo que esta pestaña recuerda. */
   const quitarConversacion = useCallback((id: string) => {
     setConversations((prev) => prev?.filter((c) => c.id !== id) ?? prev);
@@ -502,9 +519,10 @@ export function InboxClient({
           conversations={conversations}
           channels={channels}
           selectedId={selectedId}
-          onSelect={select}
+          onSelect={elegirConversacion}
           onTogglePin={(c) => void fijar.toggle(c)}
           onSeeded={() => void refetchConversations()}
+          onOpenMessage={abrirMensaje}
         />
       </section>
 
@@ -611,6 +629,7 @@ export function InboxClient({
               }}
             >
               <MessageThread
+                irA={salto?.conversationId === selected.id ? salto : null}
                 messages={thread}
                 notas={notas}
                 eventos={eventos}

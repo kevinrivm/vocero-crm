@@ -389,7 +389,10 @@ export function MessageThread({
   onReact,
   reaccionBloqueada = null,
   onAskPlainText,
+  irA = null,
 }: {
+  /** 079 — Mensaje al que saltar (buscador de la Bandeja). `nonce` distingue dos saltos al mismo. */
+  irA?: { messageId: string; nonce: number } | null;
   messages: MessageDto[];
   /**
    * 074 — Escribe en la caja «¿Me lo puedes mandar en texto?» (sin enviarlo).
@@ -464,12 +467,43 @@ export function MessageThread({
     []
   );
 
+  // 079 — Saltar al mensaje que eligió el buscador. Espera a que el hilo lo
+  // traiga y deja un ancla: cargar notas o eventos no regresa al fondo; un
+  // mensaje nuevo, sí.
+  const anclaRef = useRef<{ messageId: string; largo: number } | null>(null);
+  const saltoHecho = useRef<number | null>(null);
+  useEffect(() => {
+    if (!irA || saltoHecho.current === irA.nonce) return;
+    if (!messages.some((m) => m.id === irA.messageId)) return;
+    saltoHecho.current = irA.nonce;
+    anclaRef.current = { messageId: irA.messageId, largo: messages.length };
+    setResaltado(irA.messageId);
+    if (resaltadoTimer.current) clearTimeout(resaltadoTimer.current);
+    resaltadoTimer.current = setTimeout(() => setResaltado(null), 2500);
+  }, [irA, messages]);
+
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    const ancla = anclaRef.current;
+    if (ancla && messages.length <= ancla.largo) {
+      const destino = el.querySelector<HTMLElement>(`[data-message-id="${CSS.escape(ancla.messageId)}"]`);
+      if (destino) {
+        el.scrollTop +=
+          destino.getBoundingClientRect().top -
+          el.getBoundingClientRect().top -
+          el.clientHeight / 2 +
+          destino.offsetHeight / 2;
+        pegadoAbajo.current = false;
+        return;
+      }
+    }
+    anclaRef.current = null;
     el.scrollTop = el.scrollHeight;
     pegadoAbajo.current = true;
-  }, [messages.length, notas.length, eventos.length, notice]);
+    // Sin `resaltado`: el clic en una cita (039) también resalta, y no debe
+    // devolver el hilo al fondo.
+  }, [messages.length, notas.length, eventos.length, notice, irA?.nonce]);
 
   // Sin esto, una conversación corta con una foto quedaba en el primer
   // mensaje: al bajar al final todavía cabía todo (scroll 0) y, cuando la foto
