@@ -5,6 +5,17 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
+## Sin publicar
+
+- **Captura de contactos y agenda públicas** (spec 080): enlaces compartibles,
+  constructor estructurado y widget JavaScript sin iframe para recibir contactos
+  y reservar citas en los registros existentes del CRM. Incluye etiquetas
+  automáticas por formulario, dominios exactos autorizados y webhook con secreto
+  por organización. Requiere las migraciones aditivas `0033` y `0034`; el
+  contenedor las aplica al arrancar.
+  La API v1 `POST /api/v1/contacts` también admite correo opcional y sigue
+  requiriendo una llave `operate` solo del lado servidor.
+
 ## 2.12.0 — 2026-11-24
 
 El agente contesta una vez por ráfaga y el cliente ve «escribiendo…» desde

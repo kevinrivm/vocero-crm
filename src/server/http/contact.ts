@@ -1,5 +1,5 @@
 import { conSesion } from "@/server/http/compartido";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { apiError, parseBody } from "@/lib/api";
 import { getDb, schema } from "@/lib/db";
@@ -7,6 +7,7 @@ import { scoped } from "@/lib/db/tenant";
 import {
   getContactById,
   getContactStage,
+  getContactTags,
   serializeContact,
 } from "@/server/contacts";
 import { upsertFicha } from "@/server/bot/ficha";
@@ -24,16 +25,20 @@ export const GET = conSesion(async (session, _req: Request, ctx: Params) => {
   const { id } = await ctx.params;
   const contact = await getContactById(session.organizationId, id);
   if (!contact) return apiError(404, "not_found", "Contacto no encontrado");
-  const [stageRow, anuncio] = await Promise.all([
+  const [stageRow, anuncio, tags] = await Promise.all([
     getContactStage(session.organizationId, id),
     anuncioDelContacto(session.organizationId, id),
+    getContactTags(session.organizationId, id),
   ]);
   // 018 — Sin imagen todavía: se reintenta en segundo plano y llega por SSE.
   if (anuncio && !anuncio.imageAssetId) {
     repararImagenSiFalta(session.organizationId, id);
   }
   return Response.json({
-    contact: serializeContact(contact, null, null, cuentaComoAnuncio(anuncio)),
+    contact: {
+      ...serializeContact(contact, null, null, cuentaComoAnuncio(anuncio)),
+      tags,
+    },
     // 018 — de qué anuncio llegó, o null si escribió por su cuenta.
     anuncio,
     stage: stageRow
@@ -50,10 +55,16 @@ export const GET = conSesion(async (session, _req: Request, ctx: Params) => {
 
 const patchSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
+  email: z.string().trim().email().max(254).nullable().optional(),
   notes: z.string().max(4000).nullable().optional(),
   /** 027 — El agente no le responde a esta persona; se lleva a su conversación. */
   aiPaused: z.boolean().optional(),
   archived: z.boolean().optional(),
+  tagIds: z
+    .array(z.string().min(1))
+    .max(30)
+    .refine((ids) => new Set(ids).size === ids.length, "No repitas etiquetas")
+    .optional(),
   /**
    * Parche de la ficha: solo las claves que cambian. `null` borra una clave.
    * No es un reemplazo — el agente sigue escribiendo mientras el dueño
@@ -80,31 +91,72 @@ export const PATCH = conSesion(async (session, req: Request, ctx: Params) => {
     if (!res) return apiError(404, "not_found", "Contacto no encontrado");
   }
 
+  const db = getDb();
+  if (body.data.tagIds !== undefined && body.data.tagIds.length > 0) {
+    const ownedTags = await db
+      .select({ id: schema.contactTag.id })
+      .from(schema.contactTag)
+      .where(
+        scoped(
+          schema.contactTag.organizationId,
+          session.organizationId,
+          inArray(schema.contactTag.id, body.data.tagIds)
+        )
+      );
+    if (ownedTags.length !== body.data.tagIds.length) {
+      return apiError(422, "invalid_body", "Una o más etiquetas no existen");
+    }
+  }
+
   const set: Record<string, unknown> = { updatedAt: new Date() };
   if (body.data.name !== undefined) {
     set.name = body.data.name;
     // Lo escribio una persona: a partir de aqui WhatsApp ya no lo pisa (#51).
     set.nameSource = "manual";
   }
+  if (body.data.email !== undefined) set.email = body.data.email?.trim().toLowerCase() || null;
   if (body.data.notes !== undefined) set.notes = body.data.notes;
   if (body.data.archived !== undefined) {
     set.archivedAt = body.data.archived ? new Date() : null;
   }
   if (body.data.aiPaused !== undefined) set.aiPaused = body.data.aiPaused;
 
-  const db = getDb();
-  const updated = await db
-    .update(schema.contact)
-    .set(set)
-    .where(
-      scoped(
-        schema.contact.organizationId,
-        session.organizationId,
-        eq(schema.contact.id, id)
+  const updated = await db.transaction(async (tx) => {
+    const rows = await tx
+      .update(schema.contact)
+      .set(set)
+      .where(
+        scoped(
+          schema.contact.organizationId,
+          session.organizationId,
+          eq(schema.contact.id, id)
+        )
       )
-    )
-    .returning();
-  if (!updated[0]) return apiError(404, "not_found", "Contacto no encontrado");
+      .returning();
+    if (!rows[0]) return null;
+    if (body.data.tagIds !== undefined) {
+      await tx
+        .delete(schema.contactTagAssignment)
+        .where(
+          scoped(
+            schema.contactTagAssignment.organizationId,
+            session.organizationId,
+            eq(schema.contactTagAssignment.contactId, id)
+          )
+        );
+      if (body.data.tagIds.length > 0) {
+        await tx.insert(schema.contactTagAssignment).values(
+          body.data.tagIds.map((tagId) => ({
+            organizationId: session.organizationId,
+            contactId: id,
+            tagId,
+          }))
+        );
+      }
+    }
+    return rows[0];
+  });
+  if (!updated) return apiError(404, "not_found", "Contacto no encontrado");
   // 027: la pausa se lleva a la conversación que ya exista; sin esto no
   // tendría efecto hasta que naciera otra.
   if (body.data.aiPaused !== undefined) {
@@ -112,6 +164,9 @@ export const PATCH = conSesion(async (session, req: Request, ctx: Params) => {
   }
   const anuncio = await anuncioDelContacto(session.organizationId, id);
   return Response.json({
-    contact: serializeContact(updated[0], null, null, cuentaComoAnuncio(anuncio)),
+    contact: {
+      ...serializeContact(updated, null, null, cuentaComoAnuncio(anuncio)),
+      tags: await getContactTags(session.organizationId, id),
+    },
   });
 });

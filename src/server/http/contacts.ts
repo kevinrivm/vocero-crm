@@ -1,5 +1,5 @@
 import { conSesion } from "@/server/http/compartido";
-import { desc, eq, inArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { apiError, parseBody } from "@/lib/api";
 import { getDb, schema } from "@/lib/db";
@@ -24,9 +24,26 @@ export const GET = conSesion(async (session, req: Request) => {
   const url = new URL(req.url);
   const q = url.searchParams.get("q")?.trim();
   const stage = url.searchParams.get("stage")?.trim();
+  const tagId = url.searchParams.get("tagId")?.trim();
   const includeArchived = url.searchParams.get("archived") === "true";
 
   const db = getDb();
+
+  const tagContactIds = tagId
+    ? (
+        await db
+          .select({ contactId: schema.contactTagAssignment.contactId })
+          .from(schema.contactTagAssignment)
+          .where(
+            scoped(
+              schema.contactTagAssignment.organizationId,
+              session.organizationId,
+              eq(schema.contactTagAssignment.tagId, tagId)
+            )
+          )
+      ).map((row) => row.contactId)
+    : null;
+  if (tagContactIds?.length === 0) return Response.json({ contacts: [] });
 
   // Etapa de cada contacto en una consulta aparte: una subconsulta
   // correlacionada aquí choca con el `id` de `lead` ("column reference id is
@@ -59,6 +76,7 @@ export const GET = conSesion(async (session, req: Request) => {
       ? or(
           sql`lower(translate(${schema.contact.name}, ${UNACCENT_FROM}, ${UNACCENT_TO}))
               like ${`%${qLike}%`}`,
+          sql`lower(coalesce(${schema.contact.email}, '')) like ${`%${qLike}%`}`,
           // Un dígito suelto barrería el directorio entero: mínimo 3.
           qDigits.length >= 3
             ? sql`regexp_replace(coalesce(${schema.contact.phone}, ''), '\\D', '', 'g')
@@ -82,21 +100,54 @@ export const GET = conSesion(async (session, req: Request) => {
         schema.contact.organizationId,
         session.organizationId,
         search,
-        stageContactIds ? inArray(schema.contact.id, stageContactIds) : undefined
+        stageContactIds ? inArray(schema.contact.id, stageContactIds) : undefined,
+        tagContactIds ? inArray(schema.contact.id, tagContactIds) : undefined
       )
     )
     .orderBy(desc(schema.contact.updatedAt))
     .limit(200);
 
-  const contacts = rows
-    .filter((c) => includeArchived || !c.archivedAt)
-    .map((c) =>
-      serializeContact(
-        c,
-        stageByContact.get(c.id) ?? null,
-        priorityByContact.get(c.id) ?? null
-      )
-    );
+  const visibleRows = rows.filter((c) => includeArchived || !c.archivedAt);
+  const tagRows = visibleRows.length
+    ? await db
+        .select({
+          contactId: schema.contactTagAssignment.contactId,
+          id: schema.contactTag.id,
+          name: schema.contactTag.name,
+        })
+        .from(schema.contactTagAssignment)
+        .innerJoin(
+          schema.contactTag,
+          and(
+            eq(schema.contactTag.id, schema.contactTagAssignment.tagId),
+            eq(schema.contactTag.organizationId, schema.contactTagAssignment.organizationId)
+          )
+        )
+        .where(
+          scoped(
+            schema.contactTagAssignment.organizationId,
+            session.organizationId,
+            inArray(
+              schema.contactTagAssignment.contactId,
+              visibleRows.map((contact) => contact.id)
+            )
+          )
+        )
+    : [];
+  const tagsByContact = new Map<string, { id: string; name: string }[]>();
+  for (const tag of tagRows) {
+    const tags = tagsByContact.get(tag.contactId) ?? [];
+    tags.push({ id: tag.id, name: tag.name });
+    tagsByContact.set(tag.contactId, tags);
+  }
+  const contacts = visibleRows.map((contact) => ({
+    ...serializeContact(
+      contact,
+      stageByContact.get(contact.id) ?? null,
+      priorityByContact.get(contact.id) ?? null
+    ),
+    tags: tagsByContact.get(contact.id) ?? [],
+  }));
   return Response.json({ contacts });
 });
 
@@ -113,6 +164,7 @@ const createSchema = z.object({
     .string()
     .trim()
     .regex(/^\d{7,15}$/, "Teléfono en dígitos, con código de país (ej. 5215512345678)"),
+  email: z.string().trim().email().max(254).optional().or(z.literal("")),
   notes: z.string().max(4000).optional(),
   source: z.enum(["anuncio", "organico", "referido", "conocido", "otro"]).optional(),
   /** Etapa inicial del lead; si no viene, la primera abierta del tablero. */
@@ -133,6 +185,7 @@ export const POST = conSesion(async (session, req: Request) => {
       organizationId: session.organizationId,
       name: body.data.name,
       phone,
+      email: body.data.email?.trim().toLowerCase() || null,
       waIdentity: phone,
       notes: body.data.notes ?? null,
       source: body.data.source ?? null,

@@ -4,12 +4,17 @@ import {
   index,
   integer,
   jsonb,
+  primaryKey,
   pgTable,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import {
+  DEFAULT_PUBLIC_FORM_CONFIG,
+  type PublicFormConfig,
+} from "../public-form-config";
 
 /**
  * Tiempo: todas las columnas son `timestamp without time zone` y el marco es
@@ -142,6 +147,8 @@ export const contact = pgTable(
     waIdentity: text("wa_identity").notNull(),
     /** Teléfono como ATRIBUTO opcional (003): falta en contactos BSUID. */
     phone: text("phone"),
+    /** Correo opcional capturado por el CRM o un formulario público. */
+    email: text("email"),
     /** Business-Scoped User ID si se conoce (003). */
     waUserId: text("wa_user_id"),
     name: text("name").notNull(),
@@ -202,6 +209,50 @@ export const contact = pgTable(
     ),
     index("contact_org_wa_user_id_idx").on(t.organizationId, t.waUserId),
     index("contact_org_name_idx").on(t.organizationId, t.name),
+    index("contact_org_email_idx").on(t.organizationId, t.email),
+  ]
+);
+
+/** Etiquetas configurables del CRM, aisladas por organización. */
+export const contactTag = pgTable(
+  "contact_tag",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    nameKey: text("name_key").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("contact_tag_org_name_uq").on(t.organizationId, t.nameKey),
+    index("contact_tag_org_idx").on(t.organizationId, t.createdAt),
+  ]
+);
+
+/** Etiquetas asignadas a contactos; se consultan siempre dentro de la organización. */
+export const contactTagAssignment = pgTable(
+  "contact_tag_assignment",
+  {
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contact.id, { onDelete: "cascade" }),
+    tagId: text("tag_id")
+      .notNull()
+      .references(() => contactTag.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.organizationId, t.contactId, t.tagId] }),
+    index("contact_tag_assignment_org_tag_idx").on(
+      t.organizationId,
+      t.tagId,
+      t.contactId
+    ),
   ]
 );
 
@@ -874,6 +925,57 @@ export const calendarSettings = pgTable(
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (t) => [uniqueIndex("calendar_settings_org_uq").on(t.organizationId)]
+);
+
+/** Captura pública y webhook por organización; los dos formularios parten apagados. */
+export const publicFormSettings = pgTable(
+  "public_form_settings",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    contactEnabled: boolean("contact_enabled").notNull().default(false),
+    bookingEnabled: boolean("booking_enabled").notNull().default(false),
+    /** SHA-256 hexadecimal; el secreto original solo se muestra al rotarlo. */
+    webhookSecretHash: text("webhook_secret_hash"),
+    /** Configuración versionada: solo datos estructurados, nunca HTML ejecutable. */
+    contactFormConfig: jsonb("contact_form_config")
+      .$type<PublicFormConfig>()
+      .notNull()
+      .default(DEFAULT_PUBLIC_FORM_CONFIG.contact),
+    bookingFormConfig: jsonb("booking_form_config")
+      .$type<PublicFormConfig>()
+      .notNull()
+      .default(DEFAULT_PUBLIC_FORM_CONFIG.booking),
+    /** Orígenes web exactos autorizados para el widget JavaScript. */
+    allowedOrigins: text("allowed_origins").array().notNull().default(sql`ARRAY[]::text[]`),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("public_form_settings_org_uq").on(t.organizationId)]
+);
+
+/** Etiquetas que se agregan al contacto al completar cada tipo de formulario. */
+export const publicFormTagAssignment = pgTable(
+  "public_form_tag_assignment",
+  {
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    formKind: text("form_kind").notNull(),
+    tagId: text("tag_id")
+      .notNull()
+      .references(() => contactTag.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.organizationId, t.formKind, t.tagId] }),
+    index("public_form_tag_assignment_org_kind_idx").on(
+      t.organizationId,
+      t.formKind
+    ),
+  ]
 );
 
 /**
