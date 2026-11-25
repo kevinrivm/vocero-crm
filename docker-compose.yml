@@ -62,6 +62,7 @@ services:
       OPENROUTER_JUDGE_MODEL: ${OPENROUTER_JUDGE_MODEL:-}
       ALLOW_SIGNUP: ${ALLOW_SIGNUP:-}
       AGENT_COALESCE_MS: ${AGENT_COALESCE_MS:-6000}
+      AGENT_COALESCE_LARGO_MS: ${AGENT_COALESCE_LARGO_MS:-8000}
       # Opcionales: vacías = apagadas (guía de cada una en .env.example).
       CHANNELS: ${CHANNELS:-}
       AGENDA: ${AGENDA:-}
