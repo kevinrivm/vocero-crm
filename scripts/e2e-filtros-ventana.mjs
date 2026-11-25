@@ -122,10 +122,10 @@ try {
 
   console.log("\n== AC-E3 · con la búsqueda y No leídas ==");
   await page.keyboard.press("Escape");
-  await page.getByPlaceholder("Buscar por nombre o teléfono").fill(CERRADA);
+  await page.getByLabel("Buscar conversación").fill(CERRADA);
   await espera(400);
   ok("búsqueda de la cerrada + por vencer → vacío", !(await enLista(VENCE)) && !(await enLista(CERRADA)));
-  await page.getByPlaceholder("Buscar por nombre o teléfono").fill("");
+  await page.getByLabel("Buscar conversación").fill("");
   await page.getByRole("tab", { name: /^No leídas/ }).click();
   await espera(300);
   ok("No leídas cuenta dentro de lo filtrado", await enLista(VENCE));
