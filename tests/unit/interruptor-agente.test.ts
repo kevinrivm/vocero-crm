@@ -44,7 +44,14 @@ vi.mock("@/lib/db", async (importOriginal) => {
 });
 
 const encolarDespacho = vi.hoisted(() => vi.fn(async () => ({ notBefore: new Date() })));
-vi.mock("@/server/dispatch/outbox", () => ({ encolarDespacho }));
+vi.mock("@/server/dispatch/outbox", () => ({
+  encolarDespacho,
+  ventanaCoalesceMs: () => 3000,
+  ventanaLargaMs: () => 8000,
+}));
+// 078 — El «escribiendo…» al encolar no toca Meta en las unitarias.
+const mostrarEscribiendo = vi.hoisted(() => vi.fn(async () => ({ ok: true })));
+vi.mock("@/server/whatsapp/escribiendo", () => ({ mostrarEscribiendo }));
 vi.mock("@/server/dispatch/worker", () => ({ iniciarWorker: () => {}, programarTanda: () => {} }));
 
 const getBrainHealth = vi.hoisted(() => vi.fn());
@@ -59,12 +66,13 @@ vi.mock("@/lib/auth/session", () => ({
 import { despacharAlCerebro } from "@/server/dispatch/encolar";
 import { PUT } from "@/app/api/agent/profile/route";
 
-const CONV_ABIERTA = { aiEnabled: true, handoffAt: null, isTest: false };
+const CONV_ABIERTA = { aiEnabled: true, handoffAt: null, isTest: false, channel: "whatsapp" };
 
 beforeEach(() => {
   cola.length = 0;
   updates.length = 0;
   encolarDespacho.mockClear();
+  mostrarEscribiendo.mockClear();
   getBrainHealth.mockReset();
   vi.stubEnv("BRAIN_DISPATCH_URL", "");
   vi.stubEnv("BRAIN_HEALTH_URL", "");
@@ -73,20 +81,29 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 
 describe("el despacho respeta el interruptor", () => {
-  it("encendido: se encola el turno", async () => {
-    cola.push([CONV_ABIERTA], [{ enabled: true }]);
+  it("encendido: se encola el turno y el cliente ve «escribiendo…»", async () => {
+    cola.push([CONV_ABIERTA], [{ enabled: true }], [{ type: "text", text: "¿Cuánto cuesta la limpieza?" }]);
     await despacharAlCerebro("cv_1", "org_1", "msg_1");
     expect(encolarDespacho).toHaveBeenCalledWith({
       organizationId: "org_1",
       conversationId: "cv_1",
       messageIds: ["msg_1"],
+      ventanaMs: 3000,
     });
+    expect(mostrarEscribiendo).toHaveBeenCalledTimes(1);
+  });
+
+  it("078 — un «Hola» espera la ventana larga", async () => {
+    cola.push([CONV_ABIERTA], [{ enabled: true }], [{ type: "text", text: "Hola" }]);
+    await despacharAlCerebro("cv_1", "org_1", "msg_1");
+    expect(encolarDespacho).toHaveBeenCalledWith(expect.objectContaining({ ventanaMs: 8000 }));
   });
 
   it("apagado: no se encola, queda en la bandeja", async () => {
     cola.push([CONV_ABIERTA], [{ enabled: false }]);
     await despacharAlCerebro("cv_1", "org_1", "msg_1");
     expect(encolarDespacho).not.toHaveBeenCalled();
+    expect(mostrarEscribiendo).not.toHaveBeenCalled();
   });
 
   it("sin perfil: no se encola", async () => {
