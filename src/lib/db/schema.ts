@@ -393,6 +393,21 @@ export const conversation = pgTable(
     lastInboundAt: timestamp("last_inbound_at"),
     lastMessageAt: timestamp("last_message_at"),
     unreadCount: integer("unread_count").notNull().default(0),
+    /**
+     * 076 — Fin de una pausa manual de la IA con duración («1 hora», «hasta
+     * mañana»). NULL con la IA apagada = pausa indefinida. Al vencer no pasa
+     * nada solo: la IA vuelve cuando el cliente escribe (`reactivacion.ts`).
+     */
+    aiPausedUntil: timestamp("ai_paused_until"),
+    /**
+     * 076 — La última vez que una PERSONA del equipo le escribió al cliente,
+     * por cualquier camino: la Bandeja (texto, adjunto, plantilla, reenvío,
+     * también por la API v1) o el eco del teléfono en coexistencia. Lo
+     * automático (la IA, los recordatorios, lo que registra una integración)
+     * no cuenta. Es lo que mide «el equipo lleva N horas sin escribir»: el
+     * origen del mensaje no basta, porque un recordatorio sale como operador.
+     */
+    lastTeamOutAt: timestamp("last_team_out_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -403,6 +418,35 @@ export const conversation = pgTable(
       .where(sql`${t.isTest} = false`),
     index("conversation_org_last_idx").on(t.organizationId, t.lastMessageAt),
   ]
+);
+
+/**
+ * 076 — Cada vez que la IA volvió SOLA a una conversación en pausa.
+ *
+ * El hilo lo pinta («La IA volvió a atender (24 h sin respuesta del equipo)»)
+ * junto con la pausa que terminó: al volver, `handoff_at` se borra y sin esta
+ * fila el hilo ya no diría que hubo una persona. Solo ids, horas y motivos.
+ */
+export const iaVuelta = pgTable(
+  "ia_vuelta",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversation.id, { onDelete: "cascade" }),
+    /** sin_equipo = pasaron N horas sin que el equipo escribiera; pausa_vencida = terminó la pausa con fecha. */
+    motivo: text("motivo", { enum: ["sin_equipo", "pausa_vencida"] }).notNull(),
+    /** Las N horas del ajuste cuando volvió por `sin_equipo`. */
+    horas: integer("horas"),
+    /** El traspaso que terminó (`handoff_at`/`handoff_reason`), si había uno. */
+    pausadaDesde: timestamp("pausada_desde"),
+    motivoPausa: text("motivo_pausa"),
+    occurredAt: timestamp("occurred_at").notNull().defaultNow(),
+  },
+  (t) => [index("ia_vuelta_org_conv_idx").on(t.organizationId, t.conversationId, t.occurredAt)]
 );
 
 export const message = pgTable(
@@ -704,6 +748,13 @@ export const agentProfile = pgTable(
     instructions: text("instructions"),
     escalationRules: text("escalation_rules"),
     greeting: text("greeting"),
+    /**
+     * 076 — Tras cuántas horas sin que el equipo escriba la IA vuelve sola a
+     * una conversación en pausa, cuando el cliente escribe. NULL = nunca.
+     * Sin default en la base a propósito: la instalación que actualiza queda
+     * en «nunca»; un perfil nuevo nace con 24 (`HORAS_REACTIVACION_NUEVAS`).
+     */
+    reactivateAfterHours: integer("reactivate_after_hours"),
     /** 034 — El rol del agente (`src/lib/agent-roles.ts`). */
     role: text("role").notNull().default("calificador"),
     /**

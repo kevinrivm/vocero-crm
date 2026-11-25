@@ -6,7 +6,7 @@ import { LOSS_REASON_LABEL, type LossReason, type StageChangeSource } from "./ty
 
 export type EventoHiloDto = {
   id: string;
-  tipo: "etapa" | "traspaso";
+  tipo: "etapa" | "traspaso" | "vuelta";
   texto: string;
   createdAt: string;
 };
@@ -51,4 +51,16 @@ export function textoTraspaso(motivo: string | null): string {
   const etiqueta = motivo ? HANDOFF_LABELS[motivo] : undefined;
   if (!etiqueta) return "La IA se pausó";
   return `La IA se pausó: ${etiqueta.charAt(0).toLowerCase()}${etiqueta.slice(1)}`;
+}
+
+/**
+ * 076 — «La IA volvió a atender (24 h sin respuesta del equipo)» o
+ * «… (terminó la pausa)». Lo que el dueño necesita leer es POR QUÉ volvió sola.
+ */
+export function textoVuelta(motivo: string, horas: number | null): string {
+  if (motivo === "sin_equipo" && horas) {
+    return `La IA volvió a atender (${horas} h sin respuesta del equipo)`;
+  }
+  if (motivo === "pausa_vencida") return "La IA volvió a atender (terminó la pausa)";
+  return "La IA volvió a atender";
 }

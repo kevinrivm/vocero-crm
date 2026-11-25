@@ -73,7 +73,7 @@ self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const pedida = event.notification.data && event.notification.data.url;
   const url =
-    typeof pedida === "string" && /^\/inbox(\?conversation=[\w%-]+)?$/.test(pedida) ? pedida : "/inbox";
+    typeof pedida === "string" && /^\/inbox(\?(conversation=[\w%-]+(&vista=esperando)?|vista=esperando))?$/.test(pedida) ? pedida : "/inbox";
   event.waitUntil(
     (async () => {
       const ventanas = await self.clients.matchAll({ type: "window", includeUncontrolled: true });

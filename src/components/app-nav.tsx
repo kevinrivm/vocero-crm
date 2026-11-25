@@ -49,6 +49,8 @@ import {
   versionTitle,
   type ResolvedCommit,
 } from "@/lib/version";
+import { RESPALDO_MS } from "@/lib/esperando";
+import { publicarParaEsperando } from "@/components/esperando/estado";
 
 /**
  * Un renglón del menú, como el `side-item` del mockup de la landing: texto
@@ -110,6 +112,9 @@ export function AppNav({
   const contar = useCallback((lista: ConversacionDeLista[]) => {
     setUnread(lista.reduce((a, c) => a + c.unreadCount, 0));
     setChats(lista.filter((c) => c.unreadCount > 0).length);
+    // 077 — El cintillo y el aviso de «Esperando» cuentan sobre esta misma
+    // lista: la de la Bandeja si está abierta, o la que pide el menú.
+    publicarParaEsperando(lista);
   }, []);
 
   const pedirLista = useCallback(async () => {
@@ -137,6 +142,16 @@ export function AppNav({
   }, [pedirLista]);
 
   useEffect(() => setSonido(sonidoActivado()), []);
+
+  // 077 — Respaldo de baja frecuencia, por si se perdió un evento del tiempo
+  // real fuera de la Bandeja (ella relee la suya al reconectar). Solo con la
+  // página al frente: una pestaña olvidada no consulta nada.
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (document.visibilityState === "visible") void refetchUnread();
+    }, RESPALDO_MS);
+    return () => clearInterval(t);
+  }, [refetchUnread]);
 
   useDesbloquearAudio();
   useTituloNoLeidos(chats);
@@ -186,6 +201,9 @@ export function AppNav({
       }
     },
     onConversationUpdated: () => void refetchUnread(),
+    // 077: tras un corte, lo que pasó mientras tanto (alguien contestó, otro
+    // cliente escribió) cambia quién espera.
+    onReconnect: () => void refetchUnread(),
   });
 
   const version = commit ?? { commit: BUILD_COMMIT, verified: BUILD_COMMIT !== "" };

@@ -225,6 +225,13 @@
       "when": 1795526831299,
       "tag": "0031_una_respuesta",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1795545644836,
+      "tag": "0032_la_ia_vuelve_sola",
+      "breakpoints": true
     }
   ]
 }

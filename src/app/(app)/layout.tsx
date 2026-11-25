@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { getSessionOrNull } from "@/lib/auth/session";
 import { leerSesion } from "@/lib/auth/leer-sesion";
 import { aparienciaActual } from "@/server/apariencia";
@@ -12,6 +12,7 @@ import { enabledChannels } from "@/server/channels/enabled";
 import { navKicker } from "@/lib/channels";
 import { avisoIaDe } from "@/server/ai/aviso";
 import { AvisoIaBanner } from "@/components/avisos/aviso-ia";
+import { avisoEsperandoDeCookie, ESPERANDO_COOKIE } from "@/lib/esperando";
 
 export default async function AppLayout({
   children,
@@ -26,6 +27,10 @@ export default async function AppLayout({
   // bot roto. Se resuelve en el servidor y en el layout para que se vea desde
   // CUALQUIER pantalla, no solo desde el panel de un contacto (#85).
   const aviso = await avisoIaDe(session.organizationId);
+  // 077 — Qué ve esta persona de «Esperando» (cintillo, aviso, sonido) se
+  // resuelve aquí para que el primer pintado ya lo sepa. Vive en su cookie,
+  // como la apariencia; sin ella, lo de siempre: cintillo y aviso con sonido.
+  const avisoEsperando = avisoEsperandoDeCookie((await cookies()).get(ESPERANDO_COOKIE)?.value);
 
   return (
     <AppShell
@@ -43,6 +48,7 @@ export default async function AppLayout({
       agenda={agendaEnabled()}
       kicker={navKicker([...enabledChannels()])}
       aviso={<AvisoIaBanner aviso={aviso} />}
+      esperando={{ userId: session.userId, ...avisoEsperando }}
     >
       {/* 073 — La sesión la renueva el navegador: ver `leerSesion`. */}
       <SessionKeepalive />

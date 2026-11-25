@@ -4,6 +4,10 @@ import { scoped } from "@/lib/db/tenant";
 import { isWindowOpen, replyWindow, windowRemainingMs } from "@/server/inbox/window";
 import { capabilitiesFor, windowMsFor } from "@/server/channels/capabilities";
 import type { ConversationDto } from "@/lib/types";
+import { businessTimezone } from "@/server/analytics/period";
+import { finDePausa, type DuracionPausa } from "@/server/inbox/reactivacion";
+import { aFecha, esperaConVentana, esperaDesdeSql } from "@/server/inbox/esperando";
+import type { EsperaDto } from "@/lib/esperando";
 
 /**
  * 018 — El anuncio de origen viaja con la conversación. La llave única
@@ -41,7 +45,9 @@ function aAnuncioDeLista(
 
 export async function listConversations(
   organizationId: string,
-  since?: Date
+  since?: Date,
+  /** 077 — La hora con la que se decide quién espera a una persona. */
+  ahora: Date = new Date()
 ): Promise<ConversationDto[]> {
   const db = getDb();
   // 064 — `organization_id` primero: es la primera columna de
@@ -69,6 +75,9 @@ export async function listConversations(
       preview: previewSql,
       stageName: stageSql,
       anuncio: anuncioDeLista,
+      // 077: desde cuándo espera a una persona. Las subconsultas solo corren
+      // para las que pueden estar esperando: las demás cortan en el `case`.
+      esperaDesde: esperaDesdeSql({ ahora }),
     })
     .from(schema.conversation)
     .innerJoin(
@@ -92,7 +101,8 @@ export async function listConversations(
       r.contact,
       r.preview,
       r.stageName,
-      aAnuncioDeLista(r.anuncio)
+      aAnuncioDeLista(r.anuncio),
+      esperaConVentana(r.conversation, aFecha(r.esperaDesde), { ahora })
     )
   );
 }
@@ -155,7 +165,13 @@ export function serializeConversation(
   contact: typeof schema.contact.$inferSelect,
   preview: string | null = null,
   stageName: string | null = null,
-  anuncio: ConversationDto["anuncio"] = null
+  anuncio: ConversationDto["anuncio"] = null,
+  /**
+   * 077 — Solo la lista lo calcula (`listConversations`). Quien serializa una
+   * sola conversación (el PATCH) lo deja en null: la Bandeja relee la lista
+   * con el evento que publica.
+   */
+  espera: EsperaDto | null = null
 ): ConversationDto {
   const caps = capabilitiesFor(c.channel);
   // 024: la extensión humana solo existe en los canales que la declaran.
@@ -170,6 +186,7 @@ export function serializeConversation(
     stageName,
     aiEnabled: c.aiEnabled,
     handoffAt: c.handoffAt?.toISOString() ?? null,
+    aiPausedUntil: c.aiPausedUntil?.toISOString() ?? null,
     handoffReason: c.handoffReason,
     lastInboundAt: c.lastInboundAt?.toISOString() ?? null,
     lastMessageAt: c.lastMessageAt?.toISOString() ?? null,
@@ -191,6 +208,7 @@ export function serializeConversation(
       quoteReply: caps.quoteReplies,
     },
     preview,
+    espera,
     anuncio,
   };
 }
@@ -198,15 +216,30 @@ export function serializeConversation(
 export async function updateConversation(
   organizationId: string,
   conversationId: string,
-  patch: { aiEnabled?: boolean; reactivate?: boolean; markRead?: boolean }
+  patch: {
+    aiEnabled?: boolean;
+    reactivate?: boolean;
+    markRead?: boolean;
+    /** 076 — Cuánto dura la pausa al apagar la IA. Sin él, indefinida. */
+    pauseFor?: DuracionPausa;
+  }
 ) {
   const db = getDb();
   const set: Record<string, unknown> = { updatedAt: new Date() };
-  if (patch.aiEnabled !== undefined) set.aiEnabled = patch.aiEnabled;
+  if (patch.aiEnabled !== undefined) {
+    set.aiEnabled = patch.aiEnabled;
+    // «Hasta mañana» es en la zona del negocio: la de su agenda.
+    set.aiPausedUntil = patch.aiEnabled
+      ? null
+      : patch.pauseFor && patch.pauseFor !== "indefinida"
+        ? finDePausa(patch.pauseFor, await businessTimezone(organizationId))
+        : null;
+  }
   if (patch.reactivate) {
     set.handoffAt = null;
     set.handoffReason = null;
     set.aiEnabled = patch.aiEnabled ?? true;
+    set.aiPausedUntil = null;
   }
   if (patch.markRead) set.unreadCount = 0;
 

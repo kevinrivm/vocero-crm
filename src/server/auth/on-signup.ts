@@ -1,6 +1,7 @@
 import { count, eq, sql } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { newId } from "@/lib/db/ids";
+import { HORAS_REACTIVACION_NUEVAS } from "@/server/inbox/reactivacion";
 
 /** Etapas sembradas del pipeline (US2). */
 const SEED_STAGES: { name: string; kind: "open" | "won" | "lost" }[] = [
@@ -54,6 +55,9 @@ export async function onUserCreated(userId: string, userName: string) {
     await tx.insert(schema.agentProfile).values({
       id: newId("agentProfile"),
       organizationId: orgId,
+      // 076: un negocio NUEVO nace con la IA que vuelve sola a las 24 h sin
+      // respuesta del equipo; el de una instalación que actualiza, en «nunca».
+      reactivateAfterHours: HORAS_REACTIVACION_NUEVAS,
     });
   });
 }

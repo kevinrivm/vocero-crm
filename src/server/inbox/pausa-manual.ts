@@ -1,6 +1,7 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, or } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { publish } from "@/server/events/bus";
+import { anotarSalidaDelEquipo } from "@/server/inbox/reactivacion";
 
 /**
  * 068 — Una persona del negocio contestó: la IA se hace a un lado.
@@ -17,8 +18,13 @@ import { publish } from "@/server/events/bus";
  */
 export async function pausarIaPorRespuestaManual(
   organizationId: string,
-  conversationId: string
+  conversationId: string,
+  /** 076 — Cuándo escribió la persona (el eco trae la hora de Meta). */
+  at: Date = new Date()
 ): Promise<boolean> {
+  // 076: la hora de la persona se anota SIEMPRE, también si la IA ya estaba
+  // en pausa: es lo que decide cuándo puede volver (`reactivacion.ts`).
+  await anotarSalidaDelEquipo(organizationId, conversationId, at);
   const ahora = new Date();
   const paused = await getDb()
     .update(schema.conversation)
@@ -32,7 +38,10 @@ export async function pausarIaPorRespuestaManual(
       and(
         eq(schema.conversation.organizationId, organizationId),
         eq(schema.conversation.id, conversationId),
-        isNull(schema.conversation.handoffAt)
+        isNull(schema.conversation.handoffAt),
+        // 076: una pausa indefinida del panel ya es «la lleva una persona», y
+        // abrir un traspaso encima haría que la IA volviera a las N horas.
+        or(eq(schema.conversation.aiEnabled, true), isNotNull(schema.conversation.aiPausedUntil))
       )
     )
     .returning({ id: schema.conversation.id });

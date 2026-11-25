@@ -58,7 +58,8 @@ const BASE = [
 describe("el CRM anuncia el turno superado", () => {
   it("con la misma cadena que Vocero Cloud", () => {
     expect(CAPACIDAD_SUPERADO).toBe("dispatch_superado");
-    expect(capacidadesDelCrm()).toEqual([CAPACIDAD_SUPERADO]);
+    // 076: después anuncia también la nota de atención humana.
+    expect(capacidadesDelCrm()).toEqual([CAPACIDAD_SUPERADO, "atencion_humana"]);
   });
 
   it("al final del evento, sin mover ninguna clave de antes", () => {

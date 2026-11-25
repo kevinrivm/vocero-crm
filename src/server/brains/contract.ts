@@ -92,6 +92,25 @@ export type EventoDespacho = {
    * cerebro ya recibió; no debe descartarlos por repetidos.
    */
   relaunch?: number;
+  /** 076 — Hubo una persona: ver `AtencionHumana`. */
+  humanAttention?: AtencionHumana;
+};
+
+/**
+ * 076 — Una persona del equipo atendió la conversación mientras la IA estaba
+ * en pausa. Opcional: solo viaja cuando la IA vuelve y todavía no contestó
+ * desde que escribió la persona (`server/brains/atencion-humana.ts`). Un
+ * cerebro que no lo conoce lo ignora; Nea lo usa para no contradecir al
+ * equipo. Es la misma forma que manda Vocero Cloud, para que un cerebro sirva
+ * a las dos ediciones.
+ */
+export type AtencionHumana = {
+  /** El primer mensaje del equipo desde la última respuesta de la IA. */
+  since: string;
+  /** El último mensaje del equipo. */
+  lastTeamMessageAt: string;
+  /** Lo que se dijeron desde la última respuesta de la IA (sin la ráfaga), del más viejo al más nuevo. */
+  messages: { at: string; author: "team" | "customer"; type: string; text: string | null }[];
 };
 
 /**
@@ -103,9 +122,16 @@ export type EventoDespacho = {
  */
 export const CAPACIDAD_SUPERADO = "dispatch_superado";
 
+/**
+ * 076 — El CRM le avisa al cerebro cuando una persona del equipo atendió la
+ * conversación (`humanAttention` en el despacho). Anunciarla dice que la
+ * AUSENCIA del campo significa «no hubo persona», no «este CRM no sabe».
+ */
+export const CAPACIDAD_ATENCION_HUMANA = "atencion_humana";
+
 /** 075 — Lo que viaja en `capabilities` de cada despacho. */
 export function capacidadesDelCrm(): string[] {
-  return [CAPACIDAD_SUPERADO];
+  return [CAPACIDAD_SUPERADO, CAPACIDAD_ATENCION_HUMANA];
 }
 
 /** Lo que hace falta saber de un mensaje para meterlo al evento. */
@@ -163,6 +189,8 @@ export function armarEvento(datos: {
   capabilities?: string[];
   /** 075 — 0 o ausente en un despacho normal. */
   relaunch?: number;
+  /** 076 — Solo si hubo una persona del equipo. */
+  humanAttention?: AtencionHumana | null;
 }): EventoDespacho {
   return {
     dispatchId: datos.dispatchId,
@@ -191,6 +219,8 @@ export function armarEvento(datos: {
     // gemelo no cambia.
     ...(datos.capabilities?.length ? { capabilities: [...datos.capabilities] } : {}),
     ...(datos.relaunch && datos.relaunch > 0 ? { relaunch: datos.relaunch } : {}),
+    // 076 — Solo si hubo una persona: sin ella el despacho no cambia de forma.
+    ...(datos.humanAttention ? { humanAttention: datos.humanAttention } : {}),
   };
 }
 

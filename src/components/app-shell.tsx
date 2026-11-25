@@ -11,6 +11,8 @@ import { BrandLogo } from "@/components/brand-mark";
 import { cn } from "@/lib/utils";
 import { BandaSinConexion } from "@/components/banda-sin-conexion";
 import { AtajosGlobales } from "@/components/atajos-globales";
+import { AvisoEsperando } from "@/components/esperando/aviso-esperando";
+import type { AvisoEsperandoDto } from "@/lib/esperando";
 
 /**
  * Cascarón de la app en dos modos:
@@ -33,6 +35,7 @@ export function AppShell({
   agenda = false,
   kicker,
   aviso = null,
+  esperando = null,
   children,
 }: {
   branding: Branding;
@@ -54,6 +57,11 @@ export function AppShell({
    * no responde nadie.
    */
   aviso?: React.ReactNode;
+  /**
+   * 077 — Quién mira y qué eligió ver de «Esperando» (cintillo, aviso,
+   * sonido). Con null no se pinta ni el cintillo ni el aviso.
+   */
+  esperando?: ({ userId: string } & AvisoEsperandoDto) | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -114,6 +122,13 @@ export function AppShell({
         </header>
 
         {aviso}
+        {/* 077 — Clientes que esperan a una persona, desde cualquier pantalla. */}
+        {esperando && (
+          <AvisoEsperando
+            userId={esperando.userId}
+            inicial={{ modo: esperando.modo, sonido: esperando.sonido }}
+          />
+        )}
         {/* 056 — El tiempo real caído se ve desde cualquier pantalla. */}
         <BandaSinConexion />
         {/* 055 — Ctrl+K y «?» desde cualquier pantalla. */}

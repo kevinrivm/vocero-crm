@@ -25,6 +25,8 @@ type Profile = {
   instructions: string | null;
   escalationRules: string | null;
   greeting: string | null;
+  /** 076 — Horas sin que el equipo escriba para que la IA vuelva sola; null = nunca. */
+  reactivateAfterHours: number | null;
   /** 034 */
   role: string;
   tools: ClaveHerramienta[];
@@ -353,13 +355,54 @@ function ProfileSection({
             onChange={(e) => setForm({ ...form, greeting: e.target.value })}
           />
         </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="agent-reactivate">Cuándo vuelve la IA</Label>
+          <p className="text-[12px] text-text-3">
+            Cuando tu equipo contesta o el agente pasa la conversación a una persona, la IA se
+            pausa en ese chat. Si el cliente vuelve a escribir y nadie del equipo le ha escrito en
+            estas horas, la IA retoma sola.
+          </p>
+          <div className="flex flex-wrap items-center gap-2 text-sm">
+            <span>Devolver la conversación a la IA si el equipo no escribe en</span>
+            <Input
+              id="agent-reactivate"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={720}
+              className="h-8 w-20"
+              placeholder="—"
+              value={form.reactivateAfterHours ?? ""}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                const n = Number(v);
+                setForm({
+                  ...form,
+                  reactivateAfterHours: v === "" || !Number.isFinite(n) ? null : Math.trunc(n),
+                });
+              }}
+            />
+            <span>horas</span>
+          </div>
+          <p className="text-[12px] text-text-3">
+            Vacío = nunca: la conversación sigue con tu equipo hasta que reactives la IA a mano.
+          </p>
+        </div>
         <Button
           onClick={() => {
             // 034 — Solo lo de esta tarjeta: el formulario guarda una copia
             // del perfil de cuando se abrió, y mandarla entera pisaría las
             // herramientas cambiadas después en la tarjeta del rol.
-            const { name, tone, instructions, escalationRules, greeting } = form;
-            void onSave({ name, tone, instructions, escalationRules, greeting });
+            const { name, tone, instructions, escalationRules, greeting, reactivateAfterHours } =
+              form;
+            void onSave({
+              name,
+              tone,
+              instructions,
+              escalationRules,
+              greeting,
+              reactivateAfterHours,
+            });
           }}
         >
           Guardar comportamiento

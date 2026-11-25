@@ -13,6 +13,7 @@ import {
 import { agendaEnabled } from "@/server/agenda/flag";
 import { leerConfigDespacho, urlSaludCerebro } from "@/server/brains/config";
 import { getBrainHealth } from "@/server/bot/status";
+import { HORAS_REACTIVACION_MAX } from "@/server/inbox/reactivacion";
 
 
 export const GET = conSesion(async (session) => {
@@ -33,6 +34,8 @@ export const GET = conSesion(async (session) => {
       instructions: p.instructions,
       escalationRules: p.escalationRules,
       greeting: p.greeting,
+      // 076 — Tras cuántas horas sin que el equipo escriba vuelve la IA sola.
+      reactivateAfterHours: p.reactivateAfterHours,
       // 034
       role: rolDe(p.role).clave,
       tools: herramientasEfectivas(p.tools),
@@ -53,6 +56,17 @@ const putSchema = z.object({
   instructions: z.string().max(8000).nullable().optional(),
   escalationRules: z.string().max(4000).nullable().optional(),
   greeting: z.string().max(1000).nullable().optional(),
+  /**
+   * 076 — La IA vuelve sola a una conversación en pausa cuando el cliente
+   * escribe y el equipo lleva estas horas sin escribirle. null = nunca.
+   */
+  reactivateAfterHours: z
+    .number({ message: "Las horas deben ser un número entero" })
+    .int("Las horas deben ser un número entero")
+    .min(1, "Las horas deben ser al menos 1 (o vacío para nunca)")
+    .max(HORAS_REACTIVACION_MAX, `Las horas no pueden pasar de ${HORAS_REACTIVACION_MAX} (30 días)`)
+    .nullable()
+    .optional(),
   // 034 — Solo claves del catálogo; `escalar` se guarda siempre.
   tools: z
     .array(z.enum(CLAVES_HERRAMIENTA as [ClaveHerramienta, ...ClaveHerramienta[]]))

@@ -79,7 +79,7 @@ export const HERRAMIENTAS_CONFIGURACION: Herramienta[] = [
     name: "get_agent_config",
     title: "Ver la configuración del agente",
     description:
-      "Nombre, tono, instrucciones, reglas de escalado, saludo, rol, herramientas activas y si está encendido. También dice si la IA del negocio está lista (aiConfigured, aiMensaje) y si la agenda existe en esta instancia (agendaEnabled).",
+      "Nombre, tono, instrucciones, reglas de escalado, saludo, rol, herramientas activas, si está encendido y tras cuántas horas sin el equipo vuelve sola la IA a una conversación en pausa (reactivateAfterHours; null = nunca). También dice si la IA del negocio está lista (aiConfigured, aiMensaje) y si la agenda existe en esta instancia (agendaEnabled).",
     scope: "configure",
     inputSchema: sinArgs,
     annotations: lectura,
@@ -110,6 +110,13 @@ export const HERRAMIENTAS_CONFIGURACION: Herramienta[] = [
             "Lo que el agente puede hacer: ficha (guardar datos del cliente), etapa (mover en el embudo), agendar, reprogramar, salida (despedir a quien no califica), escalar (siempre va). Manda la lista completa.",
         },
         enabled: { type: "boolean", description: "Encender (true) o apagar (false) el agente" },
+        reactivateAfterHours: {
+          type: ["integer", "null"],
+          minimum: 1,
+          maximum: 720,
+          description:
+            "Cuándo vuelve la IA sola a una conversación en pausa (porque contestó alguien del equipo o el agente la pasó a una persona): cuando el cliente escribe y el equipo lleva estas horas sin escribirle. null = nunca, solo se reactiva a mano. Nunca vuelve tras hostilidad ni con una pausa manual con fecha vigente.",
+        },
       },
       additionalProperties: false,
     },
@@ -118,7 +125,7 @@ export const HERRAMIENTAS_CONFIGURACION: Herramienta[] = [
       handler: h(profile.PUT),
       method: "PUT",
       path: "/api/v1/agent/profile",
-      body: solo(a, ["name", "tone", "instructions", "escalationRules", "greeting", "tools", "enabled"]),
+      body: solo(a, ["name", "tone", "instructions", "escalationRules", "greeting", "tools", "enabled", "reactivateAfterHours"]),
     }),
   },
   {

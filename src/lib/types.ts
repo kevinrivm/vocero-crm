@@ -2,6 +2,7 @@
 
 import type { ReaccionDto } from "@/lib/reacciones";
 import type { Channel } from "@/lib/channels";
+import type { EsperaDto } from "@/lib/esperando";
 
 export type ConversationDto = {
   id: string;
@@ -11,6 +12,8 @@ export type ConversationDto = {
   stageName: string | null;
   aiEnabled: boolean;
   handoffAt: string | null;
+  /** 076 — Fin de la pausa manual con duración; null = indefinida (o sin pausa). */
+  aiPausedUntil: string | null;
   handoffReason: string | null;
   lastInboundAt: string | null;
   lastMessageAt: string | null;
@@ -30,6 +33,13 @@ export type ConversationDto = {
    */
   composer: { media: boolean; structured: boolean; quoteReply: boolean };
   preview: string | null;
+  /**
+   * 077 — Si espera a una persona: desde cuándo y hasta cuándo se le puede
+   * contestar con texto libre. null = no espera a nadie. Lo calcula la lista
+   * (`server/inbox/esperando.ts`); la pestaña, el cintillo y el aviso leen
+   * esto mismo con `lib/esperando.ts`.
+   */
+  espera: EsperaDto | null;
   /** 018: el anuncio que abrió la conversación, para la marca de la lista. */
   anuncio: {
     headline: string | null;

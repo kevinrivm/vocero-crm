@@ -255,7 +255,7 @@
     "/conversations": {
       "get": {
         "summary": "Listar conversaciones",
-        "description": "Permiso: read. Con `since` (ISO 8601) solo las que cambiaron después.",
+        "description": "Permiso: read. Con `since` (ISO 8601) solo las que cambiaron después. Cada conversación trae `espera`: `{ desde, hasta }` si el cliente espera a una persona (desde su primer mensaje sin respuesta; `hasta` = hasta cuándo se le puede contestar con texto libre), o null. Con `filter=esperando`, solo esas, de la que más lleva a la que menos, con `minutosEsperando`.",
         "parameters": [
           {
             "name": "since",
@@ -263,6 +263,15 @@
             "schema": {
               "type": "string",
               "format": "date-time"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "`esperando`: solo los clientes que esperan a una persona. Otro valor responde 422.",
+            "schema": {
+              "type": "string",
+              "enum": ["esperando"]
             }
           }
         ],
@@ -764,7 +773,7 @@
     "/agent/profile": {
       "get": {
         "summary": "Configuración del agente",
-        "description": "Permiso: configure. Nombre, tono, instrucciones, reglas de escalado, saludo, rol, herramientas y si está encendido. También dice si la IA del negocio está lista (`aiConfigured`, `aiMensaje`) y si la agenda existe en esta instancia (`agendaEnabled`).",
+        "description": "Permiso: configure. Nombre, tono, instrucciones, reglas de escalado, saludo, rol, herramientas, si está encendido y `reactivateAfterHours` (tras cuántas horas sin el equipo vuelve sola la IA; `null` = nunca). También dice si la IA del negocio está lista (`aiConfigured`, `aiMensaje`) y si la agenda existe en esta instancia (`agendaEnabled`).",
         "responses": {
           "200": {
             "description": "`{ profile: { enabled, name, tone, instructions, escalationRules, greeting, role, tools }, agendaEnabled, aiConfigured, aiMensaje }`"
@@ -839,6 +848,15 @@
                       ]
                     },
                     "description": "Lo que el agente puede hacer. `escalar` se guarda siempre."
+                  },
+                  "reactivateAfterHours": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 720,
+                    "description": "Cuándo vuelve la IA sola a una conversación en pausa: cuando el cliente escribe y el equipo lleva estas horas sin escribirle. `null` = nunca. Nunca vuelve tras hostilidad ni con una pausa manual con fecha vigente."
                   }
                 }
               }
