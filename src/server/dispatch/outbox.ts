@@ -35,6 +35,11 @@ export function ventanaCoalesceMs(): number {
   return getEnv().AGENT_COALESCE_MS;
 }
 
+/** 078 — La espera cuando el último mensaje deja la ráfaga abierta (`ventana.ts`). */
+export function ventanaLargaMs(): number {
+  return Math.max(getEnv().AGENT_COALESCE_MS, getEnv().AGENT_COALESCE_LARGO_MS);
+}
+
 /** Cuánto tiempo un worker se reserva una fila antes de que otro pueda tomarla. */
 export const LEASE_MS = 180_000;
 export const MAX_INTENTOS = 3;
@@ -77,11 +82,17 @@ export async function encolarDespacho(params: {
    * a escribir, y esa no es un relanzamiento.
    */
   relanzamiento?: number;
+  /**
+   * 078 — Cuánto esperar desde ESTE mensaje (`ventanaParaMensaje`). Sin ella,
+   * la espera normal. Como cada mensaje reabre la ventana, la decide el
+   * último de la ráfaga.
+   */
+  ventanaMs?: number;
 }): Promise<{ id: string; notBefore: Date }> {
   const db = getDb();
   const ahora = params.ahora ?? new Date();
   const notBefore = new Date(
-    ahora.getTime() + (params.inmediato ? 0 : ventanaCoalesceMs())
+    ahora.getTime() + (params.inmediato ? 0 : (params.ventanaMs ?? ventanaCoalesceMs()))
   );
   const messageIds = [...new Set(params.messageIds ?? [])];
   // Se concatena en SQL y no leyendo-y-escribiendo: dos mensajes que llegan a

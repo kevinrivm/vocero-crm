@@ -470,6 +470,12 @@ export async function POST(req: Request, ctx: Params) {
   // POST {phoneNumberId}/messages con status:"read" → typing/leído:
   // NO es un mensaje saliente — no contamina el outbox.
   if (path.length === 2 && path[1] === "messages" && body.status === "read") {
+    // 078 — Se anota para que un arnés vea cuándo salió el «escribiendo…».
+    getWaMockState().lecturas.push({
+      messageId: String(body.message_id ?? ""),
+      typing: Boolean((body as { typing_indicator?: unknown }).typing_indicator),
+      at: new Date().toISOString(),
+    });
     return Response.json({ success: true });
   }
 

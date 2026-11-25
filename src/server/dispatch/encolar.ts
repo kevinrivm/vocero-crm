@@ -1,6 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
-import { encolarDespacho } from "@/server/dispatch/outbox";
+import { encolarDespacho, ventanaCoalesceMs, ventanaLargaMs } from "@/server/dispatch/outbox";
+import { ventanaParaMensaje } from "@/server/dispatch/ventana";
+import { mostrarEscribiendo } from "@/server/whatsapp/escribiendo";
 import { iniciarWorker, programarTanda } from "@/server/dispatch/worker";
 
 /**
@@ -27,6 +29,7 @@ export async function despacharAlCerebro(
         aiEnabled: schema.conversation.aiEnabled,
         handoffAt: schema.conversation.handoffAt,
         isTest: schema.conversation.isTest,
+        channel: schema.conversation.channel,
       })
       .from(schema.conversation)
       .where(
@@ -54,11 +57,27 @@ export async function despacharAlCerebro(
 
     // 025 — El despacho anota qué entrante lo provoca: es lo que le debe al
     // cerebro, aunque después la conversación tenga una respuesta.
+    // 078 — La espera la decide este mensaje: si deja la ráfaga abierta
+    // («Hola», «Ok», el texto del anuncio, una foto) se espera más.
+    const [msg] = await getDb()
+      .select({ type: schema.message.type, text: schema.message.text })
+      .from(schema.message)
+      .where(
+        and(
+          eq(schema.message.organizationId, organizationId),
+          eq(schema.message.id, messageId)
+        )
+      )
+      .limit(1);
     const { notBefore } = await encolarDespacho({
       organizationId,
       conversationId,
       messageIds: [messageId],
+      ventanaMs: ventanaParaMensaje(msg ?? null, ventanaCoalesceMs(), ventanaLargaMs()),
     });
+    // Y el cliente ve «escribiendo…» desde ya: la espera no parece silencio.
+    // Best-effort y sin esperar: el turno no depende de esto.
+    void mostrarEscribiendo(organizationId, { id: conversationId, ...conv });
     iniciarWorker();
     // Que despierte justo cuando la ventana venza, no en su siguiente barrido.
     programarTanda(notBefore);

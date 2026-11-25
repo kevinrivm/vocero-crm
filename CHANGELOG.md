@@ -5,6 +5,36 @@ sigue el SemVer del [README](README.md#versiones): una menor trae funciones
 nuevas y actualizar es redesplegar. Desde 1.4.0, cada tag `vX.Y.Z` publica la
 imagen `ghcr.io/kevinrivm/vocero-crm:X.Y.Z`.
 
+## 2.12.0 — 2026-11-24
+
+El agente contesta una vez por ráfaga y el cliente ve «escribiendo…» desde
+el inicio, y el buscador de la Bandeja encuentra también lo que se dijo en
+los mensajes. Actualizar es redesplegar con la etiqueta `2.12.0`: sin
+migración. La única variable nueva, `AGENT_COALESCE_LARGO_MS`, es opcional
+(8 s por defecto). Recomendado: bajar `AGENT_COALESCE_MS` a 3–4 s. Nea no
+tiene que cambiar.
+
+### Nuevo
+
+- **La espera de la ráfaga se adapta al mensaje** (spec 078). Antes de
+  mandarle el turno al agente, el CRM espera a que el cliente termine de
+  escribir. Ahora la espera la decide el último mensaje: tras un saludo, un
+  «ok», el texto de un anuncio, tres palabras o menos, una foto o un sticker
+  espera más (`AGENT_COALESCE_LARGO_MS`, 8 s por defecto), porque casi siempre
+  viene otro mensaje detrás; tras una pregunta o una frase completa, la
+  espera de siempre (`AGENT_COALESCE_MS`). Así el agente contesta una vez y
+  no dos. Con esto conviene bajar `AGENT_COALESCE_MS` a 3–4 s para que las
+  preguntas completas se contesten antes (el valor por defecto no cambia).
+- **«Escribiendo…» desde el inicio.** El cliente ve «escribiendo…» en cuanto
+  su mensaje llega a la cola del agente, no hasta que el agente empieza a
+  pensar: la espera ya no parece silencio. Solo en WhatsApp.
+- **Buscar dentro de los mensajes, como en WhatsApp** (spec 079). Desde 3
+  letras, el buscador de la Bandeja enseña debajo de «Chats» una sección
+  «Mensajes» con los que contienen lo buscado (texto o pie de foto, sin
+  importar acentos ni mayúsculas, los 30 más recientes) y la coincidencia
+  resaltada. Tocar uno abre la conversación centrada en ese mensaje. Sin
+  migración.
+
 ## 2.11.0 — 2026-11-24
 
 La IA vuelve sola cuando el equipo deja de atender, y nadie se queda

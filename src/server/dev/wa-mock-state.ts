@@ -90,6 +90,9 @@ export type MockWabaNumber = {
   platform_type?: string;
 };
 
+/** 078 — Un «leído» (con o sin «escribiendo…») que el CRM mandó a Meta. */
+export type MockLectura = { messageId: string; typing: boolean; at: string };
+
 /** 044 — Un archivo subido a `{phoneNumberId}/media`, para las aserciones. */
 export type MockUpload = {
   id: string;
@@ -104,6 +107,8 @@ export type MockUpload = {
 type WaMockState = {
   outbox: OutboxEntry[];
   uploads: MockUpload[];
+  /** 078 — Los «leído/escribiendo…», en orden. */
+  lecturas: MockLectura[];
   templates: MockTemplate[];
   capiEvents: CapiMockEvent[];
   /** Por WABA ID. Sin entrada = la app no está suscrita a esa WABA. */
@@ -131,6 +136,7 @@ function freshState(): WaMockState {
   return {
     outbox: [],
     uploads: [],
+    lecturas: [],
     templates: [],
     capiEvents: [],
     wabaSubscriptions: {},
@@ -153,6 +159,7 @@ export function getWaMockState(): WaMockState {
   // Un proceso de `next dev` que ya tenía el estado viejo en memoria.
   globalForMock.__waMockState.phoneWebhooks ??= {};
   globalForMock.__waMockState.uploads ??= [];
+  globalForMock.__waMockState.lecturas ??= [];
   globalForMock.__waMockState.splitAccounts ??= {};
   globalForMock.__waMockState.wabaNumbers ??= {};
   globalForMock.__waMockState.registrations ??= {};

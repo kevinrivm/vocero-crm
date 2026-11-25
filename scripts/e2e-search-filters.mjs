@@ -64,7 +64,8 @@ ok("las 3 personas de prueba están en la bandeja",
 
 const page = await ctx.newPage();
 // Cada fila trae además el botón de fijar (070), sin texto: solo cuentan las filas.
-const rows = async () => (await page.locator("ul > li button").allInnerTexts()).filter((t) => t.trim());
+// 079 — Solo la lista de chats: desde 3 letras, debajo sale la sección «Mensajes».
+const rows = async () => (await page.locator("[data-lista-chats] > li button").allInnerTexts()).filter((t) => t.trim());
 
 console.log("\n== Bandeja: teclear mientras la página aún carga (el bug) ==");
 await page.goto(`${BASE}/inbox`, { waitUntil: "commit" });
