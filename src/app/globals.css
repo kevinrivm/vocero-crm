@@ -3,10 +3,9 @@
 @tailwind utilities;
 
 /*
-  Sistema de diseño de Vocero: la misma marca que vocerocrm.com dentro del CRM.
-  Papel frío (#f6f8fc), tinta azul marino, acento azul eléctrico con remate
-  cian, tipografía Archivo para la interfaz, Instrument Serif itálica para los
-  acentos editoriales e IBM Plex Mono para etiquetas y horas.
+  Sistema de diseño de Vocero CRM inspirado en U-Topic: superficies frías,
+  tinta carbón, turquesa de marca y tipografía IBM Plex para una interfaz
+  compacta y orientada a datos.
 
   El tema activo se selecciona con `data-theme` en <html> (ver src/lib/theme.ts):
   el servidor lo escribe desde la cookie, así que no hay parpadeo.
@@ -17,57 +16,57 @@
   :root {
     color-scheme: light;
 
-    /* 061 — La familia de la interfaz (ver layout.tsx). 062 la cambia con
-       data-letra. */
-    --font-sans: var(--font-urbanist), var(--font-archivo);
+    /* IBM Plex para lectura compacta de datos. Ajustes → Apariencia puede
+       cambiarla con data-letra. */
+    --font-sans: var(--font-plex-sans), var(--font-archivo);
     /* 062 — Tamaño (zoom de la app) y densidad (filas y espacio entre
        tarjetas). Los cambia Ajustes → Apariencia con data-tamano y
        data-densidad. */
     --escala: 1;
-    --hueco: 12px;
+    --hueco: 8px;
 
-    /* Neutros: papel frío de la landing */
+    /* Neutros: papel y paneles de un espacio de trabajo técnico. */
     --bg: #ffffff;
-    --bg-subtle: #eef4f0;
-    --bg-panel: #e7efea;
-    --bg-hover: #dfe9e3;
+    --bg-subtle: #f0f4f7;
+    --bg-panel: #e9eff4;
+    --bg-hover: #e1e9ef;
     /* Lo que flota sobre la página: diálogos, cajones, menús. En claro es el
        mismo blanco de siempre; en oscuro se aclara para despegarse. */
     --bg-raised: #ffffff;
-    --text: #141a17;
-    --text-2: #47524d;
-    --text-3: #5f6a65;
-    --text-4: #8a958f;
-    --border: #e1e9e4;
-    --border-strong: #cfdad3;
+    --text: #0d181c;
+    --text-2: #435257;
+    --text-3: #5b6466;
+    --text-4: #7e898d;
+    --border: #e9eff4;
+    --border-strong: #d4dae0;
     /* Chips dentro de una fila y la fila bajo el cursor. En claro coinciden
        con --bg y --bg-subtle; en oscuro NO: ahí --bg-subtle es más oscuro que
        --bg y un chip con fondo --bg desaparece dentro de la fila. */
     --chip-bg: #ffffff;
-    --row-hover: #eef4f0;
+    --row-hover: #f0f4f7;
     /* 215 — Lo no hábil del calendario de Citas (ver .cal-off). */
-    --cal-off: #eef4f0;
+    --cal-off: #f0f4f7;
 
     /* Chat: el cliente entra en verde WhatsApp, el CRM contesta en el acento */
-    --chat-bg: #eef4f0;
+    --chat-bg: #f0f4f7;
     /* Los dibujos del fondo del chat, a la WhatsApp (ver .thread-bg). El
        tono va dentro del SVG: negro muy tenue en claro, blanco en oscuro.
        Ruta absoluta: dentro de una variable, una relativa se resolvería
        contra la página. */
     --chat-dibujos: url("/fondo-chat/claro.svg");
-    --bubble-in: #151b18;
-    --bubble-in-border: #151b18;
+    --bubble-in: #0d181c;
+    --bubble-in-border: #0d181c;
     --bubble-out: #ffffff;
-    --bubble-out-border: #d8e2dc;
+    --bubble-out-border: #d4dae0;
     --bubble-out-text: var(--text);
 
-    /* Acento (default: azul Vocero; el white-label lo sobreescribe) */
-    --accent: #0d5bff;
-    --accent-hover: #0a4de6;
-    --accent-soft: #d3e2ff;
-    --accent-tint: #ebf1ff;
-    --accent-text: #0038d8;
-    --accent-fg: #ffffff;
+    /* Turquesa U-Topic. El white-label lo puede cambiar por organización. */
+    --accent: #00afb9;
+    --accent-hover: #008d96;
+    --accent-soft: #cceff0;
+    --accent-tint: #e9f8f8;
+    --accent-text: #006d73;
+    --accent-fg: #0d181c;
     /* El acento como TINTA (una hora, un enlace) y como anillo de foco. En
        claro son el acento mismo; en oscuro, sus variantes aclaradas: el
        acento sólido es para rellenos y ahí no alcanza AA como texto. */
@@ -78,7 +77,7 @@
     /* 039: fondo del fragmento citado dentro de una burbuja (cualquier color). */
     --quote-bg: rgba(0, 0, 0, 0.05);
     --quote-bg-hover: rgba(0, 0, 0, 0.09);
-    --bg-active: #e6f0ea;
+    --bg-active: #e3f5f5;
 
     /* Estado: color puro + tríada (tint = fondo, soft = borde, text = tinta) */
     --success: #1fb35b;
@@ -86,7 +85,7 @@
     --success-soft: #c9ebd6;
     --success-text: #157a41;
 
-    --warning: #f2a71b;
+    --warning: #fbc54e;
     --warning-tint: #fef6e6;
     --warning-soft: #f8e3b5;
     --warning-text: #935f0b;
@@ -97,61 +96,62 @@
     --danger-text: #b73535;
     --danger-fg: #ffffff;
 
-    --info: #0d5bff;
-    --info-tint: #ebf1ff;
-    --info-soft: #d3e2ff;
-    --info-text: #0038d8;
+    --info: #008d96;
+    --info-tint: #e9f8f8;
+    --info-soft: #cceff0;
+    --info-text: #006d73;
 
     /* Superficies auxiliares */
-    --overlay: rgba(4, 16, 46, 0.55);
+    --overlay: rgba(13, 24, 28, 0.48);
     --knob: #ffffff;
 
-    /* Radios y sombras (las de la landing, con tinte azul marino) */
-    --radius-sm: 10px;
-    --radius: 14px;
-    --radius-lg: 20px;
-    --shadow-sm: 0 1px 2px rgba(20, 40, 30, 0.05);
-    --shadow-md: 0 14px 40px -16px rgba(20, 40, 30, 0.16);
-    --shadow-pop: 0 30px 80px -20px rgba(8, 27, 82, 0.22),
-      0 8px 24px -12px rgba(8, 27, 82, 0.12);
+    /* Radios y sombras discretos para mantener alta densidad de información. */
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 2px rgba(13, 24, 28, 0.05);
+    --shadow-md: 0 10px 28px -16px rgba(13, 24, 28, 0.18);
+    --shadow-pop: 0 24px 64px -24px rgba(13, 24, 28, 0.22),
+      0 6px 20px -12px rgba(13, 24, 28, 0.12);
 
     /* Densidad de filas de conversación */
-    --row-py: 11px;
+    --row-py: 7px;
 
-    /* 061 — Diseño de tarjetas (Menta). El marco es el fondo que se ve entre
+    /* Diseño de tarjetas. El marco es el fondo que se ve entre
        las tarjetas; la tarjeta, cada zona (riel, lista, hilo, panel). */
-    --marco-1: #f1eee5;
-    --marco-2: #cde1d5;
-    --radio-tarjeta: 24px;
+    --marco-1: #f0f4f7;
+    --marco-2: #dce6ec;
+    --radio-tarjeta: 16px;
     /* 062 — Contorno de la tarjeta (Alto contraste), pintado por dentro y
        encima del contenido (ver .tarjeta::after). */
     --contorno-tarjeta: none;
-    --sombra-tarjeta: 0 1px 2px rgba(20, 40, 30, 0.04),
-      0 10px 30px -14px rgba(20, 40, 30, 0.16);
+    --sombra-tarjeta: 0 1px 2px rgba(13, 24, 28, 0.04),
+      0 8px 22px -14px rgba(13, 24, 28, 0.14);
     /* El riel de iconos y el botón de enviar: ni el acento ni el gris, la
        tinta del tema (como en la referencia). */
-    --riel-activo: #151b18;
+    --riel-activo: #0d181c;
     --riel-activo-texto: #ffffff;
-    --enviar: #151b18;
+    --enviar: #0d181c;
     --enviar-texto: #ffffff;
     /* Lo que va DENTRO de una burbuja (ver .burbuja-in / .burbuja-out): su
        texto, lo secundario (hora, cita), los enlaces y una superficie para lo
        que se apoya encima (un documento, el audio). */
-    --bubble-in-text: #f3f6f4;
-    --bubble-in-muted: #a7b2ac;
+    --bubble-in-text: #f0f4f7;
+    --bubble-in-muted: #aab7bc;
     --bubble-in-link: #8fcbff;
-    --bubble-in-raised: #252c28;
-    --bubble-in-line: #3a443f;
-    --bubble-out-muted: #5f6a65;
+    --bubble-in-raised: #253238;
+    --bubble-in-line: #3b4b50;
+    --bubble-out-muted: #5b6466;
   }
 
   /*
     Tema oscuro v2 (R8). Tres niveles que se leen de un vistazo, como en claro:
-    la barra lateral (azul marino fijo, ver `.nav-dark`) es lo más oscuro; la
+    la barra lateral (tinta fija, ver `.nav-dark`) es lo más oscuro; la
     página va un escalón ARRIBA de ella (≥ 1.25:1, si no el bicolor
     desaparece) y lo que flota (diálogos, cajones) otro más. Antes todo vivía
-    entre #070e20 y #131f3d: barra y página a 1.04:1 y las sombras no se
-    veían. Los pisos de contraste los vigila tests/unit/contraste-temas.test.ts.
+    entre la tinta U-Topic y el panel oscuro: la separación entre niveles se
+    conserva al ajustar la paleta. Los pisos de contraste los vigila
+    tests/unit/contraste-temas.test.ts.
   */
   :root[data-theme="dark"] {
     color-scheme: dark;
@@ -159,39 +159,38 @@
     /* Escalera de superficies, de la más honda a la más alta. --bg-subtle es
        el hueco (hilo del chat, columnas del pipeline, fuera de horario), como
        el papel gris del tema claro. */
-    --bg-subtle: #121916;
-    --bg: #1a2320;
-    --row-hover: #202a26;
-    --bg-raised: #212b27;
-    --chip-bg: #26312c;
-    --bg-panel: #2c3833;
-    --bg-hover: #33413a;
+    --bg-subtle: #10191d;
+    --bg: #172226;
+    --row-hover: #1d2a2f;
+    --bg-raised: #202c31;
+    --chip-bg: #253238;
+    --bg-panel: #2b393e;
+    --bg-hover: #34454a;
     /* 215 — Lo no hábil del calendario: el mismo hueco que en claro. */
-    --cal-off: #121916;
-    --text: #eaf1ed;
-    --text-2: #b8c5be;
+    --cal-off: #10191d;
+    --text: #edf3f5;
+    --text-2: #c0cdd1;
     /* ≥ 4.5:1 incluso sobre el hover más claro: la `.kicker` mide 10.5px. */
-    --text-3: #a5b2ab;
+    --text-3: #adbdc1;
     /* Solo iconos y deshabilitado (≥ 3:1), nunca texto de lectura. */
-    --text-4: #76847d;
+    --text-4: #839499;
     /* Bordes ≥ 1.6:1 contra la página (214) y ≥ 1.4:1 contra lo que flota. */
-    --border: #3d4e46;
-    --border-strong: #506259;
+    --border: #39494e;
+    --border-strong: #52656a;
 
     /* Chat */
-    --chat-bg: #121916;
+    --chat-bg: #10191d;
     --chat-dibujos: url("/fondo-chat/oscuro.svg");
-    --bubble-in: #e6eee9;
-    --bubble-in-border: #e6eee9;
+    --bubble-in: #edf3f5;
+    --bubble-in-border: #edf3f5;
 
-    /* Acento: respaldo con el azul Vocero calculado para este fondo; el
-       white-label lo recalcula (ver resolveAccentSet en lib/branding). */
-    --accent: #0d5bff;
-    --accent-hover: #3475ff;
-    --accent-soft: #143c82;
-    --accent-tint: #16335e;
-    --accent-text: #6f9eff;
-    --accent-fg: #ffffff;
+    /* El white-label calcula las variantes de teal para este fondo. */
+    --accent: #00afb9;
+    --accent-hover: #43c2c9;
+    --accent-soft: #16494e;
+    --accent-tint: #17393e;
+    --accent-text: #82e1e4;
+    --accent-fg: #0d181c;
     --accent-ink: var(--accent-text);
     --ring: var(--accent-text);
     --accent-veil: rgba(0, 0, 0, 0.22);
@@ -199,16 +198,16 @@
     --quote-bg-hover: rgba(255, 255, 255, 0.12);
 
     /* Estado sobre fondo oscuro: el tono puro oscurecido (no mezclado con el
-       azul marino, que lo vuelve gris), un escalón arriba de --bg. */
+       la tinta, que lo vuelve gris), un escalón arriba de --bg. */
     --success: #4fd07f;
-    --success-tint: #183e26;
-    --success-soft: #28683f;
+    --success-tint: #183e2b;
+    --success-soft: #28684a;
     --success-text: #7fe0a3;
 
-    --warning: #f5b74a;
-    --warning-tint: #453315;
-    --warning-soft: #765824;
-    --warning-text: #f7c86f;
+    --warning: #fbc54e;
+    --warning-tint: #453b20;
+    --warning-soft: #76612d;
+    --warning-text: #f7d378;
 
     --danger: #ef6b6b;
     --danger-tint: #562727;
@@ -216,13 +215,13 @@
     --danger-text: #f59a9a;
     --danger-fg: #1b0d10;
 
-    --info: #6a9dff;
-    --info-tint: #243557;
-    --info-soft: #3a568c;
-    --info-text: #9dbbff;
+    --info: #56cbd0;
+    --info-tint: #17393e;
+    --info-soft: #20545a;
+    --info-text: #82e1e4;
 
-    --overlay: rgba(2, 8, 24, 0.72);
-    --knob: #dfe6fa;
+    --overlay: rgba(4, 10, 12, 0.72);
+    --knob: #dce5e8;
 
     /* Sombras: sobre oscuro necesitan más negro para leerse */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
@@ -230,30 +229,30 @@
     --shadow-pop: 0 30px 80px -20px rgba(0, 0, 0, 0.75),
       0 8px 24px -12px rgba(0, 0, 0, 0.5);
 
-    /* 061 — Noche: la pareja oscura de Menta. Se invierten las burbujas: el
+    /* Tema oscuro: pareja del claro. Se invierten las burbujas: el
        cliente en claro, la respuesta en una tarjeta un escalón arriba. */
-    --bubble-out: #26312c;
-    --bubble-out-border: #3b4a43;
-    --bubble-out-text: #eaf1ed;
-    --bubble-out-muted: #a3b0a9;
-    --bubble-in-text: #111613;
-    --bubble-in-muted: #4f5b55;
-    --bubble-in-link: #0b4bd1;
-    --bubble-in-raised: #d6e0da;
-    --bubble-in-line: #b9c6be;
-    --bg-active: #25332c;
-    --marco-1: #090d0b;
-    --marco-2: #0d1210;
+    --bubble-out: #253238;
+    --bubble-out-border: #39494e;
+    --bubble-out-text: #edf3f5;
+    --bubble-out-muted: #aebdc1;
+    --bubble-in-text: #11191c;
+    --bubble-in-muted: #536064;
+    --bubble-in-link: #08777d;
+    --bubble-in-raised: #dce5e8;
+    --bubble-in-line: #b8c7cb;
+    --bg-active: #17393e;
+    --marco-1: #0b1114;
+    --marco-2: #111a1e;
     --sombra-tarjeta: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 30px -14px rgba(0, 0, 0, 0.55);
-    --riel-activo: #e6eee9;
-    --riel-activo-texto: #111613;
-    --enviar: #e6eee9;
-    --enviar-texto: #111613;
+    --riel-activo: #edf3f5;
+    --riel-activo-texto: #11191c;
+    --enviar: #edf3f5;
+    --enviar-texto: #11191c;
   }
 
   /*
-    Sidebar: azul marino fijo, sin importar el tema claro/oscuro del resto de
-    la app (como el lateral de la landing). Redeclara sus neutros directamente
+    Sidebar: tinta U-Topic fija, sin importar el tema claro/oscuro del resto de
+    la app. Redeclara sus neutros directamente
     sobre el `<aside>` (ver AppNav) y la barra superior del teléfono, para que
     las clases que ya usan (bg-subtle, border, text-2, text-3,
     hover:bg-accent…) hereden estos valores en vez de los de `:root`.
@@ -266,19 +265,19 @@
   */
   .nav-dark {
     color-scheme: dark;
-    --bg: #0b1327;
-    --bg-subtle: #070e20;
-    --bg-panel: #131f3d;
-    --bg-raised: #131f3d;
-    --bg-hover: #182750;
-    --text: #e8eefc;
-    --text-2: #a9b8dc;
-    --text-3: #7688b0;
-    --text-4: #55648a;
-    --border: #263866;
-    --border-strong: #34498a;
-    --chip-bg: #142040;
-    --row-hover: #111b36;
+    --bg: #0d181c;
+    --bg-subtle: #101f23;
+    --bg-panel: #17272c;
+    --bg-raised: #17272c;
+    --bg-hover: #1d3035;
+    --text: #edf3f5;
+    --text-2: #bdcbd0;
+    --text-3: #a2b2b7;
+    --text-4: #7c9095;
+    --border: #25383d;
+    --border-strong: #344b51;
+    --chip-bg: #182a2f;
+    --row-hover: #132329;
     --accent-ink: var(--accent-text);
     --ring: var(--accent);
     --shadow-pop: 0 30px 80px -20px rgba(0, 0, 0, 0.75),
@@ -313,18 +312,18 @@
 }
 
 @layer components {
-  /* Mosaico de marca: degradado del acento, como el favicon */
+  /* Mosaico de marca: degradado del acento, como el favicon. */
   .brand-tile {
     background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   }
 
-  /* Rejilla difuminada del hero de la landing (login) */
+  /* Rejilla técnica y discreta del login. */
   .brand-grid {
     background-image:
       linear-gradient(to right, var(--accent-soft) 1px, transparent 1px),
       linear-gradient(to bottom, var(--accent-soft) 1px, transparent 1px);
-    background-size: 52px 52px;
-    opacity: 0.3;
+    background-size: 36px 36px;
+    opacity: 0.2;
     -webkit-mask-image: radial-gradient(
       ellipse 90% 80% at 50% 20%,
       #000 30%,
@@ -333,11 +332,11 @@
     mask-image: radial-gradient(ellipse 90% 80% at 50% 20%, #000 30%, transparent 75%);
   }
 
-  /* Resplandores suaves que flotan detrás del formulario */
+  /* Brillo muy tenue para separar el acceso del fondo sin estética de landing. */
   .brand-glow {
     position: absolute;
     border-radius: 50%;
-    filter: blur(90px);
+    filter: blur(100px);
     pointer-events: none;
   }
   .brand-glow-a {
@@ -347,7 +346,7 @@
     top: -120px;
     background: radial-gradient(
       circle,
-      color-mix(in srgb, var(--accent) 16%, transparent),
+      color-mix(in srgb, var(--accent) 7%, transparent),
       transparent 65%
     );
     animation: brand-drift 14s ease-in-out infinite alternate;
@@ -357,7 +356,7 @@
     height: 460px;
     left: -140px;
     bottom: -180px;
-    background: radial-gradient(circle, rgba(0, 198, 245, 0.14), transparent 65%);
+      background: radial-gradient(circle, rgba(251, 197, 78, 0.08), transparent 65%);
     animation: brand-drift 18s ease-in-out infinite alternate-reverse;
   }
   @keyframes brand-drift {
@@ -412,7 +411,7 @@
     );
   }
 
-  /* Etiqueta editorial en mono: "01 · BANDEJA", "ETAPA", "NOTAS" */
+  /* Metadatos y etiquetas de trabajo: "01 · BANDEJA", "ETAPA", "NOTAS". */
   .kicker {
     @apply font-mono text-[10.5px] font-medium uppercase tracking-[0.14em] text-text-3;
   }

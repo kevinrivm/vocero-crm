@@ -14,8 +14,9 @@ export const dynamic = "force-dynamic";
 export default async function SettingsLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // 069 — Ajustes → API solo existe con la bandera y para quien configura.
-  const api = apiV1Enabled() && canConfigure((await getSessionOrNull())?.role);
+  // 069/080 — API y formularios solo aparecen para quien puede configurar.
+  const canSet = canConfigure((await getSessionOrNull())?.role);
+  const api = apiV1Enabled() && canSet;
   return (
     <div className="flex h-full flex-col">
       <header className="border-b px-4 py-3 sm:px-6 sm:py-4">
@@ -30,6 +31,7 @@ export default async function SettingsLayout({
           messenger={isChannelEnabled("messenger")}
           tiktok={isChannelEnabled("tiktok")}
           api={api}
+          forms={canSet}
         />
         <div className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>

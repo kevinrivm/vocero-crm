@@ -35,6 +35,8 @@ export function ContactsClient() {
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState("all");
   const [stages, setStages] = useState<string[]>([]);
+  const [tagId, setTagId] = useState("all");
+  const [tags, setTags] = useState<{ id: string; name: string }[]>([]);
   const [showArchived, setShowArchived] = useState(false);
   const [editing, setEditing] = useState<ContactDto | null>(null);
   const [creando, setCreando] = useState(false);
@@ -51,6 +53,15 @@ export function ContactsClient() {
 
   useEffect(() => {
     void (async () => {
+      const res = await fetch("/api/contact-tags").catch(() => null);
+      if (!res?.ok) return;
+      const data = (await res.json()) as { tags: { id: string; name: string }[] };
+      setTags(data.tags);
+    })();
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
       const res = await fetch("/api/pipeline/stages").catch(() => null);
       if (!res?.ok) return;
       const data = (await res.json()) as { stages: { name: string }[] };
@@ -62,6 +73,7 @@ export function ContactsClient() {
     const params = new URLSearchParams();
     if (query.trim()) params.set("q", query.trim());
     if (stage !== "all") params.set("stage", stage);
+    if (tagId !== "all") params.set("tagId", tagId);
     if (showArchived) params.set("archived", "true");
     const res = await fetch(`/api/contacts?${params}`).catch(() => null);
     if (!res?.ok) return;
@@ -74,7 +86,25 @@ export function ContactsClient() {
         (a, b) => priorityRank(a.priority ?? null) - priorityRank(b.priority ?? null)
       )
     );
-  }, [query, stage, showArchived]);
+  }, [query, stage, tagId, showArchived]);
+
+  async function createTag(name: string) {
+    const response = await fetch("/api/contact-tags", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name }),
+    }).catch(() => null);
+    const body = (await response?.json().catch(() => null)) as {
+      tag?: { id: string; name: string };
+      error?: { message?: string };
+    } | null;
+    const tag = body?.tag;
+    if (!response?.ok || !tag) {
+      throw new Error(body?.error?.message ?? "No se pudo crear la etiqueta");
+    }
+    setTags((current) => [...current, tag].sort((a, b) => a.name.localeCompare(b.name, "es")));
+    return tag;
+  }
 
   useEffect(() => {
     const t = setTimeout(() => void refetch(), 250);
@@ -129,6 +159,17 @@ export function ContactsClient() {
               ))}
             </select>
           )}
+          {tags.length > 0 && (
+            <select
+              value={tagId}
+              onChange={(e) => setTagId(e.target.value)}
+              aria-label="Filtrar por etiqueta"
+              className="h-9 rounded-md border border-input bg-card px-2 text-sm"
+            >
+              <option value="all">Toda etiqueta</option>
+              {tags.map((tag) => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
+            </select>
+          )}
           <div className="relative w-full sm:w-auto">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -145,7 +186,7 @@ export function ContactsClient() {
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {contacts.length === 0 ? (
-          query.trim() || stage !== "all" ? (
+          query.trim() || stage !== "all" || tagId !== "all" ? (
             <EmptyState
               icon={Search}
               className="h-full"
@@ -156,6 +197,7 @@ export function ContactsClient() {
                   {query.trim() ? ` «${query.trim()}»` : ""}
                   {query.trim() && stage !== "all" ? " en" : ""}
                   {stage !== "all" ? ` la etapa «${stage}»` : ""}.
+                  {tagId !== "all" ? ` La etiqueta «${tags.find((tag) => tag.id === tagId)?.name ?? ""}» no tiene contactos coincidentes.` : ""}
                 </>
               }
             />
@@ -164,7 +206,7 @@ export function ContactsClient() {
               icon={Users}
               className="h-full"
               title="Sin contactos"
-              description="Cada persona que escriba a tu WhatsApp quedará registrada aquí automáticamente."
+              description="Los mensajes que recibas y los formularios que publiques pueden quedar registrados aquí automáticamente."
             />
           )
         ) : (
@@ -206,9 +248,11 @@ export function ContactsClient() {
                         {SOURCE_LABELS[c.source.value]}
                       </Badge>
                     )}
+                    {c.tags?.map((tag) => <Badge key={tag.id} variant="secondary">{tag.name}</Badge>)}
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {formatPhone(c.phone)}
+                    {c.email ? ` · ${c.email}` : ""}
                     {c.notes ? ` · ${c.notes.slice(0, 60)}` : ""}
                   </p>
                 </div>
@@ -258,6 +302,8 @@ export function ContactsClient() {
       {editing && (
         <EditDialog
           contact={editing}
+          tags={tags}
+          onCreateTag={createTag}
           onClose={() => setEditing(null)}
           onSave={async (patchBody) => {
             await patch(editing.id, patchBody);
@@ -322,16 +368,36 @@ export function ContactsClient() {
 
 function EditDialog({
   contact,
+  tags,
+  onCreateTag,
   onClose,
   onSave,
 }: {
   contact: ContactDto;
+  tags: { id: string; name: string }[];
+  onCreateTag: (name: string) => Promise<{ id: string; name: string }>;
   onClose: () => void;
-  onSave: (patch: { name: string; notes: string; aiPaused?: boolean }) => Promise<void>;
+  onSave: (patch: { name: string; email: string | null; notes: string; tagIds: string[]; aiPaused?: boolean }) => Promise<void>;
 }) {
   const [name, setName] = useState(contact.name);
+  const [email, setEmail] = useState(contact.email ?? "");
   const [notes, setNotes] = useState(contact.notes ?? "");
   const [aiPaused, setAiPaused] = useState(contact.aiPaused ?? false);
+  const [selectedTagIds, setSelectedTagIds] = useState((contact.tags ?? []).map((tag) => tag.id));
+  const [newTag, setNewTag] = useState("");
+  const [tagError, setTagError] = useState<string | null>(null);
+
+  async function addTag() {
+    if (!newTag.trim()) return;
+    setTagError(null);
+    try {
+      const tag = await onCreateTag(newTag.trim());
+      setSelectedTagIds((current) => current.includes(tag.id) ? current : [...current, tag.id]);
+      setNewTag("");
+    } catch (err) {
+      setTagError(err instanceof Error ? err.message : "No se pudo crear la etiqueta");
+    }
+  }
 
   return (
     <div
@@ -353,6 +419,28 @@ function EditDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium" htmlFor="edit-email">Correo (opcional)</label>
+            <Input id="edit-email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <span className="block text-sm font-medium">Etiquetas</span>
+            {tags.length > 0 ? (
+              <div className="flex flex-wrap gap-x-4 gap-y-2">
+                {tags.map((tag) => (
+                  <label key={tag.id} className="flex items-center gap-1.5 text-xs">
+                    <input type="checkbox" checked={selectedTagIds.includes(tag.id)} onChange={(event) => setSelectedTagIds((current) => event.target.checked ? [...current, tag.id] : current.filter((id) => id !== tag.id))} className="accent-primary" />
+                    {tag.name}
+                  </label>
+                ))}
+              </div>
+            ) : <p className="text-xs text-muted-foreground">Todavía no hay etiquetas.</p>}
+            <div className="flex gap-2">
+              <Input aria-label="Nombre de nueva etiqueta" value={newTag} onChange={(e) => setNewTag(e.target.value)} placeholder="Nueva etiqueta" maxLength={40} />
+              <Button type="button" variant="secondary" size="sm" disabled={!newTag.trim()} onClick={() => void addTag()}>Crear</Button>
+            </div>
+            {tagError && <p role="alert" className="text-xs text-danger-text">{tagError}</p>}
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium" htmlFor="edit-notes">
@@ -390,7 +478,9 @@ function EditDialog({
             onClick={() =>
               void onSave({
                 name: name.trim(),
+                email: email.trim() || null,
                 notes,
+                tagIds: selectedTagIds,
                 // Solo si cambió: mandarlo siempre reescribiría el interruptor
                 // de la Bandeja cada vez que alguien corrige un nombre.
                 ...(aiPaused !== (contact.aiPaused ?? false) ? { aiPaused } : {}),

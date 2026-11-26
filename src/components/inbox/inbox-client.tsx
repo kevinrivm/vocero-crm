@@ -394,6 +394,10 @@ export function InboxClient({
         media: null,
         quotable: false,
         replyTo: p.replyTo,
+        reactable: false,
+        reactions: [],
+        editedAt: null,
+        originalText: null,
         createdAt: p.createdAt,
       })),
     ];

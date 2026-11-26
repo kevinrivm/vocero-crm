@@ -42,6 +42,18 @@ curl -s "https://tu-crm.example.com/api/v1/contacts?q=martillo" \
 ```
 
 ```bash
+curl -s -X POST https://tu-crm.example.com/api/v1/contacts \
+  -H "Authorization: Bearer $VOCERO_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Ana Pérez","phone":"5215512345678","email":"ana@example.com"}'
+```
+
+`POST /contacts` requiere permiso `operate`, valida los campos y crea también
+el lead del Pipeline. No pongas la llave en un formulario del navegador: úsala
+desde un servidor o automatización. Para una página pública usa el formulario
+público o su webhook de entrada con secreto propio.
+
+```bash
 curl -s -X POST https://tu-crm.example.com/api/v1/conversations/cv_xxx/notes \
   -H "Authorization: Bearer $VOCERO_API_KEY" \
   -H "Content-Type: application/json" \

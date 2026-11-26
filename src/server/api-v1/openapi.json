@@ -94,7 +94,7 @@
     "/contacts": {
       "get": {
         "summary": "Listar y buscar contactos",
-        "description": "Permiso: read. `q` busca por nombre (sin acentos ni mayúsculas) o por dígitos del teléfono.",
+        "description": "Permiso: read. `q` busca por nombre o correo sin distinguir mayúsculas/acentos, o por dígitos del teléfono.",
         "parameters": [
           {
             "name": "q",
@@ -150,6 +150,12 @@
                     "type": "string",
                     "pattern": "^\\d{7,15}$",
                     "description": "Dígitos con código de país, p. ej. 5215512345678"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "maxLength": 254,
+                    "description": "Correo opcional del contacto"
                   },
                   "notes": {
                     "type": "string",

@@ -232,6 +232,20 @@
       "when": 1795545644836,
       "tag": "0032_la_ia_vuelve_sola",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1795580559617,
+      "tag": "0033_public_forms_contact_tags",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1795609957926,
+      "tag": "0034_public_forms_widget_config",
+      "breakpoints": true
     }
   ]
 }

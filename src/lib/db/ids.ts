@@ -7,6 +7,7 @@ const prefixes = {
   organization: "org",
   member: "mem",
   contact: "ct",
+  contactTag: "tag",
   conversation: "cv",
   message: "msg",
   lead: "ld",
@@ -21,6 +22,7 @@ const prefixes = {
   mediaAsset: "ma",
   // 015 — motor de agenda
   calendarSettings: "cal",
+  publicFormSettings: "pfs",
   booking: "bk",
   offeredSlot: "ofs",
   zoomCredentials: "zcred",

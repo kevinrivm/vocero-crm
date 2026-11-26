@@ -31,6 +31,7 @@ export function NewContactDialog({
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [source, setSource] = useState<SourceValue>("referido");
   const [notes, setNotes] = useState("");
   const [stages, setStages] = useState<StageDto[]>([]);
@@ -62,6 +63,7 @@ export function NewContactDialog({
       body: JSON.stringify({
         name: name.trim(),
         phone: phone.trim(),
+        email: email.trim() || undefined,
         source,
         notes: notes.trim() || undefined,
         stageId: stageId || undefined,
@@ -139,6 +141,18 @@ export function NewContactDialog({
               él, WhatsApp no lo reconoce como la misma persona que te escriba
               después.
             </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium" htmlFor="nc-email">Correo (opcional)</label>
+            <Input
+              id="nc-email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="persona@ejemplo.com"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-3">

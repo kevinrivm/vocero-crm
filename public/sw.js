@@ -22,8 +22,8 @@ const PAGINA_SIN_CONEXION = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sin conexión</title>
 <style>
-  :root { color-scheme: light dark; --bg: #ffffff; --text: #0a1730; --muted: #4b5875; }
-  @media (prefers-color-scheme: dark) { :root { --bg: #0b1327; --text: #e8eefb; --muted: #a7b3cc; } }
+  :root { color-scheme: light dark; --bg: #ffffff; --text: #0d181c; --muted: #5b6466; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #0d181c; --text: #edf3f5; --muted: #bdcbd0; } }
   html, body { height: 100%; margin: 0; }
   body { display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box;
          background: var(--bg); color: var(--text); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -31,8 +31,7 @@ const PAGINA_SIN_CONEXION = `<!doctype html>
   h1 { font-size: 1.25rem; margin: 0 0 .5rem; }
   p { margin: 0 0 1.25rem; color: var(--muted); }
   button { font: inherit; font-weight: 600; padding: .6rem 1.2rem; border-radius: 10px; border: 0;
-           /* El mismo azul en los dos temas: con blanco encima pasa AA (5,3:1). */
-           background: #0d5bff; color: #ffffff; cursor: pointer; }
+           background: #00afb9; color: #0d181c; cursor: pointer; }
 </style>
 </head>
 <body>

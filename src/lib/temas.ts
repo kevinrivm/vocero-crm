@@ -36,15 +36,15 @@ export type Tema = {
 
 export const TEMAS: Record<TemaId, Tema> = {
   menta: {
-    nombre: "Menta",
-    descripcion: "Tarjetas blancas sobre menta suave. El de siempre.",
+    nombre: "U-Topic claro",
+    descripcion: "Superficies frías, tinta y turquesa para el trabajo diario.",
     modo: "light",
     pareja: "noche",
     tokens: {},
   },
   noche: {
-    nombre: "Noche",
-    descripcion: "La pareja oscura de Menta.",
+    nombre: "U-Topic oscuro",
+    descripcion: "La pareja oscura del tema claro.",
     modo: "dark",
     pareja: "menta",
     tokens: {},
@@ -344,9 +344,9 @@ export type Apariencia = z.infer<typeof aparienciaSchema>;
 
 export const APARIENCIA_POR_DEFECTO: Apariencia = {
   tema: "menta",
-  letra: "urbanist",
+  letra: "plex",
   tamano: "normal",
-  densidad: "normal",
+  densidad: "compacta",
 };
 
 /** Cookie con la elección de esta persona en este equipo (D5). */

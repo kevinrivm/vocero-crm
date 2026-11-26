@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb, schema } from "@/lib/db";
 import { scoped } from "@/lib/db/tenant";
 import { effectiveSource } from "@/server/contact-source";
@@ -15,6 +15,7 @@ export function serializeContact(
     id: c.id,
     name: c.name,
     phone: c.phone,
+    email: c.email,
     notes: c.notes,
     aiPaused: c.aiPaused,
     stageName,
@@ -68,4 +69,27 @@ export async function getContactStage(
     )
     .limit(1);
   return rows[0] ?? null;
+}
+
+/** Etiquetas de un contacto dentro de la organización activa. */
+export async function getContactTags(organizationId: string, contactId: string) {
+  const db = getDb();
+  return db
+    .select({ id: schema.contactTag.id, name: schema.contactTag.name })
+    .from(schema.contactTagAssignment)
+    .innerJoin(
+      schema.contactTag,
+      and(
+        eq(schema.contactTag.id, schema.contactTagAssignment.tagId),
+        eq(schema.contactTag.organizationId, schema.contactTagAssignment.organizationId)
+      )
+    )
+    .where(
+      scoped(
+        schema.contactTagAssignment.organizationId,
+        organizationId,
+        eq(schema.contactTagAssignment.contactId, contactId)
+      )
+    )
+    .orderBy(schema.contactTag.name);
 }
