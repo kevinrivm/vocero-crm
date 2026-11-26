@@ -12,6 +12,8 @@ export type ConversationDto = {
   aiEnabled: boolean;
   aiPausedUntil: string | null;
   espera: EsperaDto | null;
+  /** 070 — Momento en que esta persona del equipo fijó la conversación. */
+  pinnedAt?: string | null;
   handoffAt: string | null;
   handoffReason: string | null;
   lastInboundAt: string | null;
