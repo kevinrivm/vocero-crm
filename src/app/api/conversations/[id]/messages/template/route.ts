@@ -1,12 +1,8 @@
 import { z } from "zod";
 import { apiError, parseBody, withAuth } from "@/lib/api";
 import { SendError } from "@/server/inbox/send";
-import { pausarIaTrasEnvioDeLaBandeja } from "@/server/inbox/pausa-manual";
-import {
-  sendTemplate,
-  TemplateError,
-  templateErrorStatus,
-} from "@/server/whatsapp/templates";
+import { responderConPlantilla } from "@/server/plantillas/enviar";
+import { TemplateError, templateErrorStatus } from "@/server/whatsapp/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -25,16 +21,17 @@ export const POST = withAuth(async (session, req: Request, ctx: Params) => {
   if (!body.ok) return body.response;
 
   try {
-    const result = await sendTemplate({
+    // 068: una plantilla mandada a mano desde la Bandeja también pausa la IA.
+    // Eso lo hace `porElEquipo` (ver `server/plantillas/enviar`).
+    const result = await responderConPlantilla({
       organizationId: session.organizationId,
       conversationId: id,
       templateId: body.data.templateId,
       variables:
         body.data.variables ??
         (body.data.variable === undefined ? undefined : [body.data.variable]),
+      porElEquipo: true,
     });
-    // 068: una plantilla mandada a mano desde la Bandeja también pausa la IA.
-    await pausarIaTrasEnvioDeLaBandeja(session.organizationId, id);
     return Response.json({ messageId: result.messageId });
   } catch (err) {
     if (err instanceof TemplateError) {

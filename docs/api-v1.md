@@ -59,9 +59,12 @@ curl -s -X POST https://tu-crm.example.com/api/v1/conversations/cv_xxx/notes \
 - **Configurar es un permiso aparte** (`configure`) y no arrastra operar: una
   llave para Claude que configura no mueve leads, y una de n8n que mueve leads
   no cambia cómo le habla el agente a todos los clientes.
-- **Mandar mensajes es un permiso aparte** (`send`). Respeta la ventana de 24 h
-  de WhatsApp y, como contestar desde la Bandeja, pausa la IA de esa
-  conversación.
+- **Mandar mensajes es un permiso aparte** (`send`). Dentro de la ventana de
+  24 h de WhatsApp, `POST /conversations/{id}/messages` manda texto y, como
+  contestar desde la Bandeja, pausa la IA de esa conversación. Fuera de la
+  ventana solo se puede con una plantilla aprobada:
+  `POST /templates/send`, que **no** pausa la IA — la mandó un programa, y el
+  agente atiende lo que conteste el cliente.
 - **Mismo código que la pantalla.** Cada ruta v1 envuelve el mismo handler que
   usa la UI (`src/server/http/`): una regla de negocio cambia en un solo lugar.
   Los handlers deciden «configurar» con `canConfigure(session.role)`, así que
@@ -96,8 +99,39 @@ curl -s -X POST https://tu-crm.example.com/api/v1/conversations/cv_xxx/notes \
 Diferencias con Vocero Cloud: la raíz no guarda versiones de la configuración
 (no hay `/agent/revisions` ni `expectedConfigVersion`), no tiene recordatorios
 de citas ni el «ejemplo» de Cloud (en su lugar, `POST /agent/preset` carga un
-rol), y no ofrece `/templates/send` ni `/templates/record` (quedan como
-pendiente).
+rol) y no tiene `/templates/record` (queda como pendiente: registrar en el
+hilo una plantilla que mandó otro sistema).
+
+## Escribir primero (`POST /templates/send`)
+
+Un programa casi nunca contesta: avisa. Un cobro cinco días antes del
+vencimiento, el saldo de una cuenta de anuncios, un recordatorio. Esos salen
+sin que el cliente haya escrito, y fuera de la ventana de 24 h WhatsApp solo
+deja iniciar con una plantilla aprobada.
+
+- **A dónde**: `conversationId` si el hilo ya existe, o `contactId` y se crea
+  si hace falta. Uno de los dos, no ambos.
+- **No pausa la IA.** Es la única diferencia real con mandar la plantilla
+  desde la Bandeja: ahí la mandó una persona que se hizo cargo (068, 076);
+  aquí la mandó el agente, y el agente debe poder atender la respuesta. Si
+  pausara, el cobro automático quedaría sin quién conteste.
+- **Con la ventana abierta y `contactId`: 409 `window_open`.** Gastar una
+  plantilla cuando puedes mandar texto es tirar dinero y reputación de
+  plantilla. Con `conversationId` no se comprueba: ahí mandas tú.
+- **Por qué importa que pase por el CRM.** Una plantilla que otro sistema le
+  manda a Meta por su cuenta no queda en el hilo, aunque salga del mismo
+  número: el asesor ve la respuesta del cliente sin la pregunta que la
+  provocó. Por aquí queda, con su `messageId`.
+
+```bash
+curl -X POST https://crm.negocio.test/api/v1/templates/send \
+  -H "Authorization: Bearer vk_…" -H "Content-Type: application/json" \
+  -d '{"contactId":"ct_…","templateId":"tpl_…","variables":["Campañas de Google Ads","01-12-26","$630.700"]}'
+```
+
+- Código: `src/server/http/templates-send.ts` sobre
+  `src/server/plantillas/enviar.ts`, el mismo módulo que usan las dos rutas de
+  la pantalla.
 
 ## Probar el agente sin WhatsApp (`POST /agent/simulate`)
 

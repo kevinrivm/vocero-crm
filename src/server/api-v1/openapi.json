@@ -271,7 +271,9 @@
             "description": "`esperando`: solo los clientes que esperan a una persona. Otro valor responde 422.",
             "schema": {
               "type": "string",
-              "enum": ["esperando"]
+              "enum": [
+                "esperando"
+              ]
             }
           }
         ],
@@ -312,7 +314,7 @@
       },
       "post": {
         "summary": "Mandar un mensaje al cliente",
-        "description": "Permiso: send. Solo dentro de la ventana de 24 h de WhatsApp (fuera de ella: 409 `window_closed`; para reabrirla hace falta una plantilla: `POST /templates/send`, donde esté encendida). Igual que contestar desde la Bandeja, **pausa la IA** de esa conversación.",
+        "description": "Permiso: send. Solo dentro de la ventana de 24 h de WhatsApp (fuera de ella: 409 `window_closed`; para reabrirla hace falta una plantilla: `POST /templates/send`). Igual que contestar desde la Bandeja, **pausa la IA** de esa conversación.",
         "requestBody": {
           "required": true,
           "content": {
@@ -1520,6 +1522,60 @@
         "responses": {
           "200": {
             "description": "La vista de Ajustes → IA ya con lo guardado."
+          },
+          "422": {
+            "$ref": "#/components/responses/Error"
+          }
+        }
+      }
+    },
+    "/templates/send": {
+      "post": {
+        "summary": "Mandar una plantilla aprobada",
+        "description": "Permiso: send. La forma de **escribir primero**: fuera de la ventana de 24 h WhatsApp solo deja iniciar con una plantilla aprobada. Manda `conversationId` para una conversación que ya existe, o `contactId` y se crea si hace falta (uno de los dos, no ambos).\n\nA diferencia de `POST /conversations/{id}/messages`, **no pausa la IA**: la mandó un programa, y el agente atiende lo que conteste el cliente.\n\nCon la ventana abierta y `contactId` responde 409 `window_open`: gastar una plantilla ahí es tirar dinero y reputación de plantilla.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "templateId"
+                ],
+                "properties": {
+                  "templateId": {
+                    "type": "string",
+                    "description": "Id de la plantilla en este CRM (`GET /templates` en la pantalla; se sincronizan desde Meta)."
+                  },
+                  "variables": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "maxLength": 500
+                    },
+                    "maxItems": 10,
+                    "description": "Valores de {{1}}..{{n}}, en orden."
+                  },
+                  "conversationId": {
+                    "type": "string"
+                  },
+                  "contactId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "`{ messageId, conversationId }`"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          },
+          "409": {
+            "$ref": "#/components/responses/Error"
           },
           "422": {
             "$ref": "#/components/responses/Error"
