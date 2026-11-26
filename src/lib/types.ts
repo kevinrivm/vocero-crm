@@ -2,6 +2,7 @@
 
 import type { Channel } from "@/lib/channels";
 import type { EsperaDto } from "@/lib/esperando";
+import type { ReaccionDto } from "@/lib/reacciones";
 
 export type ConversationDto = {
   id: string;
@@ -96,6 +97,13 @@ export type MessageDto = {
   quotable: boolean;
   /** 039 — El mensaje que cita, o null si no cita ninguno. */
   replyTo: QuotedMessageDto | null;
+  /** 072 — La plataforma acepta reacciones a este mensaje. */
+  reactable: boolean;
+  /** 072 — Reacciones del contacto y del equipo. */
+  reactions: ReaccionDto[];
+  /** 074 — Fecha de edición y texto anterior, si fue editado. */
+  editedAt: string | null;
+  originalText: string | null;
   createdAt: string;
 };
 
